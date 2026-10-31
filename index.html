@@ -2387,6 +2387,38 @@
       return seq;
     }
     const MORPH_OF_BIRD=buildMorphAssignment(NAMES.length);
+    /* P7 (Issue #22): second-layer individual variation assignments.
+       spreadIndicesP7 generalises P1's largest-remainder counts plus
+       shortfall spread over a weights array (no randomness). */
+    function spreadIndicesP7(weights, n){
+      const totalW=weights.reduce((s,w)=>s+w,0);
+      const quotas=weights.map(w=>w/totalW*n);
+      const counts=quotas.map(q=>Math.floor(q));
+      let rest=n-counts.reduce((s,c)=>s+c,0);
+      const byRemainder=weights.map((w,i)=>i).sort((a,b)=>{
+        const fa=quotas[a]-Math.floor(quotas[a]), fb=quotas[b]-Math.floor(quotas[b]);
+        if(fb!==fa) return fb-fa;
+        if(weights[b]!==weights[a]) return weights[b]-weights[a];
+        return a-b;
+      });
+      for(let k=0;k<rest;k++) counts[byRemainder[k]]++;
+      const assigned=new Array(weights.length).fill(0);
+      const seq=new Array(n);
+      for(let k=0;k<n;k++){
+        let best=-1, bestShort=-Infinity;
+        for(let i=0;i<weights.length;i++){
+          if(assigned[i]>=counts[i]) continue;
+          const short=counts[i]*(k+1)/n-assigned[i];
+          if(short>bestShort){ bestShort=short; best=i; }
+        }
+        seq[k]=best; assigned[best]++;
+      }
+      return seq;
+    }
+    const P7_VARIANTS=[{jitter:0.96, uOff:0.00},{jitter:1.00, uOff:0.34},{jitter:1.04, uOff:0.67}];
+    const BIRD_VARIANT=spreadIndicesP7([1,1,1], NAMES.length);
+    const NECK_CLASSES=[{name:'strong', emissive:1.30, sheen:1.25, tint:null},{name:'weak', emissive:1.00, sheen:1.00, tint:null},{name:'juvenile', emissive:0.45, sheen:0.40, tint:0xb9b2a4}];
+    const BIRD_NECK_CLASS=spreadIndicesP7([33,50,17], NAMES.length);
     const NECK_COLORS=[0x2e8f6e,0x2e8f6e,0x7a5fb0,0x3a9a7c,0x2e8f6e,0x6a55a8];
     /* iridescence endpoints: fully saturated emerald ⇄ violet — the
        previous muted pair mixed to a pale blue-grey at side views */
@@ -2417,7 +2449,7 @@
     function featherTexture(draw){
       const cv=document.createElement('canvas'); cv.width=256; cv.height=256;
       draw(cv.getContext('2d'));
-      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; t.anisotropy=8;
+      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; t.anisotropy=8; t.wrapS=THREE.RepeatWrapping; // P7 (Issue #22): wrapS for per-variant UV offset
       return t;
     }
     /* close-range (至近LOD) high-resolution feather textures: 2048px
@@ -2429,7 +2461,7 @@
       const cv=document.createElement('canvas'); cv.width=2048; cv.height=2048;
       const g=cv.getContext('2d'); g.scale(2,2);
       draw(g);
-      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding;
+      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; t.wrapS=THREE.RepeatWrapping; // P7 (Issue #22)
       t.anisotropy=Math.min(16, renderer.capabilities.getMaxAnisotropy());
       return t;
     }
@@ -2716,7 +2748,7 @@
     };
     function hiPlaceholderTex(){
       const cv=document.createElement('canvas'); cv.width=2; cv.height=2;
-      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding;
+      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; t.wrapS=THREE.RepeatWrapping; // P7 (Issue #22)
       return t;
     }
     const bodyTexHi=hiPlaceholderTex();
@@ -2893,7 +2925,7 @@
        outer-edge strips share one material too. */
     const SHARED_UNDERWING_MAT=new THREE.MeshStandardMaterial({map:underwingTex, roughness:0.95, side:THREE.DoubleSide});
     const SHARED_TAIL_EDGE_MAT=new THREE.MeshStandardMaterial({color:0xf6f6f2, roughness:0.95, side:THREE.DoubleSide});
-    const _morphMatCache=new Array(MORPHS.length).fill(null);
+    const _morphMatCache=new Array(MORPHS.length*P7_VARIANTS.length).fill(null); // P7 (Issue #22): per morph x variant
     /* P5 (Issue #12): bumpMap reuses each material's own map instance
        (no new textures) and every feathered material shares the one
        featherRoughTex above as roughnessMap; the scalar roughness
@@ -2907,45 +2939,57 @@
        instance as map, so they ride the B6 placeholder → real-canvas
        swap in ensureHiTextures() untouched. */
     const BUMP_BODY=0.04, BUMP_WING=0.02, BUMP_TAIL=0.03;
-    function morphMatsFor(morph){
+    /* P7 (Issue #22): r128 shares one vUv across all map slots, so
+       adding a uniform offset to vUv.x in the vertex shader shifts
+       map / bumpMap / roughnessMap consistently at every LOD. */
+    function p7ShiftUV(mat, uOff){ mat.onBeforeCompile=shader=>{ shader.uniforms.uP7Off={value:uOff}; shader.vertexShader=('uniform float uP7Off;\n'+shader.vertexShader).replace('#include <uv_vertex>', '#include <uv_vertex>\n#ifdef USE_MAP\n vUv.x+=uP7Off;\n#endif'); }; mat.customProgramCacheKey=()=>'p7uv'; return mat; }
+    function morphMatsFor(morph, variant){
+      const v=(variant===undefined||variant===null)?0:variant;
       const idx=MORPHS.indexOf(morph);
-      if(_morphMatCache[idx]) return _morphMatCache[idx];
+      const cacheKey=idx*P7_VARIANTS.length+v;
+      if(_morphMatCache[cacheKey]) return _morphMatCache[cacheKey];
       const bc=morph.body;
+      const jf=P7_VARIANTS[v].jitter, uOff=P7_VARIANTS[v].uOff;
       const entry={
-        bodyLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
-        bodyHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
-        breastLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
-        breastHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
-        headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
-        headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
-        wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFor(morph), bumpMap:wingTextureFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        bodyLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        bodyHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        breastLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        breastHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
+        headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
+        wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:wingTextureFor(morph), bumpMap:wingTextureFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         wingHi:null, // lazy: wingTextureHiFor() builds a 2048px texture, as before only on first close LOD
-        tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, bumpMap:tailTex, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
-        tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
-        rump:new THREE.MeshStandardMaterial({color:(morph.rump===null||morph.rump===undefined)?bc:morph.rump, roughness:0.9}),
-        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92*jf), map:tailTex, bumpMap:tailTex, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92*jf), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        rump:new THREE.MeshStandardMaterial({color:new THREE.Color(morph.rump==null?bc:morph.rump).multiplyScalar(jf), roughness:0.9}),
+        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92*jf), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         /* P2 (Issue #20): far-LOD materials — posterised wing/tail
            textures and flat darkened head/neck/trunk so a distant
            bird keeps its pattern and value structure. */
-        wingFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFarFor(morph), bumpMap:wingTextureFarFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
-        tailFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexFar, bumpMap:tailTexFar, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
-        headFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62), roughness:0.9}),
-        neckFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62), roughness:0.9}),
-        trunkFar:new THREE.MeshStandardMaterial({vertexColors:true, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02})
+        wingFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:wingTextureFarFor(morph), bumpMap:wingTextureFarFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92*jf), map:tailTexFar, bumpMap:tailTexFar, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        headFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62*jf), roughness:0.9}),
+        neckFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62*jf), roughness:0.9}),
+        trunkFar:new THREE.MeshStandardMaterial({color:new THREE.Color(jf,jf,jf), vertexColors:true, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02})
       };
+      // P7 (Issue #22): shift UVs on every mapped slot for offset variants (mapless rump/headFar/neckFar excluded).
+      if(uOff!==0){ for(const k of ['bodyLo','bodyHi','breastLo','breastHi','headLo','headHi','wingLo','tailLo','tailHi','fan','wingFar','tailFar','trunkFar']){ if(entry[k]) p7ShiftUV(entry[k], uOff); } }
       // C2 (Issue #16): pigeon Standard materials take envMapIntensity 0.3.
       // Set at creation so lazily built Hi-LOD materials are covered too
       // (tuneEnvIntensity only reaches materials attached at first env apply).
       for(const k in entry){ const m=entry[k]; if(m) m.envMapIntensity=0.3; }
-      _morphMatCache[idx]=entry;
+      _morphMatCache[cacheKey]=entry;
       return entry;
     }
-    function morphWingHiMat(morph){
-      const entry=morphMatsFor(morph);
+    function morphWingHiMat(morph, variant){
+      const v=(variant===undefined||variant===null)?0:variant;
+      const entry=morphMatsFor(morph, v);
       if(!entry.wingHi){
         const bc=morph.body;
+        const jf=P7_VARIANTS[v].jitter, uOff=P7_VARIANTS[v].uOff;
         // P5 (Issue #12): same-instance bumpMap + shared roughnessMap, as in morphMatsFor above.
-        entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureHiFor(morph), bumpMap:wingTextureHiFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide});
+        entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:wingTextureHiFor(morph), bumpMap:wingTextureHiFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide});
+        if(uOff!==0) p7ShiftUV(entry.wingHi, uOff); // P7 (Issue #22)
         entry.wingHi.envMapIntensity=0.3; // C2 (Issue #16): created lazily, may postdate tuneEnvIntensity
       }
       return entry.wingHi;
@@ -3028,7 +3072,7 @@
       const bodyG=new THREE.Group(); g.add(bodyG);
       const morph=MORPH_OF_BIRD[pi%MORPH_OF_BIRD.length];
       const bc=morph.body;
-      const mm=morphMatsFor(morph);
+      const mm=morphMatsFor(morph, BIRD_VARIANT[pi%BIRD_VARIANT.length]);
       const mat=mm.bodyLo;
       const body=new THREE.Mesh(bodyGeo, mat); body.scale.set(1,0.86,1.38); body.castShadow=true; bodyG.add(body);
       const breast=new THREE.Mesh(bodyGeo, mm.breastLo);
@@ -3060,6 +3104,10 @@
       const neckMat=new THREE.MeshPhysicalMaterial({map:neckTex, bumpMap:neckTex, bumpScale:0.03, roughness:0.24, metalness:0.38,
           emissive:0xffffff, emissiveMap:neckTex, emissiveIntensity:0.5});
       const neckSheenMat=makeNeckSheenMat();
+      /* P7 (Issue #22): neck iridescence class for this bird. */
+      const ncls=NECK_CLASSES[BIRD_NECK_CLASS[pi%BIRD_NECK_CLASS.length]];
+      if(ncls.sheen!==1){ neckSheenMat.uniforms.uA.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uB.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uHi.value.multiplyScalar(ncls.sheen); }
+      if(ncls.tint) neckMat.color.setHex(ncls.tint);
       const neck=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14), neckMat);
       neck.scale.set(1.0,1.18,1.0); neck.position.set(0,0.04,0.12); bodyG.add(neck);
       const neckSheen=new THREE.Mesh(new THREE.SphereGeometry(0.1095,20,14), neckSheenMat);
@@ -3236,7 +3284,8 @@
       return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
-        bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat};
+        bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat,
+        variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase:hash(pi*57+13)}; // P7 (Issue #22)
     }
     /* toggle the close-range LOD for one bird: geometry detail + hi-res
        textures in, basic parts out. Display scale never changes. */
@@ -3255,11 +3304,11 @@
       // same maps (bodyTex/bodyTexHi, wing lo/hi, tailTex/tailTexHi)
       // and same colours as the old per-bird mutation produced.
       const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
-      const mm=morphMatsFor(morph);
+      const mm=morphMatsFor(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]);
       const bodyMat=on?mm.bodyHi:mm.bodyLo;
       const breastMat=on?mm.breastHi:mm.breastLo;
       const headMat=on?mm.headHi:mm.headLo;
-      const wingMat=on?morphWingHiMat(morph):mm.wingLo;
+      const wingMat=on?morphWingHiMat(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]):mm.wingLo;
       const tailMat=on?mm.tailHi:mm.tailLo;
       if(m.body) m.body.material=bodyMat;
       if(m.breastMesh) m.breastMesh.material=breastMat;
@@ -3287,8 +3336,8 @@
       for(const part of m.basicHeadParts) part.visible=on?false:!p.closeLOD;
       for(const b of m.barMeshes) b.visible=!on;
       const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
-      const mm=morphMatsFor(morph);
-      const wingMat=on?mm.wingFar:(p.closeLOD?morphWingHiMat(morph):mm.wingLo);
+      const mm=morphMatsFor(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]);
+      const wingMat=on?mm.wingFar:(p.closeLOD?morphWingHiMat(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]):mm.wingLo);
       const tailMat=on?mm.tailFar:(p.closeLOD?mm.tailHi:mm.tailLo);
       if(m.wingL) m.wingL.material=wingMat;
       if(m.wingR) m.wingR.material=wingMat;
@@ -4071,9 +4120,9 @@
       _v4.copy(camera.position).sub(p.pos).normalize();
       const relAz=Math.atan2(_v4.x,_v4.z)-p.heading;
       const vf=clamp(0.5+0.75*Math.sin(relAz)-0.3*Math.cos(relAz), 0, 1);
-      if(m.neckTex) m.neckTex.offset.x=vf*0.5;
+      if(m.neckTex) m.neckTex.offset.x=vf*0.5+(m.neckPhase||0); // P7 (Issue #22): per-bird phase
       if(m.neckSheenMat) m.neckSheenMat.uniforms.uShift.value=vf;
-      m.neck.material.emissiveIntensity=0.45+0.25*Math.abs(vf-0.5)*2;
+      m.neck.material.emissiveIntensity=(0.45+0.25*Math.abs(vf-0.5)*2)*(m.neckGain||1); // P7 (Issue #22): neck class gain
       // legs dangle on takeoff and landing approach, tucked only in cruise.
       // legs[] layout: [legL, footL, ankleL, legR, footR, ankleR]; in close
       // LOD the flat basic feet (1, 4) yield to the jointed toes.
@@ -5744,6 +5793,13 @@
             existingRooftopItems:roofLayerCounts.existingRooftopItems,
             addedNodes:roofLayerCounts.addedNodes, addedCalls:roofLayerCounts.addedCalls,
             addedTextures:roofLayerCounts.addedTextures, addedTriangles:roofLayerCounts.addedTriangles},
+          /* P7 (Issue #22): second-layer individual variation. */
+          variation:{variantCounts:(()=>{ const c=[0,0,0]; for(const v of BIRD_VARIANT) c[v]=(c[v]||0)+1; return c; })(),
+            jitters:P7_VARIANTS.map(v=>v.jitter),
+            uOffsets:P7_VARIANTS.map(v=>v.uOff),
+            neckClassCounts:(()=>{ const c={strong:0, weak:0, juvenile:0}; for(const ci of BIRD_NECK_CLASS){ const nm=NECK_CLASSES[ci].name; c[nm]=(c[nm]||0)+1; } return c; })(),
+            focusVariant:BIRD_VARIANT[fp.i%BIRD_VARIANT.length],
+            focusNeckClass:NECK_CLASSES[BIRD_NECK_CLASS[fp.i%BIRD_NECK_CLASS.length]].name},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -5889,6 +5945,15 @@
           +row('rooftop.addedCalls', fmt(rt.addedCalls))
           +row('rooftop.addedTextures', fmt(rt.addedTextures))
           +row('rooftop.addedTriangles', fmt(rt.addedTriangles))
+          +'</dl>';
+        var vr=snap.variation||{}, vnc=vr.neckClassCounts||{};
+        html+='<h3>個体差（P7）</h3><dl class="tgrid">'
+          +row('variation.variantCounts', (vr.variantCounts||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('variation.jitters', (vr.jitters||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('variation.uOffsets', (vr.uOffsets||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('variation.neckClassCounts 強/弱/幼鳥', [vnc.strong,vnc.weak,vnc.juvenile].map(function(v){ return fmt(v); }).join(' / '))
+          +row('variation.focusVariant', fmt(vr.focusVariant))
+          +row('variation.focusNeckClass', fmt(vr.focusNeckClass))
           +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
