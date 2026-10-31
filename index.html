@@ -2636,6 +2636,44 @@
       g.fillStyle='rgba(24,25,30,.92)'; g.fillRect(0,26,256,78); // subterminal band, widened for far LOD
       g.fillStyle='rgba(245,245,242,.9)'; g.fillRect(0,0,256,12); // pale tip edge
     });
+    /* P6 (Issue #21): iris radial-gradient texture for the close-LOD
+       eyeball (SHARED_IRIS_MAT below). Canvas 256x128; on the sphere
+       UV the outward (+x) direction maps to the centre (0.5, 0.5) and
+       the opposite (-x) eye to the u seam (0 / 1), so the same radial
+       gradient is drawn at x = 0, 128 and 256 (y = 64, radius ~62px)
+       and either eye lands on a gradient centre. Colours run gold
+       #f2b53a at the centre through orange #e8761d (~45%) and deep
+       orange #c4500f (~80%) to #8f3408 at the rim, with faint radial
+       striations placed deterministically via the existing hash()
+       helper (no Math.random). Colour map, so sRGB encoding and
+       anisotropy 8 follow the surrounding feather textures. */
+    function irisGradientTexture(){
+      const cv=document.createElement('canvas'); cv.width=256; cv.height=128;
+      const g=cv.getContext('2d');
+      g.fillStyle='#8f3408'; g.fillRect(0,0,256,128);
+      for(const cx of [0,128,256]){
+        const grad=g.createRadialGradient(cx,64,0,cx,64,62);
+        grad.addColorStop(0,'#f2b53a');
+        grad.addColorStop(0.45,'#e8761d');
+        grad.addColorStop(0.8,'#c4500f');
+        grad.addColorStop(1,'#8f3408');
+        g.fillStyle=grad;
+        g.beginPath(); g.arc(cx,64,62,0,Math.PI*2); g.fill();
+        g.lineWidth=1;
+        for(let i=0;i<72;i++){ // faint radial striations, deterministic via hash()
+          const a=(i/72)*Math.PI*2+hash(i*3.7)*0.06;
+          const r0=6+hash(i*7.1)*10, r1=52+hash(i*11.3)*9;
+          g.strokeStyle=hash(i*13.9)>0.5?'rgba(255,214,120,0.10)':'rgba(90,30,4,0.10)';
+          g.beginPath();
+          g.moveTo(cx+Math.cos(a)*r0, 64+Math.sin(a)*r0);
+          g.lineTo(cx+Math.cos(a)*r1, 64+Math.sin(a)*r1);
+          g.stroke();
+        }
+      }
+      const t=new THREE.CanvasTexture(cv); t.encoding=THREE.sRGBEncoding; t.anisotropy=8;
+      return t;
+    }
+    const irisTex=irisGradientTexture();
     /* B6 (Issue #10): the 2048px close-LOD canvases are no longer drawn
        at startup. bodyTexHi / wingTexHiBase / tailTexHi start as 2x2
        placeholder CanvasTextures (same names, same sRGB encoding) and
@@ -2820,17 +2858,32 @@
        now swaps mesh.material between the Lo and Hi shared variants
        instead of mutating a shared material. The rendered result —
        same colours, same textures, same LOD thresholds — is unchanged. */
-    const SHARED_BEAK_MAT=new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:0.55});
-    const SHARED_CERE_MAT=new THREE.MeshStandardMaterial({color:0xe9e2d2, roughness:0.7});
+    /* P6 (Issue #21): beak colour goes grey-black like the real bird
+       (0x8a7f70 → 0x3a383d) and the cere goes powdery (roughness
+       0.7 → 0.9, colour unchanged). */
+    const SHARED_BEAK_MAT=new THREE.MeshStandardMaterial({color:0x3a383d, roughness:0.55});
+    const SHARED_CERE_MAT=new THREE.MeshStandardMaterial({color:0xe9e2d2, roughness:0.9});
     const SHARED_TWIG_MAT=new THREE.MeshStandardMaterial({color:0x6a5136, roughness:1});
     const SHARED_EYE_MAT=new THREE.MeshBasicMaterial({color:0xd8541e});
     const SHARED_PUPIL_MAT=new THREE.MeshBasicMaterial({color:0x14100c});
     const SHARED_RING_MAT=new THREE.MeshBasicMaterial({color:0xd8cfc0});
     const SHARED_BAR_MAT=new THREE.MeshStandardMaterial({color:0x101116, roughness:0.9});
     const SHARED_LEG_MAT=new THREE.MeshBasicMaterial({color:0xea0d0d});
-    const SHARED_BEAK_HI_MAT=new THREE.MeshStandardMaterial({color:0x776c5c, roughness:0.45});
-    const SHARED_CERE_HI_MAT=new THREE.MeshStandardMaterial({color:0xefe7d6, roughness:0.65});
-    const SHARED_IRIS_MAT=new THREE.MeshStandardMaterial({color:0xe05a1a, roughness:0.25});
+    /* P6 (Issue #21): Hi beak keeps the slightly-darker-than-Lo
+       relationship (0x776c5c → 0x2f2e33); Hi cere roughness
+       0.65 → 0.85, colour unchanged. The iris drops its flat 0xe05a1a
+       tint for the procedural irisTex gradient map (colour white,
+       roughness unchanged) — close-LOD eyeball only, the basic eye
+       (SHARED_EYE_MAT) is untouched. The cornea cap material is new:
+       a transparent Physical shell whose highlight comes only from
+       the environment map + clearcoat, kept subtle (opacity 0.25). */
+    const SHARED_BEAK_HI_MAT=new THREE.MeshStandardMaterial({color:0x2f2e33, roughness:0.45});
+    const SHARED_CERE_HI_MAT=new THREE.MeshStandardMaterial({color:0xefe7d6, roughness:0.85});
+    const SHARED_IRIS_MAT=new THREE.MeshStandardMaterial({color:0xffffff, map:irisTex, roughness:0.25});
+    const SHARED_CORNEA_MAT=new THREE.MeshPhysicalMaterial({color:0xffffff, transparent:true, opacity:0.25, roughness:0.06, metalness:0, clearcoat:1.0, clearcoatRoughness:0.1, envMapIntensity:0.3, depthWrite:false, side:THREE.FrontSide});
+    /* P6 (Issue #21): one shared cornea-cap sphere, slightly larger
+       than the 0.0155 eyeball, same 20x14 segmentation. */
+    const corneaGeo=new THREE.SphereGeometry(0.0168,20,14);
     const SHARED_PUPIL_HI_MAT=new THREE.MeshStandardMaterial({color:0x0d0a08, roughness:0.2});
     const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
     const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
@@ -2997,7 +3050,14 @@
          the map slot's transform across all texture slots, so the
          bump follows the iridescence shift automatically. No
          roughnessMap here: the 0.24 / 0.38 gloss stays as-is. */
-      const neckMat=new THREE.MeshStandardMaterial({map:neckTex, bumpMap:neckTex, bumpScale:0.03, roughness:0.24, metalness:0.38,
+      /* P6 (Issue #21): neckMat is promoted to MeshPhysicalMaterial
+         with parameters identical to before (no sheen / clearcoat
+         values added — defaults). The Physical upgrade is scoped to
+         the eye (cornea cap above) and neck only; body / wing / tail
+         / head feather materials stay Standard. neckTex and the
+         fresnel sheen shell are unchanged, and the per-frame
+         emissiveIntensity / uShift writes work as before. */
+      const neckMat=new THREE.MeshPhysicalMaterial({map:neckTex, bumpMap:neckTex, bumpScale:0.03, roughness:0.24, metalness:0.38,
           emissive:0xffffff, emissiveMap:neckTex, emissiveIntensity:0.5});
       const neckSheenMat=makeNeckSheenMat();
       const neck=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14), neckMat);
@@ -3107,6 +3167,11 @@
         for(const s of [-1,1]){
           const ball=new THREE.Mesh(new THREE.SphereGeometry(0.0155,20,14), irisMat);
           ball.position.set(0.0495*s,0.014,0.018); closeHead.add(ball);
+          /* P6 (Issue #21): transparent cornea cap at the same
+             position as the eyeball — closeHead only, so it shows
+             solely in the close LOD. */
+          const cap=new THREE.Mesh(corneaGeo, SHARED_CORNEA_MAT);
+          cap.position.copy(ball.position); closeHead.add(cap);
           const pup=new THREE.Mesh(new THREE.SphereGeometry(0.0078,12,9), pupilMatHi);
           pup.position.set(0.0585*s,0.014,0.021); closeHead.add(pup);
           const ringHi=new THREE.Mesh(new THREE.TorusGeometry(0.0165,0.0038,8,20), ringMatHi);
@@ -5634,6 +5699,12 @@
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
             emissiveIntensity:cityMeshMat?+cityMeshMat.emissiveIntensity.toFixed(3):0},
+          /* P6 (Issue #21): close-range eye/beak values, read live
+             from the shared materials. */
+          eye:{beakColorLo:'#'+SHARED_BEAK_MAT.color.getHexString(), beakColorHi:'#'+SHARED_BEAK_HI_MAT.color.getHexString(),
+            cereRoughnessLo:SHARED_CERE_MAT.roughness, cereRoughnessHi:SHARED_CERE_HI_MAT.roughness,
+            irisMap:!!(SHARED_IRIS_MAT&&SHARED_IRIS_MAT.map),
+            corneaOpacity:SHARED_CORNEA_MAT.opacity, corneaClearcoat:SHARED_CORNEA_MAT.clearcoat},
           road:{normalMap:!!(roadsMat&&roadsMat.normalMap),
             roughnessMap:!!(roadsMat&&roadsMat.roughnessMap),
             roughnessFactor:roadSurface.roughnessFactor,
