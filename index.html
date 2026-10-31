@@ -1485,17 +1485,21 @@
        weight (percent; European feral-pigeon survey ratios — Osaka-local
        ratios are unmeasured) and whether the raised bar geometry shows.
        The flock assignment below derives from the weights and replaces
-       the old uniform rotation. */
+       the old uniform rotation.
+       P4 (Issue #13): the barred morphs (barsGeo:true) have their rump
+       raised to near-white — the pale rump flash visible in flight —
+       staying within the P1 pattern-linked rump scheme. spread-black
+       (rump null), pied and white keep their P1 values. */
     const MORPHS=[
-      {name:'blue-bar',     body:0x8a939c, pattern:'bar',      rump:0xdcdeda, weight:35, barsGeo:true},
-      {name:'blue-checker', body:0x767e88, pattern:'checker',  rump:0xd2d4ce, weight:25, barsGeo:true},
-      {name:'t-pattern',    body:0x6b7280, pattern:'tpattern', rump:0xc6c8c2, weight:15, barsGeo:true},
+      {name:'blue-bar',     body:0x8a939c, pattern:'bar',      rump:0xf4f4f0, weight:35, barsGeo:true},
+      {name:'blue-checker', body:0x767e88, pattern:'checker',  rump:0xf0f0eb, weight:25, barsGeo:true},
+      {name:'t-pattern',    body:0x6b7280, pattern:'tpattern', rump:0xedede8, weight:15, barsGeo:true},
       {name:'spread-black', body:0x4c4f52, pattern:'spread',   rump:null,     weight:8,  barsGeo:false},
-      {name:'red',          body:0x9a6a52, pattern:'red',      rump:0xcdb49e, weight:7,  barsGeo:true},
+      {name:'red',          body:0x9a6a52, pattern:'red',      rump:0xf3efe4, weight:7,  barsGeo:true},
       {name:'pied',         body:0xb5aea0, pattern:'pied',     rump:0xe4e2da, weight:5,  barsGeo:false},
       {name:'white',        body:0xd9d7d0, pattern:'white',    rump:0xe9e7e0, weight:2,  barsGeo:false},
-      {name:'silver',       body:0xb0aca2, pattern:'bar',      rump:0xd9d6cc, weight:2,  barsGeo:true},
-      {name:'brown-bar',    body:0x7d7268, pattern:'bar',      rump:0xccbda9, weight:1,  barsGeo:true},
+      {name:'silver',       body:0xb0aca2, pattern:'bar',      rump:0xf2f2ed, weight:2,  barsGeo:true},
+      {name:'brown-bar',    body:0x7d7268, pattern:'bar',      rump:0xf1ecdd, weight:1,  barsGeo:true},
     ];
     const BODY_COLORS=MORPHS.map(m=>m.body);
     /* P1: deterministic weighted assignment. Counts come from the
@@ -1636,6 +1640,19 @@
       const grad=g.createLinearGradient(185,0,256,0); grad.addColorStop(0,'rgba(30,31,36,0)'); grad.addColorStop(1,'rgba(30,31,36,.72)');
       g.fillStyle=grad; g.fillRect(185,0,71,256); // dark primary tips
     });
+    /* P4 (Issue #13): underwing texture for the flight flash. Pale
+       whitish-grey coverts with faint barb strokes in the same flow as
+       wingTexBase; the only dark area is the primary tips. u runs root
+       0 → tip 1 (same convention as drawWingPattern), so the dark band
+       is a horizontal gradient over u ≈ 0.78 → 1.0. Fully
+       deterministic (no randomness). */
+    const underwingTex=featherTexture(g=>{
+      g.fillStyle='#d9d9d3'; g.fillRect(0,0,256,256);
+      g.strokeStyle='rgba(120,120,124,.26)'; g.lineWidth=1.1;
+      for(let i=0;i<44;i++){ g.beginPath(); g.moveTo(i*6, 256); g.lineTo(i*6+58, 0); g.stroke(); } // faint barbs
+      const grad=g.createLinearGradient(0.78*256,0,256,0); grad.addColorStop(0,'rgba(30,31,36,0)'); grad.addColorStop(1,'rgba(30,31,36,.85)');
+      g.fillStyle=grad; g.fillRect(0.78*256,0,256-0.78*256,256); // dark primary tips only
+    });
     /* P1: wing pattern overlay, drawn in unit space so the same code
        serves the 256px Lo canvas and the 1024-unit Hi authoring space
        (u runs root 0 to tip 1 across the canvas width). The twin bars
@@ -1694,6 +1711,9 @@
     }
     const tailTex=featherTexture(g=>{
       g.fillStyle='#e9e9e6'; g.fillRect(0,0,256,256);
+      // P4 (Issue #13): white outer tail edges, drawn under the shafts /
+      // subterminal band / tip edge so the band crosses over the white
+      g.fillStyle='rgba(248,248,244,.95)'; g.fillRect(0,0,14,256); g.fillRect(242,0,14,256);
       g.strokeStyle='rgba(70,70,74,.3)'; g.lineWidth=2;
       for(let i=1;i<7;i++){ g.beginPath(); g.moveTo(i*36,256); g.lineTo(i*36,0); g.stroke(); } // feather shafts
       g.fillStyle='rgba(24,25,30,.92)'; g.fillRect(0,26,256,52); // subterminal band
@@ -1782,6 +1802,10 @@
     }
     const wingGeo=makeWingGeo();
     const tailGeo=new THREE.PlaneGeometry(0.175, 0.2); tailGeo.rotateX(-Math.PI/2); tailGeo.translate(0,0,-0.095);
+    /* P4 (Issue #13): shared geometry for the close-LOD tail fan's
+       white outer-edge strips — same transform chain as the fan's
+       fGeo (translate(0,0.1,0) → rotateX(-PI/2)), narrower plane. */
+    const tailEdgeGeo=new THREE.PlaneGeometry(0.007, 0.2); tailEdgeGeo.translate(0,0.1,0); tailEdgeGeo.rotateX(-Math.PI/2);
     /* foot plate: wider + longer than before, dropped so its underside
        sits exactly on the contact surface at BODY_Y = 0.42
        (foot mesh y −0.155 + geometry offset −0.107 = −0.262 local
@@ -1894,6 +1918,11 @@
     const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
     const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
     const SHARED_CLAW_MAT=new THREE.MeshStandardMaterial({color:0x3a3430, roughness:0.4});
+    /* P4 (Issue #13): underwing flash panels share one material (and
+       the one underwingTex above); the close-LOD tail fan's white
+       outer-edge strips share one material too. */
+    const SHARED_UNDERWING_MAT=new THREE.MeshStandardMaterial({map:underwingTex, roughness:0.95, side:THREE.DoubleSide});
+    const SHARED_TAIL_EDGE_MAT=new THREE.MeshStandardMaterial({color:0xf6f6f2, roughness:0.95, side:THREE.DoubleSide});
     const _morphMatCache=new Array(MORPHS.length).fill(null);
     /* P5 (Issue #12): bumpMap reuses each material's own map instance
        (no new textures) and every feathered material shares the one
@@ -2006,6 +2035,14 @@
       const wingL=new THREE.Mesh(wingGeo, wingMat); wingL.castShadow=true; wingLP.add(wingL);
       const wingRP=new THREE.Group(); wingRP.position.set(-0.05,0.045,0.015); bodyG.add(wingRP);
       const wingR=new THREE.Mesh(wingGeo, wingMat); wingR.scale.x=-1; wingR.castShadow=true; wingRP.add(wingR);
+      /* P4 (Issue #13): underwing flash panels, 3mm below each wing
+         plane, sharing the wing silhouette and the one underwing
+         material. Hidden by default; animate() shows them only while
+         the bird is flying with its wings unfolded. */
+      const underL=new THREE.Mesh(wingGeo, SHARED_UNDERWING_MAT);
+      underL.position.y=-0.003; underL.castShadow=false; underL.visible=false; wingLP.add(underL);
+      const underR=new THREE.Mesh(wingGeo, SHARED_UNDERWING_MAT);
+      underR.scale.x=-1; underR.position.y=-0.003; underR.castShadow=false; underR.visible=false; wingRP.add(underR);
       // folded-wing panels lying over the back (where a perched pigeon's
       // barred wings actually show); swapped in when the wings are folded
       const foldL=new THREE.Mesh(wingGeo, wingMat);
@@ -2107,6 +2144,13 @@
           const pivot=new THREE.Group();
           pivot.rotation.y=(k-5.5)*0.052;
           const f=new THREE.Mesh(fGeo, fanMat); pivot.add(f); tailFan.add(pivot);
+          /* P4 (Issue #13): white edge strips on the fan's outer rim
+             only — the outermost rectrix pivots (k=0 and k=11). */
+          if(k===0||k===11){
+            const edge=new THREE.Mesh(tailEdgeGeo, SHARED_TAIL_EDGE_MAT);
+            edge.position.x=(k===0)?0.0135:-0.0135;
+            pivot.add(edge);
+          }
         }
       }
       // "noticed!" marker, shown briefly when the bird spots food / danger
@@ -2114,7 +2158,7 @@
       exclaim.scale.setScalar(0.21); exclaim.position.set(0,0.34,0); exclaim.visible=false; g.add(exclaim);
       g.scale.setScalar(DISPLAY_SCALE);
       scene.add(g);
-      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, body, twig,
+      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
         breastMesh:breast, headMesh:head,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat};
@@ -2854,6 +2898,10 @@
       const foldedNow=p.fold>0.7;
       m.foldL.visible=m.foldR.visible=foldedNow;
       m.wingL.visible=m.wingR.visible=!foldedNow;
+      /* P4 (Issue #13): underwing flash panels show only in flight
+         with the wings unfolded — never on the ground, and not during
+         the fold transition right after takeoff. */
+      m.underL.visible=m.underR.visible=(flying && !foldedNow);
       // body pitch/roll from velocity
       let pitch=0, roll=0;
       if(flying){
@@ -4254,6 +4302,7 @@
             wind:+ENV.wind.toFixed(2), wet:+ENV.wet.toFixed(2), snowCover:+ENV.snowCover.toFixed(2), postRain:Math.round(ENV.postRain)},
           sun:{rise:fmtMin(SUN.rise), set:fmtMin(SUN.set)},
           counts, flockFlying,
+          flightFlash:{underwingVisible:pigeons.reduce((n,p)=>n+((p.mesh&&p.mesh.underL&&p.mesh.underL.visible)?1:0),0)},
           morphs:{counts:(()=>{ const c={}; for(const m of MORPH_OF_BIRD) c[m.name]=(c[m.name]||0)+1; return c; })()},
           focus:{index:focusIdx, name:fp.name, morph:MORPH_OF_BIRD[fp.i%MORPH_OF_BIRD.length].name, state:fp.state, action:actionVerb(fp),
             breeding_state:fp.breeding_state, dominance_ground:+fp.dominance_ground.toFixed(2),
