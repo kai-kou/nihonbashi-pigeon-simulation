@@ -690,7 +690,8 @@
     /* C5 (Issue #19): rooftop-layer tallies, filled by
        buildRoofLayerC5() and read by __QA__. addedTriangles is the
        exact triangle count of the layer's own geometry, accumulated
-       from the built geometry (instanced boxes 12, tanks 32). */
+       from the built geometry (instanced open boxes 10, tanks 18
+       after the PR #49 triangle-budget fix). */
     const roofLayerCounts={buildings:0, textureTypes:4, byTexture:[0,0,0,0],
       parapets:0, parapetHeightMin:0, parapetHeightMax:0,
       classBuildings:{S:0,M:0,L:0,XL:0},
@@ -2051,6 +2052,27 @@
           if(sink.uv) sink.uv.push(k[0]/6, k[2]/6); // world-planar uv, 6 m tile
         }
       };
+      // PR #49 review fix (triangle budget): drop ring points that
+      // sit within 10 cm of the segment joining their neighbours.
+      // Footprints carry many nearly collinear points, and every
+      // kept point costs triangles in the roof triangulation and
+      // in the parapet edge loop. The original ring stays in use
+      // for the area/equipment decisions below; only the drawn
+      // outline (roof plane + parapet) uses the simplified ring.
+      const simplifyRingC5=(ring)=>{
+        const n=ring.length; if(n<=3) return ring;
+        const out=[];
+        for(let i=0;i<n;i++){
+          const a=ring[(i+n-1)%n], p=ring[i], c=ring[(i+1)%n];
+          const abx=p[0]-a[0], abz=p[1]-a[1];
+          const acx=c[0]-a[0], acz=c[1]-a[1];
+          const acl=Math.hypot(acx,acz);
+          const dot=abx*acx+abz*acz;
+          const dist=acl>1e-9? Math.abs(abx*acz-abz*acx)/acl : 0;
+          if(!(dot>0 && dot<acl*acl && dist<=0.10)) out.push(p);
+        }
+        return out.length>=3? out : ring;
+      };
       for(let bi=0; bi<buildingsAABB.length; bi++){
         const b=buildingsAABB[bi];
         const rw=b.x1-b.x0, rd=b.z1-b.z0, h=b.h;
@@ -2066,16 +2088,17 @@
         let pa=0;
         for(let i=0;i<np;i++){ const j=(i+1)%np; pa+=pts[i][0]*pts[j][1]-pts[j][0]*pts[i][1]; }
         const polyArea=Math.abs(pa/2);
+        const spts=simplifyRingC5(pts), sn=spts.length;
         const hasParapet=inRange && h>=10 && rw>=14 && rd>=14;
         // 1. textured roof surface: the footprint polygon triangulated
         //    (ShapeUtils earcut), 3 cm above the flat roof, world-planar
         //    uv from pushQuad's sink convention (x/6, z/6)
         if(rw>=6 && rd>=6 && h>=3 && np>=3){
           const sink=planeSink[type], Y=h+0.03;
-          const contour=pts.map(p=>new THREE.Vector2(p[0], -p[1]));
+          const contour=spts.map(p=>new THREE.Vector2(p[0], -p[1]));
           const faces=THREE.ShapeUtils.triangulateShape(contour, []);
           for(const f of faces){
-            let A=pts[f[0]], Bp=pts[f[1]], C=pts[f[2]];
+            let A=spts[f[0]], Bp=spts[f[1]], C=spts[f[2]];
             // world winding must face +y: with pts as [x,z], the
             // (B-A)x(C-A) y-component is dz1*dx2-dx1*dz2, i.e. the
             // negative of the expression below — swap when it is > 0
@@ -2088,17 +2111,16 @@
           roofLayerCounts.buildings++;
           roofLayerCounts.byTexture[type]++;
         }
-        // 2. parapet rim along every footprint edge: outer band flush
-        //    with the wall + top ring 0.30 m thick, real height
+        // 2. parapet rim along the footprint edges: outer band flush with the wall, real height. PR #49 review fix: the top ring is omitted and segments under 3 m are left as rim openings — with band + ring the layer exceeded the phase-2 overhead triangle ceiling; the raised outer band is what reads as the roof step at the 30-200 m acceptance range. See Issue #19 record.
         if(hasParapet){
-          const th=0.30, ph=0.45+hash(bi*103)*0.5+(h>30?0.25:0);
+          const ph=0.45+hash(bi*103)*0.5+(h>30?0.25:0);
           const y0=h-0.03, y1=y0+ph;
           const cenx=cx, cenz=(b.z0+b.z1)/2;
-          for(let i=0;i<np;i++){
-            const j=(i+1)%np;
-            let ax=pts[i][0], az=pts[i][1], bx=pts[j][0], bz=pts[j][1];
+          for(let i=0;i<sn;i++){
+            const j=(i+1)%sn;
+            let ax=spts[i][0], az=spts[i][1], bx=spts[j][0], bz=spts[j][1];
             let dx=bx-ax, dz=bz-az;
-            if(Math.hypot(dx,dz)<1.5) continue; // sub-1.5 m jogs are invisible at 30 m+
+            if(Math.hypot(dx,dz)<3.0) continue; // rim opening (budget, see above)
             // geometric normal of the (aB,bB,bT) winding is (-dz,0,dx);
             // flip the edge so it points away from the building centre
             let gx=-dz, gz=dx;
@@ -2107,9 +2129,7 @@
             }
             const gl=Math.hypot(gx,gz)||1, nx=gx/gl, nz=gz/gl;
             const aB=[ax,y0,az], bB=[bx,y0,bz], aT=[ax,y1,az], bT=[bx,y1,bz];
-            const aI=[ax-nx*th, y1, az-nz*th], bI=[bx-nx*th, y1, bz-nz*th];
             pushQuad(parSink, aB, bB, bT, aT, [nx,0,nz]);
-            pushQuad(parSink, aT, bT, bI, aI, [0,1,0]);
           }
           roofLayerCounts.parapets++;
           if(ph<parMin)parMin=ph; if(ph>parMax)parMax=ph;
@@ -2204,9 +2224,44 @@
         im.castShadow=false; im.receiveShadow=true; scene.add(im); nodes++;
         tris+=items.length*(geo.index? geo.index.count : geo.attributes.position.count)/3;
       }
-      const boxGeo=new THREE.BoxGeometry(1,1,1);
+      // PR #49 review fix: equipment geometries without the
+      // never-visible bottom face (penthouse/AC boxes 12 -> 10
+      // triangles) and a 6-segment tank with a top fan but no
+      // bottom cap (32 -> 18). Unit size, centred, same
+      // instancing convention as the geometries they replace.
+      const openBoxGeoC5=()=>{
+        const pos=[], nor=[];
+        const quad=(a,bb,c,d,n)=>{ for(const t of [[a,bb,c],[a,c,d]])
+          for(const k of t){ pos.push(k[0],k[1],k[2]); nor.push(n[0],n[1],n[2]); } };
+        const h=0.5;
+        quad([-h,h,-h],[-h,h,h],[h,h,h],[h,h,-h],[0,1,0]);
+        quad([h,-h,h],[h,-h,-h],[h,h,-h],[h,h,h],[1,0,0]);
+        quad([-h,-h,-h],[-h,-h,h],[-h,h,h],[-h,h,-h],[-1,0,0]);
+        quad([-h,-h,h],[h,-h,h],[h,h,h],[-h,h,h],[0,0,1]);
+        quad([h,-h,-h],[-h,-h,-h],[-h,h,-h],[h,h,-h],[0,0,-1]);
+        const g=new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+        g.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3));
+        return g;
+      };
+      const tankGeoC5=()=>{
+        const pos=[], nor=[], SEG=6;
+        const P=(k,y)=>[Math.cos(k/SEG*Math.PI*2), y, Math.sin(k/SEG*Math.PI*2)];
+        for(let k=0;k<SEG;k++){
+          const m=(k+0.5)/SEG*Math.PI*2, n=[Math.cos(m),0,Math.sin(m)];
+          const B=P(k,-0.5), B1=P(k+1,-0.5), T=P(k,0.5), T1=P(k+1,0.5);
+          for(const v of [B,T1,B1, B,T,T1]){ pos.push(v[0],v[1],v[2]); nor.push(n[0],n[1],n[2]); }
+          const C=[0,0.5,0];
+          for(const v of [C,T1,T]){ pos.push(v[0],v[1],v[2]); nor.push(0,1,0); }
+        }
+        const g=new THREE.BufferGeometry();
+        g.setAttribute('position', new THREE.Float32BufferAttribute(pos,3));
+        g.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3));
+        return g;
+      };
+      const boxGeo=openBoxGeoC5();
       instancedC5(boxGeo, penthouseMat, pentItems, true);
-      instancedC5(new THREE.CylinderGeometry(1,1,1,8), tankMat,
+      instancedC5(tankGeoC5(), tankMat,
         tankItems.map(it=>({x:it.x, y:it.y+it.sy/2, z:it.z, sx:it.sx, sy:it.sy, sz:it.sz})), false);
       instancedC5(boxGeo, acMat, acItems, true);
       roofLayerCounts.parapetHeightMin=roofLayerCounts.parapets?+parMin.toFixed(2):0;
