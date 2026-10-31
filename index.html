@@ -684,6 +684,9 @@
         offsets:WIRE_OFFS.map(o=>[o[0],o[1]])}};
     /* handles the season/weather system (later script) drives */
     let cityMeshMat=null, roadsMat=null, groundMat=null, waterMatRef=null, canopyMesh=null;
+    /* C4 (Issue #18): public wet-state of the road surface, written by
+       updateEnvironment() alongside roadsMat and read by __QA__. */
+    const roadSurface={roughnessFactor:1.0, envMapIntensity:0.25, curbSegments:0};
     const canopyBase=[]; // per-tree canopy {x,y,z,sx,sy,sz} for wind sway
     const aabbGrid=new Map(); // 80m cells -> indices into buildingsAABB
     const perchPoints=[];      // {p:V3, popular:bool, kind}
@@ -1052,7 +1055,9 @@
 
 
     function ribbon(flat, width, y, color, out){
-      // out: {pos,col,nor} accumulators; pts are [x,north] dm pairs
+      // out: {pos,col,nor,uv?} accumulators; pts are [x,north] dm pairs.
+      // When out.uv is present (roads geometry only, C4), each vertex
+      // also gets a world-planar uv (x/4, z/4) — one texture tile = 4 m.
       const pts=[];
       for(let i=0;i<flat.length;i+=2) pts.push([flat[i]/10, -flat[i+1]/10]);
       const c=new THREE.Color(color);
@@ -1063,20 +1068,128 @@
         const quad=[[a[0]+px,a[1]+pz],[b[0]+px,b[1]+pz],[b[0]-px,b[1]-pz],[a[0]-px,a[1]-pz]];
         const tris=[[0,1,2],[0,2,3]];
         for(const t of tris){
-          for(const k of t){ out.pos.push(quad[k][0], y, quad[k][1]); out.col.push(c.r,c.g,c.b); out.nor.push(0,1,0); }
+          for(const k of t){ out.pos.push(quad[k][0], y, quad[k][1]); out.col.push(c.r,c.g,c.b); out.nor.push(0,1,0);
+            if(out.uv) out.uv.push(quad[k][0]/4, quad[k][1]/4); }
         }
       }
     }
+    /* C4 (Issue #18): procedural road-surface textures, 256x256, one
+       tile = 4 m (matching the world-planar uv (x/4, z/4) ribbon()
+       emits for the roads geometry). Fully deterministic hash noise
+       (no random calls): an aggregate height field carries 3 px seam
+       grooves at the tile edge and centre (128 px); the normal map is
+       derived from that height by Sobel with the same formula and sign
+       convention as C1's makeFacadeAtlas derivation, and the roughness
+       map is base 218, +/-22 of aggregate variation, +18 on the seams. */
+    function makeRoadTextures(){
+      const S=256;
+      const lat=(ix,iy)=>hash(ix*127.1+iy*311.7);
+      const vnoise=(x,y)=>{
+        const ix=Math.floor(x), iy=Math.floor(y), fx=x-ix, fy=y-iy;
+        const sx=fx*fx*(3-2*fx), sy=fy*fy*(3-2*fy);
+        const a=lat(ix,iy), b=lat(ix+1,iy), c=lat(ix,iy+1), d=lat(ix+1,iy+1);
+        return a+(b-a)*sx+(c-a)*sy+(a-b-c+d)*sx*sy;
+      };
+      const height=new Float32Array(S*S), rough=new Float32Array(S*S), seam=new Uint8Array(S*S);
+      for(let y=0;y<S;y++) for(let x=0;x<S;x++){
+        const agg=0.55*vnoise(x/7,y/7)+0.30*vnoise(x/23,y/23)+0.15*lat(x,y);
+        const isSeam=(x%128)<3||(y%128)<3;
+        const i=y*S+x;
+        seam[i]=isSeam?1:0;
+        height[i]=clamp(agg-(isSeam?0.5:0), 0, 1);
+        rough[i]=clamp(218+(agg-0.5)*44+(isSeam?18:0), 0, 255);
+      }
+      // normal map: Sobel over the height field (same way and sign
+      // convention as the C1 facade derivation)
+      const nCv=document.createElement('canvas'); nCv.width=nCv.height=S;
+      const ng=nCv.getContext('2d'), nImg=ng.createImageData(S,S), nd=nImg.data;
+      const NSTR=2.0;
+      for(let y=0;y<S;y++){
+        const ym=((y+S-1)%S)*S, y0=y*S, yp=((y+1)%S)*S;
+        for(let x=0;x<S;x++){
+          const xm=(x+S-1)%S, xp=(x+1)%S;
+          const tl=height[ym+xm], tc=height[ym+x], tr=height[ym+xp];
+          const ml=height[y0+xm], mr=height[y0+xp];
+          const bl=height[yp+xm], bc=height[yp+x], br=height[yp+xp];
+          const dx=(tr+2*mr+br)-(tl+2*ml+bl);
+          const dy=(bl+2*bc+br)-(tl+2*tc+tr);
+          // canvas y runs downward while texture v (flipY) runs upward,
+          // so the v slope keeps the canvas Sobel sign
+          let nx=-dx*NSTR, ny=dy*NSTR, nz=1;
+          const il=1/Math.sqrt(nx*nx+ny*ny+nz*nz);
+          const o=(y0+x)*4;
+          nd[o]=(nx*il*0.5+0.5)*255; nd[o+1]=(ny*il*0.5+0.5)*255;
+          nd[o+2]=(nz*il*0.5+0.5)*255; nd[o+3]=255;
+        }
+      }
+      ng.putImageData(nImg,0,0);
+      const rCv=document.createElement('canvas'); rCv.width=rCv.height=S;
+      const rg=rCv.getContext('2d'), rImg=rg.createImageData(S,S), rd=rImg.data;
+      for(let i=0;i<S*S;i++){
+        const v=Math.round(rough[i]), o=i*4;
+        rd[o]=rd[o+1]=rd[o+2]=v; rd[o+3]=255;
+      }
+      rg.putImageData(rImg,0,0);
+      const normalTex=new THREE.CanvasTexture(nCv); // linear data: no sRGB
+      normalTex.wrapS=normalTex.wrapT=THREE.RepeatWrapping; normalTex.anisotropy=8;
+      const roughnessTex=new THREE.CanvasTexture(rCv); // linear data: no sRGB
+      roughnessTex.wrapS=roughnessTex.wrapT=THREE.RepeatWrapping; roughnessTex.anisotropy=8;
+      return {normalTex, roughnessTex};
+    }
     function buildRoadsWater(){
-      const acc={pos:[],col:[],nor:[]};
+      const acc={pos:[],col:[],nor:[],uv:[]};
       for(const r of CITY.roads) ribbon(r[2], r[0], r[1]?0.09:0.06, r[1]?0x77685a:0x3c4145, acc);
       const g=new THREE.BufferGeometry();
       g.setAttribute('position', new THREE.Float32BufferAttribute(acc.pos,3));
       g.setAttribute('color', new THREE.Float32BufferAttribute(acc.col,3));
       g.setAttribute('normal', new THREE.Float32BufferAttribute(acc.nor,3));
-      roadsMat=new THREE.MeshLambertMaterial({vertexColors:true});
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(acc.uv,2));
+      const roadTex=makeRoadTextures();
+      roadsMat=new THREE.MeshStandardMaterial({vertexColors:true,
+        normalMap:roadTex.normalTex, normalScale:new THREE.Vector2(0.55,0.55),
+        roughnessMap:roadTex.roughnessTex, roughness:1.0, metalness:0.0,
+        envMapIntensity:0.25});
       const mesh=new THREE.Mesh(g, roadsMat);
       mesh.receiveShadow=true; scene.add(mesh);
+      /* C4: curbs as real geometry — for every segment of every
+         sidewalk polyline, one BoxGeometry(1, 0.15, 0.24) instance per
+         offset side (the ribbon normal (-dz,dx) x width/2, both
+         signs), centred on the offset segment midpoint at y 0.105
+         (top 0.18, about 9 cm above the 0.09 sidewalk surface),
+         oriented and scaled along the segment, all in a single
+         InstancedMesh. */
+      const curbXforms=[];
+      for(const r of CITY.roads){
+        if(!r[1]) continue;
+        const flat=r[2], width=r[0], pts=[];
+        for(let i=0;i<flat.length;i+=2) pts.push([flat[i]/10, -flat[i+1]/10]);
+        for(let i=0;i<pts.length-1;i++){
+          const a=pts[i], b=pts[i+1];
+          let dx=b[0]-a[0], dz=b[1]-a[1];
+          const len=Math.hypot(dx,dz); if(len<0.01) continue;
+          dx/=len; dz/=len;
+          const px=-dz, pz=dx, yaw=Math.atan2(-dz, dx);
+          for(const side of [-1,1]){
+            curbXforms.push({x:(a[0]+b[0])/2+px*width/2*side,
+              z:(a[1]+b[1])/2+pz*width/2*side, yaw, len});
+          }
+        }
+      }
+      roadSurface.curbSegments=curbXforms.length;
+      if(curbXforms.length){
+        const curbInst=new THREE.InstancedMesh(new THREE.BoxGeometry(1,0.15,0.24),
+          new THREE.MeshStandardMaterial({color:0x9a9d97, roughness:0.9, envMapIntensity:0.25}),
+          curbXforms.length);
+        const cm4=new THREE.Matrix4(), cq=new THREE.Quaternion(), ce=new THREE.Euler(),
+          cs=new THREE.Vector3(), cpv=new THREE.Vector3();
+        curbXforms.forEach((ct,i)=>{
+          ce.set(0,ct.yaw,0); cq.setFromEuler(ce);
+          cs.set(ct.len,1,1); cpv.set(ct.x,0.105,ct.z);
+          cm4.compose(cpv,cq,cs); curbInst.setMatrixAt(i,cm4);
+        });
+        curbInst.castShadow=false; curbInst.receiveShadow=true;
+        scene.add(curbInst);
+      }
       // elevated expressway
       const acc2={pos:[],col:[],nor:[]};
       const pillarPts=[];
@@ -3753,6 +3866,8 @@
       for(const pm of puddleMeshes) pm.visible=po>0.03;
       if(groundMat){ groundMat.color.copy(_c1.set(0x585c52)).lerp(_c2.set(0x43463e), ENV.wet*0.7).lerp(_c2.set(0xe2e6e9), ENV.snowCover); }
       if(roadsMat){ roadsMat.color.copy(_c1.set(0xffffff)).lerp(_c2.set(0x9aa0a4), ENV.wet*0.55).lerp(_c2.set(0xdfe4e8), ENV.snowCover*0.5); }
+      if(roadsMat){ roadsMat.roughness=1-ENV.wet*0.58; roadsMat.envMapIntensity=0.25+ENV.wet*0.75;
+        roadSurface.roughnessFactor=roadsMat.roughness; roadSurface.envMapIntensity=roadsMat.envMapIntensity; }
       if(waterMatRef){ waterMatRef.roughness=clamp(0.40-ENV.rain*0.22, 0.14, 0.60); } // C2: rain smooths the surface (was Phong shininess 140+rain*160)
     }
     applySeasonVisuals();
@@ -4978,6 +5093,11 @@
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
             emissiveIntensity:cityMeshMat?+cityMeshMat.emissiveIntensity.toFixed(3):0},
+          road:{normalMap:!!(roadsMat&&roadsMat.normalMap),
+            roughnessMap:!!(roadsMat&&roadsMat.roughnessMap),
+            roughnessFactor:roadSurface.roughnessFactor,
+            envMapIntensity:roadSurface.envMapIntensity,
+            wet:+ENV.wet.toFixed(2), curbSegments:roadSurface.curbSegments},
           sky:{dome:!!skyDome, environment:!!scene.environment, envRegens:envRegenCount,
             lastEnvKey:lastEnvKey,
             turbidity:skyDome?+skyDome.material.uniforms.turbidity.value.toFixed(2):0,
