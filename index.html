@@ -6788,6 +6788,10 @@
           +row('c7.aoBaseM', fmt(c7v.aoBaseM))
           +row('c7.aoVia', fmt(c7v.aoVia))
           +'</dl>';
+        var ff=snap.flightFlash||{};
+        html+='<h3>飛行フラッシュ（P4）</h3><dl class="tgrid">'
+          +row('flightFlash.underwingVisible', fmt(ff.underwingVisible))
+          +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
           +row('boot.decoded', fmt(bt.decoded))
