@@ -2072,6 +2072,10 @@
         rump:new THREE.MeshStandardMaterial({color:(morph.rump===null||morph.rump===undefined)?bc:morph.rump, roughness:0.9}),
         fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide})
       };
+      // C2 (Issue #16): pigeon Standard materials take envMapIntensity 0.3.
+      // Set at creation so lazily built Hi-LOD materials are covered too
+      // (tuneEnvIntensity only reaches materials attached at first env apply).
+      for(const k in entry){ const m=entry[k]; if(m) m.envMapIntensity=0.3; }
       _morphMatCache[idx]=entry;
       return entry;
     }
@@ -2081,6 +2085,7 @@
         const bc=morph.body;
         // P5 (Issue #12): same-instance bumpMap + shared roughnessMap, as in morphMatsFor above.
         entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureHiFor(morph), bumpMap:wingTextureHiFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide});
+        entry.wingHi.envMapIntensity=0.3; // C2 (Issue #16): created lazily, may postdate tuneEnvIntensity
       }
       return entry.wingHi;
     }
