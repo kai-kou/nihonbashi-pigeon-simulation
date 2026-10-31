@@ -158,6 +158,28 @@
       .ptable th,.ptable td{border-bottom:1px solid var(--line); padding:5px 6px; text-align:left; vertical-align:top}
       .ptable th{color:var(--ink-2); font-weight:700; white-space:nowrap}
 
+      /* ---- performance measurement panel ---- */
+      #perf-toggle{position:fixed; right:10px; bottom:calc(10px + env(safe-area-inset-bottom)); z-index:30;
+        padding:6px 12px; font-size:11.5px; border-radius:999px; opacity:.88}
+      #perf-toggle:hover{opacity:1}
+      #perf-toggle.on{opacity:1; background:var(--teal); border-color:var(--teal); color:#fff}
+      #perf-panel{position:fixed; right:10px; bottom:calc(52px + env(safe-area-inset-bottom)); z-index:30;
+        width:min(330px, calc(100vw - 20px)); max-height:min(62vh, 560px); overflow-y:auto;
+        padding:12px 14px; font-size:12px; display:none}
+      #perf-panel.open{display:block}
+      #perf-panel h2{margin:0 0 8px; font-size:11px; letter-spacing:.12em; color:var(--ink-2); font-weight:900}
+      #perf-run{width:100%; padding:8px 10px; font-size:12.5px; box-shadow:none}
+      #perf-status{margin:8px 0 2px; font-weight:700; color:var(--teal); min-height:1.4em}
+      #perf-view{margin:2px 0 0; font-size:12px}
+      #perf-view b{font-weight:900}
+      #perf-results{margin-top:6px}
+      #perf-results h3{margin:10px 0 4px; font-size:11px; letter-spacing:.08em; color:var(--ink-2); font-weight:900}
+      #perf-results .tgrid{font-size:12px}
+      @media (max-width:760px){
+        #perf-toggle{bottom:auto; top:calc(150px + env(safe-area-inset-top))}
+        #perf-panel{bottom:auto; top:calc(192px + env(safe-area-inset-top)); max-height:52vh}
+      }
+
       /* ---- loading / toast ---- */
       #loader{position:fixed; inset:0; z-index:60; background:#0d1512; color:#e8efe9; display:flex;
         flex-direction:column; align-items:center; justify-content:center; gap:14px; text-align:center; padding:20px}
@@ -450,6 +472,15 @@
     </div>
 
     <div class="panel" id="toast"></div>
+
+    <button class="btn" id="perf-toggle" aria-expanded="false" aria-controls="perf-panel">計測</button>
+    <aside class="panel" id="perf-panel" aria-label="性能計測パネル">
+      <h2>性能計測</h2>
+      <button class="btn" id="perf-run">現在の視点で計測</button>
+      <p id="perf-status" role="status">未計測</p>
+      <p id="perf-view">視点: <b id="perf-view-name">—</b></p>
+      <div id="perf-results"></div>
+    </aside>
 
     <div id="notes" aria-hidden="true">
       <div class="scrim" id="notes-scrim"></div>
@@ -3962,6 +3993,123 @@
       }
     };
     setTimeout(()=>{ if(phaseOf(simMin)!=='roost') toast('観察モード — 群れは生態スケジュールで自律行動する（大半の時間は地上の採餌と休息）'); }, 1600);
+    </script>
+    <script>
+    /* ================= performance measurement panel =================
+       Read-only UI over window.__QA__: the toggle only opens/closes
+       this panel, and the run button calls __QA__.bench(5) plus
+       __QA__.snapshot() and renders the numbers as plain DOM text.
+       It never touches the simulation, the drawing, or __QA__ itself. */
+    (function(){
+      var toggle=document.getElementById('perf-toggle');
+      var panel=document.getElementById('perf-panel');
+      var runBtn=document.getElementById('perf-run');
+      var statusEl=document.getElementById('perf-status');
+      var viewNameEl=document.getElementById('perf-view-name');
+      var resultsEl=document.getElementById('perf-results');
+      if(!toggle||!panel||!runBtn) return;
+
+      toggle.addEventListener('click', function(){
+        var open=panel.classList.toggle('open');
+        toggle.classList.toggle('on', open);
+        toggle.setAttribute('aria-expanded', open?'true':'false');
+      });
+
+      /* Viewpoint name: remember the last viewpoint button pressed.
+         Mode switches and flying off clear it, so the fallback below
+         (camera mode name) takes over. */
+      var lastViewpoint=null;
+      function mark(id, name){
+        var el=document.getElementById(id);
+        if(el) el.addEventListener('click', function(){ lastViewpoint=name; });
+      }
+      mark('btn-street', '路面で見る');
+      mark('btn-river', '川面を見る');
+      mark('btn-expressway', '高架の遮音壁');
+      mark('btn-closeup', '鳩に寄る');
+      var segMode=document.getElementById('seg-mode');
+      if(segMode) segMode.addEventListener('click', function(){ lastViewpoint=null; });
+      var flyBtn=document.getElementById('btn-fly');
+      if(flyBtn) flyBtn.addEventListener('click', function(){ lastViewpoint=null; });
+
+      var MODE_NAMES={orbit:'観察カメラ', follow:'追跡カメラ', pov:'鳩視点', play:'操作モード'};
+      function viewpointName(snap){
+        if(snap && snap.flockFlying) return '全羽飛行（群れ飛行中）';
+        if(lastViewpoint) return lastViewpoint;
+        var mode=snap && snap.camera ? snap.camera.mode : null;
+        if(mode && MODE_NAMES[mode]) return MODE_NAMES[mode];
+        if(mode) return mode;
+        return '不明';
+      }
+
+      function fmt(v, suffix){
+        if(v===null||v===undefined||v==='') return '—';
+        return String(v)+(suffix||'');
+      }
+      function row(label, value){
+        return '<dt>'+label+'</dt><dd>'+value+'</dd>';
+      }
+      function render(bench, snap, viewName){
+        var mem=snap.memory||{}, sh=snap.shadow||{}, bt=snap.boot||{};
+        var html='';
+        html+='<h3>bench（5秒）</h3><dl class="tgrid">'
+          +row('avgFps', fmt(bench.avgFps))
+          +row('avgCalls', fmt(bench.avgCalls))
+          +row('maxCalls', fmt(bench.maxCalls))
+          +row('avgTriangles', fmt(bench.avgTriangles))
+          +row('avgFrameMs', fmt(bench.avgFrameMs, ' ms'))
+          +row('maxFrameMs', fmt(bench.maxFrameMs, ' ms'))
+          +row('frames', fmt(bench.frames))
+          +'</dl>';
+        html+='<h3>snapshot</h3><dl class="tgrid">'
+          +row('memory.geometries', fmt(mem.geometries))
+          +row('memory.textures', fmt(mem.textures))
+          +row('memory.usedJSHeapSizeMB', fmt(mem.usedJSHeapSizeMB, ' MB'))
+          +row('programs', fmt(snap.programs))
+          +row('totalNodes', fmt(snap.totalNodes))
+          +row('shadow.updates', fmt(sh.updates))
+          +row('shadow.autoUpdate', fmt(sh.autoUpdate))
+          +row('shadow.framesRendered', fmt(sh.framesRendered))
+          +'</dl>';
+        html+='<h3>boot（ms）</h3><dl class="tgrid">'
+          +row('boot.scriptStart', fmt(bt.scriptStart))
+          +row('boot.decoded', fmt(bt.decoded))
+          +row('boot.cityBuilt', fmt(bt.cityBuilt))
+          +row('boot.texturesReady', fmt(bt.texturesReady))
+          +row('boot.firstFrame', fmt(bt.firstFrame))
+          +row('boot.interactive', fmt(bt.interactive))
+          +'</dl>';
+        resultsEl.innerHTML=html;
+        viewNameEl.textContent=viewName;
+      }
+
+      var running=false;
+      runBtn.addEventListener('click', function(){
+        if(running) return;
+        if(!window.__QA__ || typeof window.__QA__.bench!=='function' || typeof window.__QA__.snapshot!=='function'){
+          statusEl.textContent='計測できません（__QA__ が利用できません）';
+          return;
+        }
+        running=true;
+        runBtn.disabled=true;
+        statusEl.textContent='計測中…（5秒間）';
+        var viewName='—';
+        try{ viewName=viewpointName(window.__QA__.snapshot()); }catch(e){}
+        viewNameEl.textContent=viewName;
+        window.__QA__.bench(5).then(function(bench){
+          var snap=null;
+          try{ snap=window.__QA__.snapshot(); }catch(e){}
+          running=false;
+          runBtn.disabled=false;
+          if(snap){ render(bench, snap, viewName); statusEl.textContent='計測完了'; }
+          else statusEl.textContent='計測結果の取得に失敗しました';
+        }, function(){
+          running=false;
+          runBtn.disabled=false;
+          statusEl.textContent='計測に失敗しました';
+        });
+      });
+    })();
     </script>
   </body>
 </html>
