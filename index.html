@@ -1480,18 +1480,60 @@
     'use strict';
     /* ================= pigeons ================= */
     const NAMES=['ハトミ','ソラ','マメ','ゴマ','スズ','タマ','ハル','アオ','クロ','シロ','ポチ','ミケ','フク','ユキ','ダイ','チビ','マル','ジン','レン','サク','トワ','ナギ','ヒナ','ルイ'];
-    /* feral pigeon colour morphs (blue bar / checker / red / black / pied / silver) */
+    /* feral pigeon colour morphs (P1, Issue #11): each morph carries a
+       wing pattern, a rump colour linked to the pattern, a population
+       weight (percent; European feral-pigeon survey ratios — Osaka-local
+       ratios are unmeasured) and whether the raised bar geometry shows.
+       The flock assignment below derives from the weights and replaces
+       the old uniform rotation. */
     const MORPHS=[
-      {body:0x8a939c, dark:0x565d64, bars:true},   // blue bar (wild type)
-      {body:0x767e88, dark:0x3f464e, bars:true},   // blue checker
-      {body:0x9a6a52, dark:0x5f3d2a, bars:true},   // red bar
-      {body:0x4c4f52, dark:0x2c2e30, bars:false},  // black
-      {body:0xd9d7d0, dark:0x9a968c, bars:false},  // white / pied
-      {body:0xb0aca2, dark:0x6e6a60, bars:true},   // silver
-      {body:0x7d7268, dark:0x4a423a, bars:true},   // brown bar
-      {body:0x99a3ab, dark:0x596068, bars:true},   // blue bar, pale
+      {name:'blue-bar',     body:0x8a939c, pattern:'bar',      rump:0xdcdeda, weight:35, barsGeo:true},
+      {name:'blue-checker', body:0x767e88, pattern:'checker',  rump:0xd2d4ce, weight:25, barsGeo:true},
+      {name:'t-pattern',    body:0x6b7280, pattern:'tpattern', rump:0xc6c8c2, weight:15, barsGeo:true},
+      {name:'spread-black', body:0x4c4f52, pattern:'spread',   rump:null,     weight:8,  barsGeo:false},
+      {name:'red',          body:0x9a6a52, pattern:'red',      rump:0xcdb49e, weight:7,  barsGeo:true},
+      {name:'pied',         body:0xb5aea0, pattern:'pied',     rump:0xe4e2da, weight:5,  barsGeo:false},
+      {name:'white',        body:0xd9d7d0, pattern:'white',    rump:0xe9e7e0, weight:2,  barsGeo:false},
+      {name:'silver',       body:0xb0aca2, pattern:'bar',      rump:0xd9d6cc, weight:2,  barsGeo:true},
+      {name:'brown-bar',    body:0x7d7268, pattern:'bar',      rump:0xccbda9, weight:1,  barsGeo:true},
     ];
     const BODY_COLORS=MORPHS.map(m=>m.body);
+    /* P1: deterministic weighted assignment. Counts come from the
+       weights by largest remainder over the flock size; the sequence
+       then spreads each morph across the flock by always picking the
+       morph with the largest shortfall against its even share. No
+       randomness: the same build always assigns the same morph to the
+       same bird. At 24 birds the counts are blue-bar 8, blue-checker 6,
+       t-pattern 4, spread-black 2, red 2, pied 1, white 1 — silver
+       (0.48 birds) and brown-bar (0.24 birds) fall below one bird and
+       receive none; their definitions and weights stay for larger
+       flocks. */
+    function buildMorphAssignment(n){
+      const totalW=MORPHS.reduce((s,m)=>s+m.weight,0);
+      const quotas=MORPHS.map(m=>m.weight/totalW*n);
+      const counts=quotas.map(q=>Math.floor(q));
+      let rest=n-counts.reduce((s,c)=>s+c,0);
+      const byRemainder=MORPHS.map((m,i)=>i).sort((a,b)=>{
+        const fa=quotas[a]-Math.floor(quotas[a]), fb=quotas[b]-Math.floor(quotas[b]);
+        if(fb!==fa) return fb-fa;
+        if(MORPHS[b].weight!==MORPHS[a].weight) return MORPHS[b].weight-MORPHS[a].weight;
+        return a-b;
+      });
+      for(let k=0;k<rest;k++) counts[byRemainder[k]]++;
+      const assigned=new Array(MORPHS.length).fill(0);
+      const seq=new Array(n);
+      for(let k=0;k<n;k++){
+        let best=-1, bestShort=-Infinity;
+        for(let i=0;i<MORPHS.length;i++){
+          if(assigned[i]>=counts[i]) continue;
+          const short=counts[i]*(k+1)/n-assigned[i];
+          if(short>bestShort){ bestShort=short; best=i; }
+        }
+        seq[k]=MORPHS[best]; assigned[best]++;
+      }
+      return seq;
+    }
+    const MORPH_OF_BIRD=buildMorphAssignment(NAMES.length);
     const NECK_COLORS=[0x2e8f6e,0x2e8f6e,0x7a5fb0,0x3a9a7c,0x2e8f6e,0x6a55a8];
     /* iridescence endpoints: fully saturated emerald ⇄ violet — the
        previous muted pair mixed to a pale blue-grey at side views */
@@ -1559,15 +1601,58 @@
       const grad=g.createLinearGradient(185,0,256,0); grad.addColorStop(0,'rgba(30,31,36,0)'); grad.addColorStop(1,'rgba(30,31,36,.72)');
       g.fillStyle=grad; g.fillRect(185,0,71,256); // dark primary tips
     });
+    /* P1: wing pattern overlay, drawn in unit space so the same code
+       serves the 256px Lo canvas and the 1024-unit Hi authoring space
+       (u runs root 0 to tip 1 across the canvas width). The twin bars
+       sit at the same u positions the old code used (112/256 Lo,
+       448/1024 Hi). Fully deterministic: fixed patch layout, no random
+       placement, so a pattern reads identically on every load. */
+    function drawWingPattern(g, S, pattern){
+      const bars=style=>{ g.fillStyle=style; g.fillRect(0.4375*S,0,0.0898*S,S); g.fillRect(0.5859*S,0,0.0781*S,S); };
+      const patches=(style,scale,alpha)=>{
+        g.fillStyle=style; g.globalAlpha=alpha;
+        const cols=6, rows=5, cw=S/cols, ch=S/rows;
+        for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+          if((r+c)%2) continue;
+          const cx=(c+0.5)*cw+(r%2?cw*0.18:0), cy=(r+0.5)*ch;
+          if(cx>0.76*S) continue; // coverts only: the primary tips stay clean
+          g.beginPath(); g.ellipse(cx,cy,cw*0.44*scale,ch*0.42*scale,-0.5,0,Math.PI*2); g.fill();
+        }
+        g.globalAlpha=1;
+      };
+      if(pattern==='bar'){
+        bars('rgba(22,23,28,.94)');
+      } else if(pattern==='checker'){
+        patches('#16171c',1,0.5);
+        bars('rgba(22,23,28,.94)');
+      } else if(pattern==='tpattern'){
+        g.fillStyle='rgba(20,21,26,.28)'; g.fillRect(0,0,S,S);
+        patches('#101116',1.3,0.85);
+        bars('rgba(16,17,22,.96)');
+      } else if(pattern==='red'){
+        patches('#46231a',1,0.38);
+        bars('rgba(70,35,24,.92)');
+      } else if(pattern==='spread'){
+        g.fillStyle='rgba(15,16,20,.93)'; g.fillRect(0,0,S,S);
+        g.strokeStyle='rgba(210,210,215,.10)'; g.lineWidth=Math.max(1,S/512);
+        for(let i=0;i<28;i++){ g.beginPath(); g.moveTo(i*(S/24),S); g.lineTo(i*(S/24)+S*0.22,0); g.stroke(); }
+      } else if(pattern==='pied'){
+        bars('rgba(22,23,28,.9)');
+        g.fillStyle='rgba(246,245,238,.96)';
+        const blobs=[[0.16,0.24,0.15,0.20],[0.44,0.60,0.19,0.24],[0.63,0.28,0.12,0.16],[0.30,0.80,0.11,0.13],[0.80,0.58,0.14,0.18],[0.55,0.88,0.10,0.11]];
+        for(const b of blobs){ g.beginPath(); g.ellipse(b[0]*S,b[1]*S,b[2]*S,b[3]*S,0.4,0,Math.PI*2); g.fill(); }
+      } else if(pattern==='white'){
+        g.fillStyle='rgba(247,247,243,.88)'; g.fillRect(0,0,S,S);
+        bars('rgba(110,110,116,.35)');
+      }
+    }
     const wingCache={};
     function wingTextureFor(morph){
-      if(!morph.bars) return wingTexBase;
-      const key=MORPHS.indexOf(morph);
+      const key=morph.pattern;
       if(wingCache[key]) return wingCache[key];
       const t=featherTexture(g=>{
         g.drawImage(wingTexBase.image,0,0);
-        g.fillStyle='rgba(22,23,28,.94)';
-        g.fillRect(112,0,23,256); g.fillRect(150,0,20,256); // the twin wing bars
+        drawWingPattern(g,256,morph.pattern);
       });
       wingCache[key]=t;
       return t;
@@ -1603,13 +1688,11 @@
     const wingHiCache={};
     function wingTextureHiFor(morph){
       ensureHiTextures(); // the hi base must be a real canvas before the drawImage below
-      if(!morph.bars) return wingTexHiBase;
-      const key=MORPHS.indexOf(morph);
+      const key=morph.pattern;
       if(wingHiCache[key]) return wingHiCache[key];
       const t=featherTextureHi(g=>{
         g.drawImage(wingTexHiBase.image,0,0,1024,1024);
-        g.fillStyle='#101116'; // near-black bars: ΔL* well over 35 vs the wing
-        g.fillRect(448,0,92,1024); g.fillRect(600,0,80,1024);
+        drawWingPattern(g,1024,morph.pattern);
       });
       wingHiCache[key]=t;
       return t;
@@ -1792,7 +1875,7 @@
         wingHi:null, // lazy: wingTextureHiFor() builds a 2048px texture, as before only on first close LOD
         tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, roughness:0.95, side:THREE.DoubleSide}),
         tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide}),
-        rump:new THREE.MeshStandardMaterial({color:morph.bars?0xbfc2bd:bc, roughness:0.9}),
+        rump:new THREE.MeshStandardMaterial({color:(morph.rump===null||morph.rump===undefined)?bc:morph.rump, roughness:0.9}),
         fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide})
       };
       _morphMatCache[idx]=entry;
@@ -1811,7 +1894,7 @@
       const g=new THREE.Group();
       g.userData.pigeonIdx=pi; // tap-to-select raycast target
       const bodyG=new THREE.Group(); g.add(bodyG);
-      const morph=MORPHS[pi%MORPHS.length];
+      const morph=MORPH_OF_BIRD[pi%MORPH_OF_BIRD.length];
       const bc=morph.body;
       const mm=morphMatsFor(morph);
       const mat=mm.bodyLo;
@@ -1883,7 +1966,7 @@
       /* twin wing bars as thin raised geometry over the texture bars, so
          the bars read by silhouette/shading as well as by print (both the
          flying wing and the folded back panels carry them) */
-      if(morph.bars){
+      if(morph.barsGeo){
         const barMat=SHARED_BAR_MAT;
         const barGeos=[new THREE.BoxGeometry(0.036,0.0035,0.175), new THREE.BoxGeometry(0.031,0.0035,0.175)];
         for(const host of [wingL, wingR, foldL, foldR]){
@@ -1997,7 +2080,7 @@
       // each mesh to the shared Lo/Hi variant for this bird's morph —
       // same maps (bodyTex/bodyTexHi, wing lo/hi, tailTex/tailTexHi)
       // and same colours as the old per-bird mutation produced.
-      const morph=MORPHS[p.i%MORPHS.length];
+      const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
       const mm=morphMatsFor(morph);
       const bodyMat=on?mm.bodyHi:mm.bodyLo;
       const breastMat=on?mm.breastHi:mm.breastLo;
@@ -3886,7 +3969,7 @@
         const b=document.createElement('button');
         b.className='ritem'; b.type='button';
         b.innerHTML='<span class="sw"></span><span class="nm"></span><span class="st"></span><span class="ds"></span>';
-        b.querySelector('.sw').style.background='#'+new THREE.Color(BODY_COLORS[i%BODY_COLORS.length]).getHexString();
+        b.querySelector('.sw').style.background='#'+new THREE.Color(MORPH_OF_BIRD[i%MORPH_OF_BIRD.length].body).getHexString();
         b.querySelector('.nm').textContent=p.name;
         b.addEventListener('click', ()=>{ setFocus(i); toast(p.name+' を注目中 — '+actionVerb(p)); });
         list.appendChild(b);
@@ -3961,7 +4044,7 @@
       const p=focus();
       $('p-name').textContent=p.name+'（'+p.sex+'・'+Math.round(p.mass*1000)+' g）';
       $('p-state').textContent=(p.player?'操作中 ／ ':'')+(STATE_LABEL[p.state]||p.state);
-      $('swatch').style.background='#'+new THREE.Color(BODY_COLORS[p.i%BODY_COLORS.length]).getHexString();
+      $('swatch').style.background='#'+new THREE.Color(MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length].body).getHexString();
       const camDist=camera.position.distanceTo(p.pos);
       $('t-dist').textContent=camDist.toFixed(1)+' m';
       $('dist-chip').textContent='鳩まで '+camDist.toFixed(0)+' m';
@@ -4116,7 +4199,8 @@
             wind:+ENV.wind.toFixed(2), wet:+ENV.wet.toFixed(2), snowCover:+ENV.snowCover.toFixed(2), postRain:Math.round(ENV.postRain)},
           sun:{rise:fmtMin(SUN.rise), set:fmtMin(SUN.set)},
           counts, flockFlying,
-          focus:{index:focusIdx, name:fp.name, state:fp.state, action:actionVerb(fp),
+          morphs:{counts:(()=>{ const c={}; for(const m of MORPH_OF_BIRD) c[m.name]=(c[m.name]||0)+1; return c; })()},
+          focus:{index:focusIdx, name:fp.name, morph:MORPH_OF_BIRD[fp.i%MORPH_OF_BIRD.length].name, state:fp.state, action:actionVerb(fp),
             breeding_state:fp.breeding_state, dominance_ground:+fp.dominance_ground.toFixed(2),
             leadership_flight:+fp.leadership_flight.toFixed(2),
             pos:{x:+fp.pos.x.toFixed(1), y:+fp.pos.y.toFixed(1), z:+fp.pos.z.toFixed(1)},
