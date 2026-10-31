@@ -4016,8 +4016,9 @@
       });
 
       /* Viewpoint name: remember the last viewpoint button pressed.
-         Mode switches and flying off clear it, so the fallback below
-         (camera mode name) takes over. */
+         Mode switches clear it, so the fallback below
+         (camera mode name) takes over. Flying the flock does not
+         clear it: viewpoint and flight are reported together. */
       var lastViewpoint=null;
       function mark(id, name){
         var el=document.getElementById(id);
@@ -4029,12 +4030,12 @@
       mark('btn-closeup', '鳩に寄る');
       var segMode=document.getElementById('seg-mode');
       if(segMode) segMode.addEventListener('click', function(){ lastViewpoint=null; });
-      var flyBtn=document.getElementById('btn-fly');
-      if(flyBtn) flyBtn.addEventListener('click', function(){ lastViewpoint=null; });
 
       var MODE_NAMES={orbit:'観察カメラ', follow:'追跡カメラ', pov:'鳩視点', play:'操作モード'};
       function viewpointName(snap){
-        if(snap && snap.flockFlying) return '全羽飛行（群れ飛行中）';
+        var flying=snap && snap.flockFlying;
+        if(flying && lastViewpoint) return lastViewpoint+'＋全羽飛行（群れ飛行中）';
+        if(flying) return '全羽飛行（群れ飛行中）';
         if(lastViewpoint) return lastViewpoint;
         var mode=snap && snap.camera ? snap.camera.mode : null;
         if(mode && MODE_NAMES[mode]) return MODE_NAMES[mode];
