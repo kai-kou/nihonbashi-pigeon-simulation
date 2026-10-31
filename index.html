@@ -2547,6 +2547,52 @@
         bars('rgba(110,110,116,.35)');
       }
     }
+    /* P2 (Issue #20): far-LOD wing pattern — same layout as
+       drawWingPattern, posterised for distance: the twin bars keep
+       their centres (u 0.4824 / 0.6250) but widen 1.5x, bar alpha goes
+       to 1.0 (white stays ghosted at 0.53) and the patch alphas rise
+       (checker 0.75, tpattern 1.0, red 0.57) so the pattern still
+       reads when the bird is a few dozen pixels tall. Cell layout,
+       the spread wash/strokes and the pied blobs are unchanged. */
+    function drawWingPatternFar(g, S, pattern){
+      const bars=style=>{ g.fillStyle=style; g.fillRect(0.4150*S,0,0.1347*S,S); g.fillRect(0.5664*S,0,0.1172*S,S); };
+      const patches=(style,scale,alpha)=>{
+        g.fillStyle=style; g.globalAlpha=alpha;
+        const cols=6, rows=5, cw=S/cols, ch=S/rows;
+        for(let r=0;r<rows;r++) for(let c=0;c<cols;c++){
+          if((r+c)%2) continue;
+          const cx=(c+0.5)*cw+(r%2?cw*0.18:0), cy=(r+0.5)*ch;
+          if(cx>0.76*S) continue; // coverts only: the primary tips stay clean
+          g.beginPath(); g.ellipse(cx,cy,cw*0.44*scale,ch*0.42*scale,-0.5,0,Math.PI*2); g.fill();
+        }
+        g.globalAlpha=1;
+      };
+      if(pattern==='bar'){
+        bars('rgba(22,23,28,1)');
+      } else if(pattern==='checker'){
+        patches('#16171c',1,0.75);
+        bars('rgba(22,23,28,1)');
+      } else if(pattern==='tpattern'){
+        g.fillStyle='rgba(20,21,26,.28)'; g.fillRect(0,0,S,S);
+        patches('#101116',1.3,1.0);
+        bars('rgba(16,17,22,1)');
+      } else if(pattern==='red'){
+        patches('#46231a',1,0.57);
+        bars('rgba(70,35,24,1)');
+      } else if(pattern==='spread'){
+        g.fillStyle='rgba(15,16,20,.93)'; g.fillRect(0,0,S,S);
+        g.strokeStyle='rgba(210,210,215,.10)'; g.lineWidth=Math.max(1,S/512);
+        for(let i=0;i<28;i++){ g.beginPath(); g.moveTo(i*(S/24),S); g.lineTo(i*(S/24)+S*0.22,0); g.stroke(); }
+      } else if(pattern==='pied'){
+        bars('rgba(22,23,28,1)');
+        g.fillStyle='rgba(246,245,238,.96)';
+        const blobs=[[0.16,0.24,0.15,0.20],[0.44,0.60,0.19,0.24],[0.63,0.28,0.12,0.16],[0.30,0.80,0.11,0.13],[0.80,0.58,0.14,0.18],[0.55,0.88,0.10,0.11]];
+        for(const b of blobs){ g.beginPath(); g.ellipse(b[0]*S,b[1]*S,b[2]*S,b[3]*S,0.4,0,Math.PI*2); g.fill(); }
+      } else if(pattern==='white'){
+        g.fillStyle='rgba(247,247,243,.88)'; g.fillRect(0,0,S,S);
+        bars('rgba(110,110,116,.53)');
+      }
+    }
     const wingCache={};
     function wingTextureFor(morph){
       const key=morph.pattern;
@@ -2558,6 +2604,17 @@
       wingCache[key]=t;
       return t;
     }
+    const wingFarCache={};
+    function wingTextureFarFor(morph){
+      const key=morph.pattern;
+      if(wingFarCache[key]) return wingFarCache[key];
+      const t=featherTexture(g=>{
+        g.drawImage(wingTexBase.image,0,0);
+        drawWingPatternFar(g,256,morph.pattern);
+      });
+      wingFarCache[key]=t;
+      return t;
+    }
     const tailTex=featherTexture(g=>{
       g.fillStyle='#e9e9e6'; g.fillRect(0,0,256,256);
       // P4 (Issue #13): white outer tail edges, drawn under the shafts /
@@ -2566,6 +2623,17 @@
       g.strokeStyle='rgba(70,70,74,.3)'; g.lineWidth=2;
       for(let i=1;i<7;i++){ g.beginPath(); g.moveTo(i*36,256); g.lineTo(i*36,0); g.stroke(); } // feather shafts
       g.fillStyle='rgba(24,25,30,.92)'; g.fillRect(0,26,256,52); // subterminal band
+      g.fillStyle='rgba(245,245,242,.9)'; g.fillRect(0,0,256,12); // pale tip edge
+    });
+    /* P2 (Issue #20): far-LOD tail — identical to tailTex except the
+       subterminal band widens from 52 to 78 px toward the root (the
+       tip-side edge stays at y=26) so the band survives minification. */
+    const tailTexFar=featherTexture(g=>{
+      g.fillStyle='#e9e9e6'; g.fillRect(0,0,256,256);
+      g.fillStyle='rgba(248,248,244,.95)'; g.fillRect(0,0,14,256); g.fillRect(242,0,14,256);
+      g.strokeStyle='rgba(70,70,74,.3)'; g.lineWidth=2;
+      for(let i=1;i<7;i++){ g.beginPath(); g.moveTo(i*36,256); g.lineTo(i*36,0); g.stroke(); } // feather shafts
+      g.fillStyle='rgba(24,25,30,.92)'; g.fillRect(0,26,256,78); // subterminal band, widened for far LOD
       g.fillStyle='rgba(245,245,242,.9)'; g.fillRect(0,0,256,12); // pale tip edge
     });
     /* B6 (Issue #10): the 2048px close-LOD canvases are no longer drawn
@@ -2802,7 +2870,15 @@
         tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, bumpMap:tailTex, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         rump:new THREE.MeshStandardMaterial({color:(morph.rump===null||morph.rump===undefined)?bc:morph.rump, roughness:0.9}),
-        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide})
+        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        /* P2 (Issue #20): far-LOD materials — posterised wing/tail
+           textures and flat darkened head/neck/trunk so a distant
+           bird keeps its pattern and value structure. */
+        wingFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFarFor(morph), bumpMap:wingTextureFarFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexFar, bumpMap:tailTexFar, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        headFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62), roughness:0.9}),
+        neckFar:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.62), roughness:0.9}),
+        trunkFar:new THREE.MeshStandardMaterial({vertexColors:true, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02})
       };
       // C2 (Issue #16): pigeon Standard materials take envMapIntensity 0.3.
       // Set at creation so lazily built Hi-LOD materials are covered too
@@ -2821,6 +2897,77 @@
       }
       return entry.wingHi;
     }
+
+    /* ---- P2 (Issue #20): far-LOD merged geometry ----
+       At distance the body+breast+rump spheres, the neck+breastPatch
+       pair and the head collapse into one low-segment merged mesh
+       each (vertex colours carry the body/rump split on the trunk;
+       the neck material is flat, so its colours are unused). Segment
+       counts are far below the near geometry (body 20x15, neck 18x14,
+       head 14x11) — that is the triangle saving the far LOD exists
+       for. farLodCounts records (index-count or, when unindexed,
+       position-count)/3 per spec. */
+    const farLodCounts={trunkTris:0, neckTris:0, headTris:0};
+    function mergeFarParts(parts){
+      const geos=[]; let total=0;
+      for(const part of parts){
+        let geo=new THREE.SphereGeometry(part.radius, part.w, part.h);
+        geo.applyMatrix4(part.matrix);
+        geo=geo.toNonIndexed();
+        const n=geo.attributes.position.count;
+        const col=new Float32Array(n*3);
+        for(let i=0;i<n;i++){ col[i*3]=part.color.r; col[i*3+1]=part.color.g; col[i*3+2]=part.color.b; }
+        geo.setAttribute('color', new THREE.BufferAttribute(col,3));
+        geos.push(geo); total+=n;
+      }
+      const pos=new Float32Array(total*3), nor=new Float32Array(total*3),
+        uv=new Float32Array(total*2), colArr=new Float32Array(total*3);
+      let vo=0;
+      for(const geo of geos){
+        pos.set(geo.attributes.position.array, vo*3);
+        nor.set(geo.attributes.normal.array, vo*3);
+        uv.set(geo.attributes.uv.array, vo*2);
+        colArr.set(geo.attributes.color.array, vo*3);
+        vo+=geo.attributes.position.count;
+      }
+      const merged=new THREE.BufferGeometry();
+      merged.setAttribute('position', new THREE.BufferAttribute(pos,3));
+      merged.setAttribute('normal', new THREE.BufferAttribute(nor,3));
+      merged.setAttribute('uv', new THREE.BufferAttribute(uv,2));
+      merged.setAttribute('color', new THREE.BufferAttribute(colArr,3));
+      return merged;
+    }
+    const _farTrunkGeoCache=new Array(MORPHS.length).fill(null);
+    function farTrunkGeoFor(morph){
+      const idx=MORPHS.indexOf(morph);
+      if(_farTrunkGeoCache[idx]) return _farTrunkGeoCache[idx];
+      const mtx=(px,py,pz,sx,sy,sz)=>new THREE.Matrix4().compose(
+        new THREE.Vector3(px,py,pz), new THREE.Quaternion(), new THREE.Vector3(sx,sy,sz));
+      const geo=mergeFarParts([
+        {radius:0.16, w:13, h:10, matrix:new THREE.Matrix4().makeScale(1,0.86,1.38), color:new THREE.Color(morph.body)},
+        {radius:0.16, w:12, h:9, matrix:mtx(0,-0.012,0.075, 0.82,0.78,0.8), color:new THREE.Color(morph.body)},
+        {radius:0.105, w:10, h:7, matrix:mtx(0,0.018,-0.115, 0.92,0.72,0.9),
+          color:new THREE.Color((morph.rump===null||morph.rump===undefined)?morph.body:morph.rump)}
+      ]);
+      if(!farLodCounts.trunkTris) farLodCounts.trunkTris=(geo.index?geo.index.count:geo.attributes.position.count)/3;
+      _farTrunkGeoCache[idx]=geo;
+      return geo;
+    }
+    const farNeckGeo=(()=>{
+      const geo=mergeFarParts([
+        {radius:0.105, w:12, h:9, matrix:new THREE.Matrix4(), color:new THREE.Color(0xffffff)},
+        {radius:0.112, w:12, h:9, matrix:new THREE.Matrix4().compose(
+          new THREE.Vector3(0,-0.074,0.01), new THREE.Quaternion(), new THREE.Vector3(0.94,1.14,0.84)),
+          color:new THREE.Color(0xffffff)}
+      ]);
+      farLodCounts.neckTris=(geo.index?geo.index.count:geo.attributes.position.count)/3;
+      return geo;
+    })();
+    const farHeadGeo=(()=>{
+      const geo=new THREE.SphereGeometry(0.056, 11, 8);
+      farLodCounts.headTris=(geo.index?geo.index.count:geo.attributes.position.count)/3;
+      return geo;
+    })();
 
     function makePigeonMesh(pi){
       const g=new THREE.Group();
@@ -2912,12 +3059,13 @@
       /* twin wing bars as thin raised geometry over the texture bars, so
          the bars read by silhouette/shading as well as by print (both the
          flying wing and the folded back panels carry them) */
+      const barMeshes=[];
       if(morph.barsGeo){
         const barMat=SHARED_BAR_MAT;
         const barGeos=[new THREE.BoxGeometry(0.036,0.0035,0.175), new THREE.BoxGeometry(0.031,0.0035,0.175)];
         for(const host of [wingL, wingR, foldL, foldR]){
-          const b1=new THREE.Mesh(barGeos[0], barMat); b1.position.set(0.184,0.0035,0); host.add(b1);
-          const b2=new THREE.Mesh(barGeos[1], barMat); b2.position.set(0.246,0.0035,0); host.add(b2);
+          const b1=new THREE.Mesh(barGeos[0], barMat); b1.position.set(0.184,0.0035,0); host.add(b1); barMeshes.push(b1);
+          const b2=new THREE.Mesh(barGeos[1], barMat); b2.position.set(0.246,0.0035,0); host.add(b2); barMeshes.push(b2);
         }
       }
       /* scarlet legs + feet: pure vivid red with almost no green
@@ -3007,6 +3155,14 @@
           }
         }
       }
+      /* P2 (Issue #20): far-LOD merged meshes, hidden until
+         setFarLOD swaps them in for the multi-part near assembly. */
+      const farTrunk=new THREE.Mesh(farTrunkGeoFor(morph), mm.trunkFar);
+      farTrunk.castShadow=true; farTrunk.visible=false; bodyG.add(farTrunk);
+      const farNeck=new THREE.Mesh(farNeckGeo, mm.neckFar);
+      farNeck.position.set(0,0.04,0.12); farNeck.scale.set(1.0,1.18,1.0); farNeck.visible=false; bodyG.add(farNeck);
+      const farHead=new THREE.Mesh(farHeadGeo, mm.headFar);
+      farHead.castShadow=true; farHead.visible=false; headG.add(farHead);
       // "noticed!" marker, shown briefly when the bird spots food / danger
       const exclaim=new THREE.Sprite(new THREE.SpriteMaterial({map:exclaimTex, transparent:true, depthWrite:false}));
       exclaim.scale.setScalar(0.21); exclaim.position.set(0,0.34,0); exclaim.visible=false; g.add(exclaim);
@@ -3014,7 +3170,7 @@
       scene.add(g);
       return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
-        breastMesh:breast, headMesh:head,
+        breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat};
     }
     /* toggle the close-range LOD for one bird: geometry detail + hi-res
@@ -3050,6 +3206,32 @@
       if(m.tail) m.tail.material=tailMat;
       m.bodyMat=bodyMat; m.breastMat=breastMat; m.headMat=headMat; m.wingMat=wingMat; m.tailMat=tailMat;
     }
+    /* P2 (Issue #20): far LOD — swap the multi-part near assembly
+       (body/breast/rump, iridescent neck + breast patch, head + basic
+       head parts, raised wing bars) for the merged far meshes, and
+       the wing/tail materials for their posterised far variants.
+       underL/underR, tail visibility, closeHead/closeBody/tailFan
+       are owned by flight state / close LOD and are not touched. */
+    function setFarLOD(p, on){
+      if(p.farLOD===on) return;
+      p.farLOD=on;
+      const m=p.mesh;
+      m.farTrunk.visible=on; m.farNeck.visible=on; m.farHead.visible=on;
+      m.body.visible=!on; m.breastMesh.visible=!on; m.rump.visible=!on;
+      m.neck.visible=!on; m.breastPatch.visible=!on; m.headMesh.visible=!on;
+      for(const part of m.basicHeadParts) part.visible=on?false:!p.closeLOD;
+      for(const b of m.barMeshes) b.visible=!on;
+      const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
+      const mm=morphMatsFor(morph);
+      const wingMat=on?mm.wingFar:(p.closeLOD?morphWingHiMat(morph):mm.wingLo);
+      const tailMat=on?mm.tailFar:(p.closeLOD?mm.tailHi:mm.tailLo);
+      if(m.wingL) m.wingL.material=wingMat;
+      if(m.wingR) m.wingR.material=wingMat;
+      if(m.foldL) m.foldL.material=wingMat;
+      if(m.foldR) m.foldR.material=wingMat;
+      if(m.tail) m.tail.material=tailMat;
+      m.wingMat=wingMat; m.tailMat=tailMat;
+    }
     /* per-bird LOD check with ±10% hysteresis so the switch never flickers:
        enter at dist < 3.0 m or frame-height occupancy > 25%, leave at
        dist > 3.3 m and occupancy < 22.5% */
@@ -3060,6 +3242,11 @@
         const occ=(0.58/d)/(2*tanHalf); // bird height ≈ 0.36 m real × 1.6 display
         if(!p.closeLOD && (d<3.0 || occ>0.25)) setCloseLOD(p, true);
         else if(p.closeLOD && d>3.3 && occ<0.225) setCloseLOD(p, false);
+        /* P2 (Issue #20): far band with hysteresis — enter at
+           d >= 15.0 m, leave at d <= 13.5 m, never while close. */
+        if(!p.farLOD && !p.closeLOD && d>=15.0) setFarLOD(p, true);
+        else if(p.farLOD && d<=13.5) setFarLOD(p, false);
+        if(p.farLOD) p.mesh.farNeck.scale.copy(p.mesh.neck.scale); // follow courtship neck swell
       }
     }
 
@@ -3078,7 +3265,7 @@
         this.sex=(i%2===0)?'♂':'♀';
         this.breeding=(i%5<2);
         this.breeding_state=this.breeding; // bimodal daily rhythm applies only when true
-        this.closeLOD=false;
+        this.closeLOD=false; this.farLOD=false;
         this.flightSecToday=0; this.pecks=0; this.peckHits=0;
         this.sinceDrink=rand(60,400); this.checkFails=0;
         this.strategy=(i%9===8)?'wide':(i%3===0?'commuter':'local');
@@ -5439,7 +5626,7 @@
             breeding_state:fp.breeding_state, dominance_ground:+fp.dominance_ground.toFixed(2),
             leadership_flight:+fp.leadership_flight.toFixed(2),
             pos:{x:+fp.pos.x.toFixed(1), y:+fp.pos.y.toFixed(1), z:+fp.pos.z.toFixed(1)},
-            closeLOD:!!fp.closeLOD, pecks:fp.pecks, peckHits:fp.peckHits},
+            closeLOD:!!fp.closeLOD, dist:+camera.position.distanceTo(fp.pos).toFixed(1), pecks:fp.pecks, peckHits:fp.peckHits},
           feed:crumbCluster?{place:crumbCluster.site.name, noticed:crumbCluster.noticed,
             remainingMs:Math.max(0, Math.round(crumbCluster.until-performance.now()))}:null,
           windowLights:{opacity:+winLightMat.opacity.toFixed(3), visible:winLightMesh.visible},
@@ -5461,6 +5648,10 @@
           occlusion:{mode:occlMode, buildings:[...occl.set], opacity:+occl.opacity.toFixed(2)},
           flight:{ratio:+flockFlightRatio().toFixed(4), capDesign:FLIGHT_TIME_RATIO_CAP, capIsDesignValue:true},
           lod:{displayScale:DISPLAY_SCALE, closeActive:pigeons.filter(p=>p.closeLOD).map(p=>p.name),
+            farActive:pigeons.filter(p=>p.farLOD).map(p=>p.name),
+            farBand:{in:15.0, out:13.5},
+            farTris:{trunk:farLodCounts.trunkTris, neck:farLodCounts.neckTris, head:farLodCounts.headTris},
+            focusMeshes:(()=>{ let n=0; const walk=(o,vis)=>{ const v=vis&&o.visible; if(v&&o.isMesh) n++; for(const c of (o.children||[])) walk(c,v); }; if(fp.mesh&&fp.mesh.g) walk(fp.mesh.g,true); return n; })(),
             headbob:{holdRatio:HEADBOB.holdRatio, breakSpeed:HEADBOB.breakSpeed}},
           streetProps:{poles:streetPropCounts.poles, wireSegments:streetPropCounts.wires,
             vendingMachines:streetPropCounts.vending, manholes:streetPropCounts.manholes,
