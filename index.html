@@ -681,11 +681,28 @@
        Every tile keeps its corners plain wall so roofs can sample a flat
        texel (uv 0.03,0.03 within the building's own tile). */
     const FACADE_TILES={office:[0,0], commercial:[1,0], residential:[0,1], shop:[1,1]};
+    /* C1 (phase 2): alongside the diffuse atlas, makeFacadeAtlas fills
+       two auxiliary canvases in the same tile coordinate system — a
+       glass mask (white = glass) and a lit-window (emissive) canvas —
+       and derives a Sobel normal map and a roughness map from them.
+       The three derived textures are published here for buildCity(). */
+    let facadeNormalTex=null, facadeRoughTex=null, facadeEmissiveTex=null;
     function makeFacadeAtlas(){
       const S=512, cv=document.createElement('canvas'); cv.width=cv.height=1024;
       const g=cv.getContext('2d');
+      const maskCv=document.createElement('canvas'); maskCv.width=maskCv.height=1024;
+      const gm=maskCv.getContext('2d'); gm.fillStyle='#000'; gm.fillRect(0,0,1024,1024);
+      const emisCv=document.createElement('canvas'); emisCv.width=emisCv.height=1024;
+      const ge=emisCv.getContext('2d'); ge.fillStyle='#000'; ge.fillRect(0,0,1024,1024);
+      let curOX=0, curOY=0; // origin of the tile currently being drawn
+      // MR: record a glass rect in the mask. ER: record a lit-window rect
+      // in the emissive canvas at deterministic intensity v (0.55..1.0).
+      const MR=(x,yb,w,h)=>{ gm.fillStyle='#fff'; gm.fillRect(curOX+x, curOY+S-yb-h, w, h); };
+      const ER=(x,yb,w,h,v)=>{ const c=Math.round(255*clamp(v,0,1));
+        ge.fillStyle='rgb('+c+','+c+','+c+')'; ge.fillRect(curOX+x, curOY+S-yb-h, w, h); };
       function tile(type, draw){
         const t=FACADE_TILES[type], ox=t[0]*S, oy=(1-t[1])*S;
+        curOX=ox; curOY=oy;
         // R(x, yb, w, h, style): yb = height above the tile's street level
         const R=(x,yb,w,h,style)=>{ g.fillStyle=style; g.fillRect(ox+x, oy+S-yb-h, w, h); };
         draw(R);
@@ -700,8 +717,12 @@
       function pane(R,x,yb,w,h,seed){
         const lit=hash(seed)>0.84, sh=0.8+hash(seed*1.7)*0.45;
         R(x-2,yb-2,w+4,h+4,'#b9b6ae');
-        if(lit) R(x,yb,w,h,'#e9cd8d');
-        else R(x,yb,w,h,'rgb('+Math.round(46*sh)+','+Math.round(62*sh)+','+Math.round(74*sh)+')');
+        // C1: lit windows are plain glass in the diffuse atlas; the lit
+        // state is recorded only in the emissive canvas (and the glass
+        // rect in the mask), so daylight shows normal glass.
+        R(x,yb,w,h,'rgb('+Math.round(46*sh)+','+Math.round(62*sh)+','+Math.round(74*sh)+')');
+        MR(x,yb,w,h);
+        if(lit) ER(x,yb,w,h, 0.55+hash(seed*3.1)*0.45);
         R(x,yb+h-8,w,8,'rgba(255,255,255,.35)'); // sky reflection band
         R(x+w/2-1,yb,2,h,'rgba(40,40,44,.3)');   // mullion
         R(x,yb-5,w,5,'rgba(30,30,28,.16)');      // grime under sill
@@ -711,8 +732,9 @@
         for(let r=0;r<5;r++) for(let c=0;c<5;c++){ // glass curtain wall
           const x=34+c*92, yb=26+r*96, seed=r*13+c*7+3, sh=0.75+hash(seed)*0.6;
           R(x,yb,76,80,'rgb('+Math.round(88*sh)+','+Math.round(112*sh)+','+Math.round(128*sh)+')');
+          MR(x,yb,76,80); // curtain-wall glass
           R(x,yb+50,76,30,'rgba(255,255,255,.26)'); // reflected sky gradient
-          if(hash(seed*3)>0.86) R(x,yb,76,80,'#e9cd8d'); // lit office floor
+          if(hash(seed*3)>0.86) ER(x,yb,76,80, 0.55+hash(seed*3.7)*0.45); // lit office floor (emissive only)
         }
         for(let c=0;c<=5;c++) R(28+c*92,16,3,480,'rgba(80,84,86,.5)'); // mullions
         for(let r=0;r<=5;r++) R(24,22+r*96,464,3,'rgba(80,84,86,.45)');
@@ -725,6 +747,7 @@
         R(30,228,452,9,'rgba(60,55,48,.4)');
         for(let c=0;c<3;c++){ // storefront glass at street level
           R(44+c*150,56,118,156,'rgb(52,66,74)');
+          MR(44+c*150,56,118,156);
           R(44+c*150,176,118,36,'rgba(255,255,255,.3)');
           R(44+c*150,56,118,10,'rgba(20,20,20,.35)');
         }
@@ -749,9 +772,59 @@
         R(40,44,200,238,'#a9a49a'); // shutter storefront
         for(let yb=54; yb<276; yb+=9) R(40,yb,200,2,'rgba(60,58,54,.45)');
         R(272,44,200,238,'rgb(54,68,76)'); // open glass bay
+        MR(272,44,200,238);
         R(272,206,200,38,'rgba(255,255,255,.3)');
         R(258,44,10,238,'#8a8378'); R(36,282,440,8,'#8a8378');
       });
+      /* C1: derive the auxiliary maps from the finished atlas.
+         normalMap — Sobel over diffuse luminance, so window frames,
+         sashes, shutter slats and balconies gain relief. Strength is
+         moderate so normalScale 0.85 stays well-behaved.
+         roughnessMap — from the glass mask: glass is smooth (70),
+         everything else is rough wall (235). */
+      const W=1024;
+      const srcPx=g.getImageData(0,0,W,W).data;
+      const lum=new Float32Array(W*W);
+      for(let i=0;i<W*W;i++){ const o=i*4;
+        lum[i]=(srcPx[o]*0.299+srcPx[o+1]*0.587+srcPx[o+2]*0.114)/255; }
+      const nCv=document.createElement('canvas'); nCv.width=nCv.height=W;
+      const ng=nCv.getContext('2d'), nImg=ng.createImageData(W,W), nd=nImg.data;
+      const NSTR=2.0;
+      for(let y=0;y<W;y++){
+        const ym=((y+W-1)%W)*W, y0=y*W, yp=((y+1)%W)*W;
+        for(let x=0;x<W;x++){
+          const xm=(x+W-1)%W, xp=(x+1)%W;
+          const tl=lum[ym+xm], tc=lum[ym+x], tr=lum[ym+xp];
+          const ml=lum[y0+xm], mr=lum[y0+xp];
+          const bl=lum[yp+xm], bc=lum[yp+x], br=lum[yp+xp];
+          const dx=(tr+2*mr+br)-(tl+2*ml+bl);
+          const dy=(bl+2*bc+br)-(tl+2*tc+tr);
+          // canvas y runs downward while texture v (flipY) runs upward,
+          // so the v slope keeps the canvas Sobel sign
+          let nx=-dx*NSTR, ny=dy*NSTR, nz=1;
+          const il=1/Math.sqrt(nx*nx+ny*ny+nz*nz);
+          const o=(y0+x)*4;
+          nd[o]=(nx*il*0.5+0.5)*255; nd[o+1]=(ny*il*0.5+0.5)*255;
+          nd[o+2]=(nz*il*0.5+0.5)*255; nd[o+3]=255;
+        }
+      }
+      ng.putImageData(nImg,0,0);
+      const maskPx=gm.getImageData(0,0,W,W).data;
+      const rCv=document.createElement('canvas'); rCv.width=rCv.height=W;
+      const rg=rCv.getContext('2d'), rImg=rg.createImageData(W,W), rd=rImg.data;
+      for(let i=0;i<W*W;i++){
+        const v=maskPx[i*4]>127?70:235, o=i*4;
+        rd[o]=rd[o+1]=rd[o+2]=v; rd[o+3]=255;
+      }
+      rg.putImageData(rImg,0,0);
+      const nTex=new THREE.CanvasTexture(nCv); // linear data: no sRGB
+      nTex.wrapS=nTex.wrapT=THREE.RepeatWrapping; nTex.anisotropy=8;
+      const rTex=new THREE.CanvasTexture(rCv); // linear data: no sRGB
+      rTex.wrapS=rTex.wrapT=THREE.RepeatWrapping; rTex.anisotropy=8;
+      const eTex=new THREE.CanvasTexture(emisCv);
+      eTex.wrapS=eTex.wrapT=THREE.RepeatWrapping;
+      eTex.encoding=THREE.sRGBEncoding; eTex.anisotropy=8;
+      facadeNormalTex=nTex; facadeRoughTex=rTex; facadeEmissiveTex=eTex;
       const tex=new THREE.CanvasTexture(cv);
       tex.wrapS=tex.wrapT=THREE.RepeatWrapping;
       tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
@@ -779,6 +852,7 @@
       const pos64=new Float64Array(posI16.length);
       for(let i=0;i<posI16.length;i++) pos64[i]=posI16[i]/10;
       const col=new Float32Array(totalVerts*3), nor=new Float32Array(totalVerts*3), uv=new Float32Array(totalVerts*2);
+      const bld=new Float32Array(totalVerts); // C1: per-building seed attribute (aBld)
       const cTop=new THREE.Color(), cWall=new THREE.Color();
       let tileU=0, tileV=0; // facade-atlas tile of the building being emitted
       let geoStart=0; // running vertex offset, replaces pos.length/3
@@ -787,6 +861,8 @@
         const vStart=geoStart;
         const count=geoCounts[bi];
         geoStart+=count;
+        const seedB=hash(bi*7+3);
+        for(let t=0;t<count;t++) bld[vStart+t]=seedB;
         const h=B[bi][0]/10, flat=B[bi][2], n=flat.length/2;
         const pts=[];
         let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9, cx=0, cn=0;
@@ -876,11 +952,50 @@
       g.setAttribute('color', new THREE.Float32BufferAttribute(col,3));
       g.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3));
       g.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
-      const m=new THREE.MeshLambertMaterial({vertexColors:true, map:facadeTex});
+      g.setAttribute('aBld', new THREE.Float32BufferAttribute(bld,1));
+      /* C1: PBR facade material. One shared onBeforeCompile modulates
+         the stock MeshStandardMaterial per building via aBld:
+         - vertex: wall vertices (normal.y < 0.7) get their vUv.y
+           remapped inside the tile row, giving each building its own
+           floor height (roofs, whose uv is a flat texel, are excluded);
+         - fragment: a per-building brightness / warm-cool tint on the
+           diffuse, and a per-building gain on the emissive windows.
+         Both city materials share the function and a constant cache
+         key so they compile a single program. */
+      const facadeShaderMod=shader=>{
+        shader.vertexShader=('attribute float aBld;\nvarying float vBSeed;\n'+shader.vertexShader)
+          .replace('#include <uv_vertex>', `#include <uv_vertex>
+            vBSeed = aBld;
+            if(normal.y < 0.7){
+              float tileRow = floor(vUv.y * 2.0);
+              float fv = fract(vUv.y * 2.0);
+              float fScale = 0.86 + 0.30 * fract(vBSeed * 7.13);
+              float fOff = fract(vBSeed * 13.7) * 0.61;
+              vUv.y = (tileRow + fract(fv * fScale + fOff)) * 0.5;
+            }`);
+        shader.fragmentShader=('varying float vBSeed;\n'+shader.fragmentShader)
+          .replace('#include <map_fragment>', `#include <map_fragment>
+            float bs1 = fract(vBSeed * 7.13);
+            float bs2 = fract(vBSeed * 13.7);
+            diffuseColor.rgb *= (0.90 + 0.18 * bs1);
+            diffuseColor.rgb *= vec3(0.97 + 0.05 * bs2, 1.0, 1.03 - 0.05 * bs2);`)
+          .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
+            totalEmissiveRadiance *= (0.45 + 1.10 * fract(vBSeed * 29.3));`);
+      };
+      const facadeParams={vertexColors:true, map:facadeTex,
+        normalMap:facadeNormalTex, normalScale:new THREE.Vector2(0.85,0.85),
+        roughnessMap:facadeRoughTex, roughness:1.0, metalness:0.0,
+        emissive:0xffbe78, emissiveMap:facadeEmissiveTex, emissiveIntensity:0};
+      const m=new THREE.MeshStandardMaterial(facadeParams);
+      m.onBeforeCompile=facadeShaderMod;
+      m.customProgramCacheKey=()=>'facade-c1';
       cityMeshMat=m;
       // ghost material (index 1) is assigned per-building via geometry
       // groups when a building blocks the view of the watched pigeon
-      cityGhostMat=new THREE.MeshLambertMaterial({vertexColors:true, map:facadeTex, transparent:true, opacity:1, depthWrite:false});
+      cityGhostMat=new THREE.MeshStandardMaterial(Object.assign({}, facadeParams,
+        {transparent:true, opacity:1, depthWrite:false}));
+      cityGhostMat.onBeforeCompile=facadeShaderMod;
+      cityGhostMat.customProgramCacheKey=()=>'facade-c1';
       const mesh=new THREE.Mesh(g,[m, cityGhostMat]);
       g.clearGroups(); g.addGroup(0, totalVerts, 0);
       cityMeshRef=mesh;
@@ -3501,6 +3616,11 @@
       const darkF=clamp((0.08-sinEl)/0.22,0,1);
       winLightMat.opacity=darkF*0.95;
       winLightMesh.visible=darkF>0.03;
+      // C1: facade emissive windows have their own, slightly earlier
+      // ramp, independent of the winLight instanced planes above
+      const glowF=clamp((0.12-sinEl)/0.24,0,1);
+      if(cityMeshMat) cityMeshMat.emissiveIntensity=glowF*1.3;
+      if(cityGhostMat) cityGhostMat.emissiveIntensity=glowF*1.3;
     }
 
     /* ================= camera control ================= */
@@ -4312,6 +4432,10 @@
           feed:crumbCluster?{place:crumbCluster.site.name, noticed:crumbCluster.noticed,
             remainingMs:Math.max(0, Math.round(crumbCluster.until-performance.now()))}:null,
           windowLights:{opacity:+winLightMat.opacity.toFixed(3), visible:winLightMesh.visible},
+          facade:{normalMap:!!(cityMeshMat&&cityMeshMat.normalMap),
+            roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
+            emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
+            emissiveIntensity:cityMeshMat?+cityMeshMat.emissiveIntensity.toFixed(3):0},
           precip:{rainVisible:rainFx.pts.visible, rainOpacity:+rainFx.mat.opacity.toFixed(2),
             snowVisible:snowFx.pts.visible, snowOpacity:+snowFx.mat.opacity.toFixed(2)},
           occlusion:{mode:occlMode, buildings:[...occl.set], opacity:+occl.opacity.toFixed(2)},
