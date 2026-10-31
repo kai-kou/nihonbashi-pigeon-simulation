@@ -1,0 +1,356 @@
+<!doctype html>
+<html lang="ja">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <meta name="color-scheme" content="light dark" />
+    <link rel="icon" href="data:," />
+    <title>日本橋 鳩シミュレーション</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <script>
+<!-- @include scripts/webfont.js -->
+    </script>
+    <style>
+<!-- @include style.css -->
+    </style>
+  </head>
+  <body>
+    <div id="stage"></div>
+    <div id="violetwash"></div>
+    <div id="povframe"></div>
+
+    <div id="loader">
+      <div class="bird">日本橋の鳩たちを呼んでいます</div>
+      <div class="bar"><i id="loadbar"></i></div>
+      <p id="loadmsg">実測マップデータを読み込み中…</p>
+    </div>
+
+    <header class="panel" id="hud-top">
+      <h1>日本橋 鳩シミュレーション<small>NIPPONBASHI PIGEON SIM — 大阪・日本橋 / ドバト Columba livia domestica</small></h1>
+      <div id="clockrow">
+        <span id="clock">10:40</span>
+        <span class="chip"><span class="dot"></span><span id="phase-label">午前の採餌</span></span>
+        <span class="chip" id="flock-chip">群れ 24羽</span>
+        <button class="chip" id="chip-weather" title="季節・天候・気温・日の出入りを表示">☀ —℃</button>
+      </div>
+      <p id="factline"></p>
+    </header>
+
+    <div id="hud-tools">
+      <div class="toolbtns">
+        <button class="btn" id="btn-uv" title="鳩の第4の色覚（バイオレット帯）を疑似再現">紫外線視</button>
+        <button class="btn" id="btn-vision" title="鳩の視野マップを表示">視野マップ</button>
+        <button class="btn" id="btn-notes">研究ノート</button>
+      </div>
+      <div id="zoomctl">
+        <span class="chip" id="dist-chip" title="カメラから注目鳩までの距離">鳩まで — m</span>
+        <button class="btn" id="btn-zoom-in" title="注目鳩に近づく">＋ 寄る</button>
+        <button class="btn" id="btn-zoom-out" title="引いて全体を見る">－ 引く</button>
+        <button class="btn" id="btn-closeup" title="注目鳩のすぐそばへ移動">鳩に寄る</button>
+      </div>
+      <div class="toolbtns">
+        <button class="btn" id="btn-street" title="路面レベルへ移動し、電柱・自販機・マンホール・横断歩道・袖看板を見る">路面で見る</button>
+        <button class="btn" id="btn-river" title="道頓堀川の水面近くへ移動する">川面を見る</button>
+        <button class="btn" id="btn-expressway" title="阪神高速の半透明遮音壁を横から見る">高架の遮音壁</button>
+      </div>
+      <div id="occl-tools">
+        <button class="btn" id="btn-roster">鳩を選ぶ</button>
+        <select id="occl-sel" title="注目鳩が建物に隠れたときの対処">
+          <option value="on">透かし：常時オン</option>
+          <option value="auto" selected>透かし：自動</option>
+          <option value="off">透かし：オフ</option>
+        </select>
+        <select id="quality-sel" title="描画品質（High は DPR 上限 1.5、Ultra は 2.0）">
+          <option value="high" selected>画質 High</option>
+          <option value="ultra">画質 Ultra</option>
+        </select>
+        <select id="refl-sel" title="川面の平面反射（自動は Ultra でのみ有効、オフで常に無効）">
+          <option value="auto" selected>反射：自動</option>
+          <option value="on">反射：オン</option>
+          <option value="off">反射：オフ</option>
+        </select>
+      </div>
+    </div>
+
+    <div class="panel" id="occl-banner" role="status">
+      <span>建物に隠れています ― 建物を透かして表示中</span>
+      <button class="btn" id="btn-occl-restore">元の表示に戻す</button>
+      <button class="btn" id="btn-occl-avoid">カメラで回避</button>
+    </div>
+
+    <aside class="panel" id="wxpop" aria-live="polite">
+      <h2>季節と天候</h2>
+      <dl class="tgrid">
+        <dt>季節</dt><dd id="wx-season">—</dd>
+        <dt>天候</dt><dd id="wx-weather">—</dd>
+        <dt>気温</dt><dd id="wx-temp">—℃</dd>
+        <dt>日の出</dt><dd id="wx-rise">—</dd>
+        <dt>日の入り</dt><dd id="wx-set">—</dd>
+        <dt>風</dt><dd id="wx-wind">—</dd>
+        <dt>降水</dt><dd id="wx-precip">—</dd>
+      </dl>
+    </aside>
+
+    <aside class="panel" id="roster">
+      <div class="rhead">
+        <h2>鳩を選ぶ</h2>
+        <button class="btn" id="btn-omakase" title="面白い状態の個体を優先して選ぶ">おまかせで次の鳩へ</button>
+      </div>
+      <div class="filters" id="roster-filters">
+        <button data-f="all" class="on">すべて</button>
+        <button data-f="ground">地上</button>
+        <button data-f="perch">止まり</button>
+        <button data-f="fly">飛行</button>
+        <button data-f="eat">食事中</button>
+        <button data-f="roost">ねぐら</button>
+      </div>
+      <div id="roster-list"></div>
+    </aside>
+
+    <aside class="panel" id="feedstat" aria-live="polite">
+      <h2>餌への反応</h2>
+      <div class="place" id="feed-place">—</div>
+      <div class="counts">
+        <div class="cnt"><b id="feed-noticed">0</b><span>気づいた</span></div>
+        <div class="cnt"><b id="feed-coming">0</b><span>集合中</span></div>
+        <div class="cnt"><b id="feed-eating">0</b><span>ついばみ中</span></div>
+      </div>
+      <div id="feedbar"><i></i></div>
+      <p class="fmsg" id="feed-msg">発見役が周囲を呼び、群れが集まります。</p>
+    </aside>
+
+    <aside class="panel" id="telemetry">
+      <h2>注目個体 テレメトリ</h2>
+      <div class="who">
+        <span id="swatch"></span>
+        <div>
+          <div id="p-name">—</div>
+          <div id="p-state">—</div>
+        </div>
+      </div>
+      <dl class="tgrid">
+        <dt>カメラ距離</dt><dd id="t-dist">— m</dd>
+        <dt>速度</dt><dd id="t-speed">0 km/h</dd>
+        <dt>高度</dt><dd id="t-alt">0 m</dd>
+        <dt>羽ばたき</dt><dd id="t-flap">— Hz</dd>
+        <dt>首振り(歩行)</dt><dd id="t-bob">—</dd>
+        <dt>行動圏タイプ</dt><dd id="t-type">—</dd>
+        <dt>行動</dt><dd id="t-act">—</dd>
+        <dt>行き先</dt><dd id="t-dest">—</dd>
+        <dt>継続時間</dt><dd id="t-dur">—</dd>
+        <dt>推定理由</dt><dd id="t-why">—</dd>
+      </dl>
+      <div class="mini">
+        <button class="btn" id="btn-focus-prev">◀ 前の鳩</button>
+        <button class="btn" id="btn-focus-next">次の鳩 ▶</button>
+      </div>
+    </aside>
+
+    <div class="panel" id="vision">
+      <h2>鳩の視野（水平面）</h2>
+      <svg viewBox="0 0 180 150" width="100%" role="img" aria-label="鳩の視野図">
+        <circle cx="90" cy="78" r="58" fill="none" stroke="var(--line)" stroke-width="1"/>
+        <path d="M90 78 L38 30 A58 58 0 1 1 142 30 Z" fill="rgba(23,163,126,.28)"/>
+        <path d="M90 78 L74 24 A58 58 0 0 1 106 24 Z" fill="rgba(192,127,19,.45)"/>
+        <path d="M90 78 L132 122 A58 58 0 0 1 48 122 Z" fill="rgba(179,64,46,.3)"/>
+        <circle cx="90" cy="78" r="7" fill="var(--ink)"/>
+        <circle cx="76" cy="74" r="3.4" fill="var(--ink)"/><circle cx="104" cy="74" r="3.4" fill="var(--ink)"/>
+        <text x="90" y="14" text-anchor="middle" font-size="9" fill="var(--ink-2)">前方・両眼 約20°</text>
+        <text x="14" y="86" font-size="9" fill="var(--ink-2)">側方中心窩</text>
+        <text x="122" y="86" font-size="9" fill="var(--ink-2)">側方中心窩</text>
+        <text x="90" y="146" text-anchor="middle" font-size="9" fill="var(--ink-2)">後方盲域 約40°</text>
+      </svg>
+      <p>全視野は約320°。眼球は ±5° しか動かないため、注視＝頭の向き。前方下方には近距離専用の red field（ついばみ用、最適 約10 cm）がある。</p>
+    </div>
+
+    <div id="dock">
+      <div class="panel" id="playhint">操作中： <kbd>マウス移動 / ドラッグ</kbd> 旋回・昇降　<kbd>W</kbd> 羽ばたき上昇　<kbd>S</kbd> 滑空　<kbd>Space</kbd> 離着陸　<kbd>←→↑↓</kbd> でも旋回可</div>
+      <div class="dockrow">
+        <div class="seg" id="seg-mode" role="tablist" aria-label="カメラモード">
+          <button data-mode="orbit" class="on">観察<small>1羽を近くで見る</small></button>
+          <button data-mode="follow">追跡<small>群れ全体を追う</small></button>
+          <button data-mode="pov">鳩視点<small>鳩の目で見る</small></button>
+          <button data-mode="play">操作<small>自分で動かす</small></button>
+        </div>
+        <div class="seg" id="seg-time" aria-label="時間速度">
+          <button data-ts="0">停止</button>
+          <button data-ts="1">×1</button>
+          <button data-ts="2">×2</button>
+          <button data-ts="10">×10</button>
+          <button data-ts="60" class="on">×60</button>
+          <button data-ts="600">×600</button>
+        </div>
+      </div>
+      <div class="dockrow">
+        <div class="seg" id="seg-season" aria-label="季節">
+          <button data-season="auto" class="on">季節：自動</button>
+          <button data-season="spring">春</button>
+          <button data-season="summer">夏</button>
+          <button data-season="autumn">秋</button>
+          <button data-season="winter">冬</button>
+        </div>
+        <div class="seg" id="seg-weather" aria-label="天候">
+          <button data-weather="auto" class="on">天候：自動</button>
+          <button data-weather="clear">晴れ</button>
+          <button data-weather="cloudy">曇り</button>
+          <button data-weather="rain">雨</button>
+          <button data-weather="heavyrain">強雨</button>
+          <button data-weather="snow">雪</button>
+          <button data-weather="wind">強風</button>
+        </div>
+      </div>
+      <div class="dockrow">
+        <button class="btn" id="btn-feed">餌をまく</button>
+        <button class="btn" id="btn-fly">群れを飛ばす</button>
+        <button class="btn warn" id="btn-falcon">ハヤブサ襲来</button>
+        <button class="btn" id="btn-evening">夕方へスキップ</button>
+      </div>
+    </div>
+
+    <div id="touchui">
+      <div id="stick"><div id="stick-knob"></div></div>
+      <button class="tbtn" id="btn-flap">羽ばたく</button>
+      <button class="tbtn" id="btn-act">離着陸</button>
+    </div>
+
+    <div class="panel" id="toast"></div>
+
+    <button class="btn" id="perf-toggle" aria-expanded="false" aria-controls="perf-panel">計測</button>
+    <aside class="panel" id="perf-panel" aria-label="性能計測パネル">
+      <h2>性能計測</h2>
+      <button class="btn" id="perf-run">現在の視点で計測</button>
+      <p id="perf-status" role="status">未計測</p>
+      <p id="perf-view">視点: <b id="perf-view-name">—</b></p>
+      <div id="perf-results"></div>
+    </aside>
+
+    <div id="notes" aria-hidden="true">
+      <div class="scrim" id="notes-scrim"></div>
+      <div class="sheet">
+        <button class="btn" id="notes-close">閉じる</button>
+        <h2>研究ノート</h2>
+        <p class="src">鳩の生態・行動・感覚と地図データについて、査読論文・公的機関資料を中心に調査したディープリサーチ（2026-10-24）の要点。本シミュレーションの行動パラメータはこの知見に基づく。<span class="tag m">確立</span>査読論文・公的機関で複数確認／<span class="tag d">設計案</span>アプリ用に提案した補間値／<span class="tag u">未検証</span>一次資料で裏づけが取れなかった事項。</p>
+
+        <h3>飛行：速度と羽ばたき</h3>
+        <ul>
+          <li><span class="tag m">確立</span>巡航速度は概ね <b>8–16 m/s（29–58 km/h）</b>。風洞での最小出力速度は 8–9 m/s（Pennycuick 1968）。レース鳩の群れ飛行の平均は約15 m/s、群れ速度への妥協は最大 ±1.5 m/s（Goldilocks 原則、Sankey &amp; Portugal 2019）。</li>
+          <li><span class="tag m">確立</span>羽ばたき頻度は離陸初動 <b>約8.9 Hz</b> → 4拍目 7.7 Hz、巡航 約6.6 Hz、着陸接近で 7.8 Hz に再上昇し最終拍 6.8 Hz（Berg &amp; Biewener 2010）。本アプリの羽ばたき周波数はこの速度連動パターンで駆動している。</li>
+          <li><span class="tag u">未検証</span>一般向けサイトの最高速度 125–149 km/h 級の数字は査読一次資料で確認できなかったため、パラメータに採用していない。</li>
+        </ul>
+
+        <h3>群れ：クラスター型フロックと階層</h3>
+        <ul>
+          <li><span class="tag m">確立</span>鳩は V字編隊を作らず、近距離を保つ塊状フロックで飛ぶ。GPS 実験では方向転換の遅延（平均 約0.3秒）から決まる <b>リーダー階層</b> が検出され、上位個体ほど前方に位置する（Nagy, Ákos, Biro &amp; Vicsek 2010, <i>Nature</i> 464:890-893）。</li>
+          <li><span class="tag m">確立</span>旋回時は相対位置を保つ parallel-path と同一円をなぞる equal-radius が混合し、旋回半径が小さいほど equal-radius 的になる（Yomosa et al. 2015）。本アプリは「固定近傍への Boids 3規則＋階層ウェイト＋速度妥協」で近似している。</li>
+          <li><span class="tag m">確立</span>ハヤブサ型の捕食者に対しては、位置ではなく <b>進行方向から逃げる</b> ことで集団旋回が創発する（HoPE モデル、Papadopoulou et al. 2022）。開始個体が周縁で急旋回すると群れが分裂（split）しやすい。</li>
+        </ul>
+
+        <h3>地上行動：首振りと採餌</h3>
+        <ul>
+          <li><span class="tag m">確立</span>歩行時の首振り（head-bobbing）の実態は「前に出す thrust ＋ 空間に固定する hold」。hold が歩行時間の <b>約63%</b> を占め、駆動源は視覚（トレッドミルで視覚流が止まると消失する。Frost 1978；Davies &amp; Green 1988）。鳩視点カメラの歩行時映像がステップ状に安定するのはこの再現。</li>
+          <li><span class="tag m">確立</span>ついばみは前方下方 0.5 m 以内の近距離対象を red field で見て行う。群れ採餌では自ら餌を見つける producer と便乗する scrounger の役割が生じる（Giraldeau &amp; Lefebvre 1987）。「餌をまく」と近くの鳩が発見役となり、周囲が集まるのはこの再現。</li>
+          <li><span class="tag m">確立</span>水飲みはくちばしを浸したまま頭を上げずに連続吸引する（ハト科特有の二重吸引）。道頓堀川沿いで頭を下げ続ける個体はこれを再現している。</li>
+          <li><span class="tag m">確立</span>着陸時はまず近くの手すり・レッジに止まって安全を確かめる性質があり、<b>糞のある場所を安全と判断する</b>（大阪府「ドバトでお困りの方へ」）。本アプリの二段着陸と「いつもの止まり場」への集中はこの観察に基づく。</li>
+        </ul>
+
+        <h3>視覚：鳩視点の根拠</h3>
+        <ul>
+          <li><span class="tag m">確立</span>視野は後方盲域 約40° を除く <b>約320°</b>（文献幅 300–340°）、両眼重なりは前方 約20°。眼球運動は ±5° 程度しかなく、注視方向 ≒ 頭の向き（Kano et al. 2024）。</li>
+          <li><span class="tag m">確立</span>二重の注視系：側方の中心窩は遠方・動体用（同種・捕食者の検出感度は前方の約3倍）、前方下方の red field は近距離専用で視力ピークは 約10 cm。鳩は「前方では近視的、側方では遠視的」。</li>
+          <li><span class="tag m">確立</span>色覚は 4色型＋油滴フィルタ。短波長側は 約409 nm のバイオレット感受性まで伸びる（Bowmaker 1977／1997）。「紫外線視」はこのバイオレット帯を擬似色化した演出であり、5原色説は学術的に早計として採用していない。</li>
+          <li><span class="tag d">設計案</span>時間分解能（フリッカー融合）は条件依存で 38–143 Hz と幅が大きい。鳩には 60 fps の映像がちらついて見えうる、という演出上の注意として記録するに留め、本アプリは通常のリフレッシュレートで描画する。</li>
+        </ul>
+
+        <h3>一日のリズムと行動圏</h3>
+        <ul>
+          <li><span class="tag m">確立</span>昼行性。採餌ピークは午前遅く〜午後。朝夕の二峰性が明瞭なのは繁殖個体のみで、非繁殖個体は日中に休息（loafing）を挟む（Rose, Nagel &amp; Haag-Wackernagel 2006）。</li>
+          <li><span class="tag m">確立</span>飛行はねぐら・採餌場・水場の間の短距離移動が中心で、日中の大半は地上での採餌と休息に充てられる。本アプリでは定期飛行を「群れの一部が短距離を移るだけ」に抑え（残りは地上に留まる）、地上で座り込む休息も再現した。飛行中／地上／止まりの内訳は画面左上のチップで確認できる。</li>
+          <li><span class="tag m">確立</span>都市ドバトの行動圏はレース鳩と別物：バーゼルの GPS 研究（80羽）で <b>32%以上がねぐらから 0.3 km 以内</b>、最大 5.29 km、2 km 超は 7.5% のみ。本アプリのデフォルト行動圏は数百 m 級＋強い場所固着。</li>
+          <li><span class="tag m">確立</span>帰巣は太陽コンパス＋地磁気＋嗅覚マップ＋視覚ランドマークの多重冗長系。既知エリア内では視覚ランドマークが優位（Gagliardo 2013；Gagliardo &amp; Bingman 2024）。</li>
+          <li><span class="tag m">確立</span>繁殖：通常 2卵、抱卵 18日（雌雄交代）、巣内 25–32日、雌雄双方がピジョンミルクで給餌。求愛は bow-coo（そ嚢を膨らませ、尾羽を扇状に広げての旋回）が中核。</li>
+        </ul>
+
+        <h3>季節と気象のシミュレーション</h3>
+        <ul>
+          <li><span class="tag d">設計案</span>太陽位置は大阪の緯度 34.67°・経度 135.51° で、赤緯と時角の式に大気差（天頂角 90.833°）と均時差を入れて季節ごとに計算する。目安として夏至頃は日の出 4:45／日の入り 19:13、冬至頃は 7:02／16:51 となり、画面左上のチップ表示と一致する。鳩の一日スケジュール（起床・採餌・休息・帰還）はこの日の出/日没に連動し、光の色温度、影の向きと長さも太陽の高度・方位に従う。</li>
+          <li><span class="tag d">設計案</span>季節パラメータは大阪の気候平年値に基づく演出値：気温の目安は春 9–21℃、夏 25–34℃、秋 11–24℃、冬 1–10℃（日変化曲線＋天候補正）。街路樹は春＝新緑＋一部に淡い花色、夏＝濃緑、秋＝紅葉色、冬＝落葉（枝のみ）。</li>
+          <li><span class="tag d">設計案</span>鳩の季節行動：春〜夏は繁殖期として求愛 bow-coo の頻度を上げ（春 ×2.4、夏 ×1.9）、巣材の小枝をくわえて運ぶ行動が出る。夏は水飲み・水浴びを増やす。冬は羽を膨らませて丸く見せ（体メッシュを約1.14倍に膨張）、ねぐら滞在が延び、群れの凝集（フロックのスロット間隔 ×0.72）を強める。</li>
+          <li><span class="tag d">設計案</span>天候は晴れ・曇り・雨・強雨・雪・強風の6種＋自動遷移（季節で重み付け：雪は冬のみ、強雨は夏に多い）。見た目は雲量と霧、雨粒・降雪粒子、路面の濡れと水たまり、積雪による地面・路面の白色化、強風での街路樹の揺れ、曇天での影の消失で表現する。</li>
+          <li><span class="tag d">設計案</span>鳩の気象行動：雨では高架下・庇への避雨を優先し採餌を抑制、雨上がり約90分（シミュレーション時間）は水たまりでの水浴びが出やすくなる。強風では定期飛行の間隔を延ばし、飛行中は風下へ姿勢が流される。雪では地上採餌の範囲が縮小する。</li>
+          <li><span class="tag d">設計案</span>夕方以降の窓明かりは、建物の壁面に配置した暖色の発光窓が日没（太陽高度）に連動して点灯する形で実装した。街灯の常時点灯とあわせて、夜景の手がかりになる。</li>
+        </ul>
+
+        <h3>地図データと本アプリの構築方法</h3>
+        <ul>
+          <li>調査の推奨は <b>国土交通省 PLATEAU 大阪市（2022年度 v3）の LOD1</b> を glTF 化して Three.js で自己ホストする方式（実測高さ・出典表示のみのライセンス・建物単位の判定が可能）。日本橋は大阪市全域を覆う LOD1 に確実に含まれる。</li>
+          <li><span class="tag u">未検証</span>日本橋が LOD2（5.238 km²）の範囲に含まれるかは公開テキストから断定できなかった。</li>
+          <li>本アプリの街並みは、Web 静的配信での軽量さを優先し <b>OpenStreetMap の実データ</b>（2026-10-24 取得、日本橋周辺 約1.9 × 1.8 km）から構築した：建物 9,079 棟のフットプリントを押し出し、道路・阪神高速の高架・道頓堀川と東横堀川を描画している。建物高さの内訳は下表の通りで、推定分は演出として扱う。</li>
+        </ul>
+        <table class="ptable">
+          <tr><th>建物高さの出典</th><th>棟数</th><th>扱い</th></tr>
+          <tr><td>OSM height タグ（実測系）</td><td>4,706</td><td>そのまま採用</td></tr>
+          <tr><td>building:levels × 3.1 m</td><td>981</td><td>階数換算</td></tr>
+          <tr><td>フットプリント面積からの推定</td><td>3,392</td><td><span class="tag d">設計案</span>演出値</td></tr>
+        </table>
+        <ul>
+          <li>鳩の止まり場は建物屋上の縁＋阪神高速の高架下＋人工レッジ（ひさし帯）で代替している（PLATEAU LOD1 にも看板・ひさしの形状はない、という調査結果を受けた設計）。</li>
+          <li>視認性のため、鳩の描画サイズは実寸（体長 29–37 cm）の1.6倍に拡大している（旧版は一律2.4倍）。速度・高度・距離・接地とコリジョンは実寸スケールで計算する。観察カメラは注目個体を追って近距離を保ち、緑のリング＋名前タグ（2行目に現在の行動）で個体を示す。</li>
+          <li>建物の窓・階スラブ線と屋上構造物（塔屋・受水槽・室外機）、鳩の羽模様（翼の二本線、尾羽の暗帯、形態色バリエーション）は<span class="tag d">設計案</span>手続きテクスチャによる演出で、実在の個別建物・個体の外観そのものではない。餌やり時は、気づいた羽数・集合中・ついばみ中をパネルで集計表示する。</li>
+          <li>ファサードは用途別に4種（オフィスのガラスカーテンウォール／商業の看板帯と店舗ガラス／住宅のバルコニーと室外機／低層店舗のシャッターと庇）を使い分け、屋上広告塔、街灯、電柱と架線、自動販売機、マンホール、横断歩道、袖看板などの路上小物、阪神高速の桁帯と遮音壁、道頓堀川・東横堀川の流れテクスチャを追加した。いずれも実在の個別店舗・商標の再現ではなく、一般的な日本橋の街並みとしての<span class="tag d">設計案</span>手続き生成である。鳩の頸の構造色は視点角度で緑↔紫に振れるよう再現し、離着陸時は脚を下げ、着陸時は尾羽を扇状に広げる。</li>
+          <li>時間は加速表示（×60 で 1秒＝1分）。歩行のステップなど細部の観察用に ×1（実時間）・×2 の低速設定もある。日の出・日没に連動して群れはねぐら（高架下・ビルの隅）へ帰る。</li>
+        </ul>
+
+        <h3>路面レベルの判別性強化（2026-10-30、実ブラウザ検証の指摘反映）</h3>
+        <ul>
+          <li><span class="tag d">設計案</span>実ブラウザ検証で「角度・距離によっては判別できない」とされた9項目を強化した。電柱は太さ・本数を増やし架線を1px線分から実チューブ（サグ付き4本束）に変更、自動販売機はドリンク窓・価格帯・投币口・受取口を持つ発光フロント、自販機と分かる面構成にした。マンホールは ø1.1 m の蓋テクスチャ（縁リング＋「下水道」）＋縁石リングで大型化し、横断歩道はゼブラバーを拡大・高輝度化して停止線・中央線ダッシュ・進行方向矢印を追加した。</li>
+          <li><span class="tag d">設計案</span>高架の遮音壁は高さ約2.8 m の半透明パネル（不透明度0.30、青味）に鋼製支柱と上・中・下レール＋パネル継ぎ目を付け、デッキが透けて見える構成にした。袖看板は支持アーム付きの突出し形状に縦書きの業種文字（薬局・喫茶・電器店など商標でない一般名称）を両面に表示した。川面は流れの筋・白い反射・波紋の2層テクスチャを異なる速度で流し、水の流れが読めるようにした。右上の「路面で見る」「川面を見る」「高架の遮音壁」ボタンで各視点へ直接移動できる。</li>
+          <li><span class="tag d">設計案</span>鳩側は、首の構造色を彩度の高い緑⇔紫にし、横視点で飽和色が出るよう視点方位の正弦で振る方式に変更（従来は横視点で中間色に潰れた）。胸にも同素材の虹色パッチを広げた。脚は胴体中心高を 0.29→0.34 m に上げ、太く鮮やかな赤（緋色）の脚・足指にして、歩行時は歩幅に合わせて左右交互に踏み出す動きを付けたため、立って歩く・採餌する個体では赤い足が胴体の下に隠れない。</li>
+        </ul>
+
+        <h3>首と足の追加改善（2026-10-31、最終検証の残件2件への対応）</h3>
+        <ul>
+          <li><span class="tag d">設計案</span>首の虹色: 従来は素材色＋同色 emissive の単色を毎フレーム一様に変えていたため、1つの視点では首全体が平坦な単色パッチに見えた。首〜胸を覆う球を拡大し、緑⇔紫が首の周方向に2周期で巡るグラデーションテクスチャ（視点方位で回転）＋視空間法線とフレネルで面内に色が流れる加算シーンシェルに置き換えた。単一視点でも面内で緑と紫が分かれ、視点を動かすと帯が大きく入れ替わるため、通常の観察距離（2〜3 m）でも色変化が判別できる。</li>
+          <li><span class="tag d">設計案</span>赤い足: 脚色を緑成分のほぼ無い鮮やかな赤（#ea0d0d）に変え、脚の半径を約2倍、胴体中心高を 0.34 → 0.42 m に上げて脚を延長し、地面までの脚が体の下に隠れないようにした。歩行ステップは従来至近LODでは無効化されていて接写対象の脚が止まっていたため、LODによらず左右交互の振り（振幅 ±0.06、出す脚の持ち上げ付き）を駆動し、至近用の関節付き足指も連動させるよう直した。</li>
+        </ul>
+
+        <h3>低速設定の追加（2026-10-31）</h3>
+        <ul>
+          <li><span class="tag d">設計案</span>歩行ステップの観察検証で「速度を落とす手段が UI に無い」ことが制約として判明したため、時間速度に ×1（実時間）・×2 を追加した。従来は停止・×10・×60・×600 のみで、最低でも実時間の10倍速だった。低速では歩行の左右交互ステップや首振りの hold/thrust を実時間のテンポで観察できる。</li>
+        </ul>
+
+        <h3>ブラッシュアップ（2026-10-25、専門レビュー反映）</h3>
+        <ul>
+          <li><span class="tag d">設計案</span>至近LOD：カメラ距離 3.0 m 未満（または画面高占有率25%超）で、嘴・蝋膜の分離ジオメトリ、虹彩・瞳孔と眼環の隆起を持つ眼球、関節と爪のある脚趾（前3・後1）、12枚の尾羽の重なりへ切り替える（±10%ヒステリシス）。翼の二本線と尾の暗帯は高コントラスト（ΔL*≧35相当）のテクスチャと薄い帯状ジオメトリの二重表現とし、至近では2048px相当テクスチャ（頭・体／翼／尾に分割割当）＋異方性フィルタ最大16を使う。</li>
+          <li><span class="tag d">設計案</span>遮蔽対処：観察・追跡で注目鳩の視線を遮る建物だけを opacity 0.12 まで約300 ms でフェードし輪郭線を残す（視線周辺8 m  corridor 内の建物が対象）。常時オン／自動／オフの3択で既定は自動、カメラの横移動（最大12 m 相当）での回避も選べる。</li>
+          <li><span class="tag m">確立</span>活動の二峰性は繁殖個体（breeding_state）にのみ適用し、非繁殖個体は10–15時を頂点とする単峰プロファイルにした。首振りは hold_ratio=0.63 を主パラメータとして歩幅周期から導出し、歩行時のみ発動、0.81 m/s 超では安定化が崩れる。巡航速度は残り距離の関数（100 m 未満は峰値8–10 m/s、上限16 m/s）とし、羽ばたき周波数は速度・上昇・飛行相の連続関数＋間欠滑空にした。</li>
+          <li><span class="tag d">設計案</span>飛行時間の上限 flight_time_ratio_cap=0.02（日中の2%）は<b>本アプリの設計値</b>であり、実測値ではない。超過時は飛行間隔ではなく持続時間（区間数）を先に削る。画面・検証用スナップショット（window.__QA__）でも capIsDesignValue として区別する。</li>
+          <li><span class="tag m">確立</span>二段着陸の原則化：レッジ・手すり・庇・看板・屋上の縁など狭い目標は常に二段着陸とし、確認用の止まり場で頭部確認を1.5–4秒挟む。確認場所や目標が塞がっていたら着陸をキャンセルする。直接着陸は屋上面・広場のみ。序列は地上（dominance_ground）と飛行リーダーシップ（leadership_flight）を分離し、餌・水へのアクセスは地上序列順のキュー、低位個体は高位個体の0.3–0.5 m 以内で退く。水飲みは水場でのみ発動し、採餌バウト後と帰還直前に確率が上がる。ついばみの成功は餌セルの中だけに限定した。</li>
+          <li><span class="tag d">設計案</span>影は CSM の代わりに、注目鳩に追随する単一のタイトな影カメラ（2048px／±170 m）で第1カスケード相当の密度を確保した。画質 High で DPR 上限1.5（Ultra 2.0）、フレーム時間超過が続くとレンダースケールを段階的に下げる動的解像度を入れた。</li>
+        </ul>
+
+        <h3>出典（主要なもの）</h3>
+        <p class="src">
+          Pennycuick (1968) <i>J Exp Biol</i> 49:527 ／ Berg &amp; Biewener (2010) <i>J Exp Biol</i> 213:1651 ／ Nagy et al. (2010) <i>Nature</i> 464:890-893 — <a href="https://pubmed.ncbi.nlm.nih.gov/20376149/" target="_blank" rel="noopener">PubMed</a> ／ Yomosa et al. (2015) <i>PLoS ONE</i> 10:e0140558 ／ Sankey &amp; Portugal (2019) <i>Animal Behaviour</i> ／ Papadopoulou et al. (2022) <i>R Soc Open Sci</i> 9:211898 ／ Frost (1978) <i>J Exp Biol</i> ／ Davies &amp; Green (1988) <i>J Exp Biol</i> 138:71 ／ Kano et al. (2024) — <a href="https://pmc.ncbi.nlm.nih.gov/articles/PMC11392528/" target="_blank" rel="noopener">PMC</a> ／ Rose, Nagel &amp; Haag-Wackernagel (2006) <i>Behav Ecol Sociobiol</i> ／ Gagliardo (2013) <i>J Exp Biol</i> ／ Cornell Lab of Ornithology, Rock Pigeon Life History — <a href="https://www.allaboutbirds.org/guide/Rock_Pigeon/lifehistory" target="_blank" rel="noopener">allaboutbirds.org</a> ／ 大阪府「ドバトでお困りの方へ」 — <a href="https://www.pref.osaka.lg.jp/o120140/doubutu/yaseidoubutu/dobato.html" target="_blank" rel="noopener">pref.osaka.lg.jp</a> ／ 地図：© OpenStreetMap contributors（ODbL）— <a href="https://www.openstreetmap.org/copyright" target="_blank" rel="noopener">openstreetmap.org/copyright</a> ／ PLATEAU 大阪市（2022年度） — <a href="https://www.geospatial.jp/ckan/dataset/plateau-27100-osaka-shi-2022" target="_blank" rel="noopener">G空間情報センター</a>
+        </p>
+        <p class="src">操作方法：観察＝自動周回カメラ／追跡＝群れに追随／鳩視点＝注目個体の頭部カメラ（歩行時は hold/thrust のステップ安定化を再現）／操作＝注目個体を自分で飛ばす。群れが飛んでいる時に操作を始めると、群れはあなたをリーダーとして追随する。</p>
+      </div>
+    </div>
+
+<!-- @script-asset assets/three.min.js -->
+<!-- @script-asset assets/city.js -->
+    <script><!-- @include data/citygeo.js --></script>
+    <script>
+<!-- @include scripts/build-city.js -->
+    </script>
+    <script>
+<!-- @include scripts/pigeons.js -->
+    </script>
+    <script>
+<!-- @include scripts/simulation.js -->
+    </script>
+    <script>
+<!-- @include scripts/perf-panel.js -->
+    </script>
+  </body>
+</html>
