@@ -2822,15 +2822,20 @@
           violet by the view-space normal across the surface plus a
           fresnel rim — a gloss that varies *within* one frame, not
           only between frames. */
+    /* P8 (Issue #23): gold -> yellow-green stops inserted into the
+       green<->violet transition band of each cycle (0.16-0.30 and
+       0.66-0.80), so the sweep reads emerald -> teal -> gold ->
+       chartreuse -> violet, closer to a real feral pigeon's neck.
+       Every pre-existing stop (position and colour) is unchanged,
+       so the item-6 main transition and the fresnel sheen shell are
+       untouched; the stops live in the texture, so the per-frame
+       offset rotation and the P7 neckPhase ride on them as before. */
+    const P8_NECK_STOPS=[[0.00,'#00d95e'],[0.16,'#00c2a0'],[0.205,'#d9a514'],[0.25,'#9fc53a'],[0.30,'#7b2ff2'],[0.44,'#b04dff'],[0.52,'#00d95e'],[0.66,'#00c2a0'],[0.705,'#d9a514'],[0.75,'#9fc53a'],[0.80,'#7b2ff2'],[0.94,'#b04dff'],[1.00,'#00d95e']];
     const neckCanvas=(()=>{
       const cv=document.createElement('canvas'); cv.width=512; cv.height=256;
       const g=cv.getContext('2d');
       const grad=g.createLinearGradient(0,0,512,0);
-      grad.addColorStop(0.00,'#00d95e'); grad.addColorStop(0.16,'#00c2a0');
-      grad.addColorStop(0.30,'#7b2ff2'); grad.addColorStop(0.44,'#b04dff');
-      grad.addColorStop(0.52,'#00d95e'); grad.addColorStop(0.66,'#00c2a0');
-      grad.addColorStop(0.80,'#7b2ff2'); grad.addColorStop(0.94,'#b04dff');
-      grad.addColorStop(1.00,'#00d95e');
+      for(const s of P8_NECK_STOPS) grad.addColorStop(s[0], s[1]); // P8 (Issue #23)
       g.fillStyle=grad; g.fillRect(0,0,512,256);
       const vshade=g.createLinearGradient(0,0,0,256); // brighter crown, deeper throat base
       vshade.addColorStop(0,'rgba(255,255,255,.20)'); vshade.addColorStop(0.55,'rgba(0,0,0,0)');
@@ -2871,6 +2876,44 @@
         transparent:true, blending:THREE.AdditiveBlending, depthWrite:false
       });
     }
+    /* P8 (Issue #23): weak fresnel tint for the folded-wing coverts,
+       close LOD only. One shared ShaderMaterial (no per-bird
+       uniforms, nothing rewritten per frame) plus, per bird, two
+       shell meshes reusing the shared wingGeo -- no new textures and
+       no new geometry. The shells are children of the folded panels,
+       so they inherit the panels' transforms and their folded-only
+       visibility; the close-LOD gate itself is applied in
+       setCloseLOD, and setFarLOD forces the shells off, so the P2
+       far LOD never shows the tint. Peak alpha is 0.20 at grazing
+       angles and zero head-on -- deliberately far weaker than the
+       neck sheen -- mixing the same emerald<->violet pair. Being a
+       ShaderMaterial (not MeshStandardMaterial), it is not reached
+       by C2's tuneEnvIntensity traverse and carries no
+       envMapIntensity; being outside morphMatsFor, it leaves the P5
+       featherRough sharing and the P7 variant UV shift (which apply
+       to the wing materials themselves) untouched. */
+    const SHARED_COVERT_TINT_MAT=new THREE.ShaderMaterial({
+      uniforms:{ uA:{value:new THREE.Color(0x00c95c)}, uB:{value:new THREE.Color(0x8a3ffc)} },
+      vertexShader:[
+        'varying vec3 vN; varying vec3 vV;',
+        'void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0);',
+        ' vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);',
+        ' gl_Position=projectionMatrix*mv; }'
+      ].join('\n'),
+      fragmentShader:[
+        'uniform vec3 uA; uniform vec3 uB;',
+        'varying vec3 vN; varying vec3 vV;',
+        'void main(){',
+        ' vec3 N=normalize(vN); vec3 V=normalize(vV);',
+        ' float ndv=clamp(dot(N,V),0.0,1.0);',
+        ' float fres=pow(1.0-ndv,2.0);',
+        ' float t=clamp(0.5+(N.x*0.78+N.y*0.28)*0.95,0.0,1.0);',
+        ' vec3 col=mix(uA,uB,t);',
+        ' gl_FragColor=vec4(col, fres*0.20);',
+        '}'
+      ].join('\n'),
+      transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide
+    });
 
     /* ---- B3 (Issue #7): shared pigeon materials ----
        Previously every bird allocated its own copy of every material
@@ -3160,6 +3203,14 @@
       const foldR=new THREE.Mesh(wingGeo, wingMat);
       foldR.position.set(-0.028,0.108,0.045); foldR.rotation.y=-1.32; foldR.scale.set(-0.92,0.92,0.92);
       bodyG.add(foldR);
+      /* P8 (Issue #23): covert fresnel tint shells over the folded
+         panels (SHARED_COVERT_TINT_MAT above), 2.5 mm above the
+         panel surface and below the raised wing bars (3.5 mm).
+         Hidden until setCloseLOD turns them on. */
+      const covertTintL=new THREE.Mesh(wingGeo, SHARED_COVERT_TINT_MAT);
+      covertTintL.position.y=0.0025; covertTintL.castShadow=false; covertTintL.visible=false; foldL.add(covertTintL);
+      const covertTintR=new THREE.Mesh(wingGeo, SHARED_COVERT_TINT_MAT);
+      covertTintR.position.y=0.0025; covertTintR.castShadow=false; covertTintR.visible=false; foldR.add(covertTintR);
       const tailG=new THREE.Group(); tailG.position.set(0,0.008,-0.15); bodyG.add(tailG);
       const tailMat=mm.tailLo;
       const tail=new THREE.Mesh(tailGeo, tailMat);
@@ -3281,7 +3332,7 @@
       exclaim.scale.setScalar(0.21); exclaim.position.set(0,0.34,0); exclaim.visible=false; g.add(exclaim);
       g.scale.setScalar(DISPLAY_SCALE);
       scene.add(g);
-      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, underL, underR, body, twig,
+      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, covertTintL, covertTintR, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat,
@@ -3296,6 +3347,9 @@
       const m=p.mesh;
       m.closeHead.visible=on; m.closeBody.visible=on; m.tailFan.visible=on;
       m.tail.visible=!on;
+      /* P8 (Issue #23): covert tint shells follow the close LOD only. */
+      if(m.covertTintL) m.covertTintL.visible=on&&!p.farLOD;
+      if(m.covertTintR) m.covertTintR.visible=on&&!p.farLOD;
       for(const part of m.basicHeadParts) part.visible=!on;
       // basic feet yield to the jointed toes (per-frame leg logic honours p.closeLOD)
       // B3: materials are shared per morph, so do not mutate .map on the
@@ -3335,6 +3389,8 @@
       m.neck.visible=!on; m.breastPatch.visible=!on; m.headMesh.visible=!on;
       for(const part of m.basicHeadParts) part.visible=on?false:!p.closeLOD;
       for(const b of m.barMeshes) b.visible=!on;
+      /* P8 (Issue #23): the far LOD never shows the covert tint. */
+      if(on){ if(m.covertTintL) m.covertTintL.visible=false; if(m.covertTintR) m.covertTintR.visible=false; }
       const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
       const mm=morphMatsFor(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]);
       const wingMat=on?mm.wingFar:(p.closeLOD?morphWingHiMat(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]):mm.wingLo);
@@ -5800,6 +5856,10 @@
             neckClassCounts:(()=>{ const c={strong:0, weak:0, juvenile:0}; for(const ci of BIRD_NECK_CLASS){ const nm=NECK_CLASSES[ci].name; c[nm]=(c[nm]||0)+1; } return c; })(),
             focusVariant:BIRD_VARIANT[fp.i%BIRD_VARIANT.length],
             focusNeckClass:NECK_CLASSES[BIRD_NECK_CLASS[fp.i%BIRD_NECK_CLASS.length]].name},
+          /* P8 (Issue #23): neck gradient stops + covert tint state. */
+          p8:{neckStopOffsets:P8_NECK_STOPS.map(s=>s[0]), neckStopColors:P8_NECK_STOPS.map(s=>s[1]),
+            covertTintMat:!!SHARED_COVERT_TINT_MAT,
+            focusCovertTintVisible:!!(fp.mesh&&fp.mesh.covertTintL&&fp.mesh.covertTintL.visible&&fp.mesh.covertTintR&&fp.mesh.covertTintR.visible)},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -5954,6 +6014,12 @@
           +row('variation.neckClassCounts 強/弱/幼鳥', [vnc.strong,vnc.weak,vnc.juvenile].map(function(v){ return fmt(v); }).join(' / '))
           +row('variation.focusVariant', fmt(vr.focusVariant))
           +row('variation.focusNeckClass', fmt(vr.focusNeckClass))
+          +'</dl>';
+        var p8v=snap.p8||{};
+        html+='<h3>首虹色・雨覆（P8）</h3><dl class="tgrid">'
+          +row('p8.neckStopOffsets', (p8v.neckStopOffsets||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('p8.covertTintMat', fmt(p8v.covertTintMat))
+          +row('p8.focusCovertTintVisible', fmt(p8v.focusCovertTintVisible))
           +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
