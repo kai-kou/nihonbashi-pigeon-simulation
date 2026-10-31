@@ -668,6 +668,22 @@
     const buildingsAABB=[];   // {x0,x1,z0,z1,h}
     const buildingVertRanges=[]; // per-building vertex ranges in the merged city geometry (for occlusion fade)
     let cityMeshRef=null, cityGhostMat=null;
+    /* X1 (Issue #28): spatial chunking of the city geometry.
+       X1_CELL is the chunk cell size in metres (3x3 of the 80 m
+       aabbGrid cells); X1_FADE_RADIUS is the fade-candidate line
+       (see buildCity): a building whose AABB lies within this
+       distance of a pigeon activity anchor (FORAGE site, DRINK
+       point, or the CIRCUIT flight polyline) is a fade candidate
+       and is never chunked -- it stays in the legacy merged fade
+       mesh (cityMeshRef). cityFadeRecs holds one record per city
+       geometry (legacy fade mesh first, then one per chunk), each
+       {geo, list:[{bi, start, count}]} with chunk-local
+       per-building vertex ranges, so applyOcclGroups() can rebuild
+       the fade groups on every city geometry. x1State is read by
+       __QA__ / the measurement panel. */
+    const X1_CELL=240, X1_FADE_RADIUS=60;
+    const x1State={chunks:0, fadeBuildings:0, chunkedBuildings:0, fadeVerts:0, chunkVerts:0};
+    let cityFadeRecs=[];
     let waterTex=null, rippleTex=null;
     const streetPropCounts={poles:0, wires:0, vending:0, manholes:0, stripes:0, sleeveSigns:0};
     /* C3 (Issue #17) near-distance layer: placements recorded by
@@ -1047,12 +1063,96 @@
           ledgePoints.push({p:V3((a[0]+b[0])/2, Math.min(3.2,h-0.4), (a[1]+b[1])/2), popular:hash(bi*17)>0.7, kind:'ledge'});
         }
       }
-      const g=new THREE.BufferGeometry();
-      g.setAttribute('position', new THREE.Float32BufferAttribute(pos64,3));
-      g.setAttribute('color', new THREE.Float32BufferAttribute(col,3));
-      g.setAttribute('normal', new THREE.Float32BufferAttribute(nor,3));
-      g.setAttribute('uv', new THREE.Float32BufferAttribute(uv,2));
-      g.setAttribute('aBld', new THREE.Float32BufferAttribute(bld,1));
+      /* X1 (Issue #28): split the merged city geometry into the
+         legacy fade mesh plus spatial chunks. The attribute arrays
+         above (position / color / normal / uv / aBld) and
+         buildingVertRanges are still generated for all 9,079
+         buildings in CITYGEO order, exactly as before; the split
+         only copies per-building ranges out of those arrays, so
+         the union of the fade mesh and every chunk reproduces the
+         old merged geometry building by building (the equivalence
+         invariant for this unit, replacing the single-geometry
+         form used by earlier units).
+         Fade-candidate line (specified in the Issue #28 claim
+         before implementation): the occlusion fade only runs in
+         orbit / follow mode against the camera -> watched-bird
+         sight line (findOccludersFrom gathers buildings from an
+         8 m corridor around that line), so candidacy is defined
+         from the watched bird's activity anchors in this file --
+         a building is a fade candidate when its AABB rectangle is
+         within X1_FADE_RADIUS (60 m) of a FORAGE site centre
+         (plus that site's radius), a DRINK point, or any segment
+         of the closed CIRCUIT flight polyline. 60 m exceeds the
+         follow camera distance (~11 m), the default orbit radius
+         (30 m), the 8 m corridor half-width and the largest site
+         radius (16 m) combined, i.e. it encloses the buildings
+         that can fall into the near-camera corridor around the
+         anchors. Candidates stay in the legacy mesh below and
+         their fade path (geometry groups over buildingVertRanges)
+         is unchanged. As a second line of defence the chunk
+         geometries also keep per-building ranges and
+         applyOcclGroups() rebuilds groups on every city geometry,
+         so a building outside the line that nevertheless becomes
+         an occluder at runtime still fades on its own.
+         Non-candidate buildings are assigned to 240 m cells by
+         their AABB centre; positions stay in world coordinates,
+         so each chunk geometry's bounding sphere gives the
+         renderer an independent frustum-culling unit. */
+      const x1RectPt=(x0,x1,z0,z1,px,pz)=>{ const dx=Math.max(x0-px,0,px-x1), dz=Math.max(z0-pz,0,pz-z1); return Math.hypot(dx,dz); };
+      const x1PtSeg=(px,pz,ax,az,bx,bz)=>{ const vx=bx-ax, vz=bz-az, L2=vx*vx+vz*vz; let t=L2?((px-ax)*vx+(pz-az)*vz)/L2:0; t=t<0?0:(t>1?1:t); return Math.hypot(px-(ax+vx*t), pz-(az+vz*t)); };
+      const x1SegInt=(ax,az,bx,bz,cx,cz,dx,dz)=>{ const d1=(dx-cx)*(az-cz)-(dz-cz)*(ax-cx), d2=(dx-cx)*(bz-cz)-(dz-cz)*(bx-cx), d3=(bx-ax)*(cz-az)-(bz-az)*(cx-ax), d4=(bx-ax)*(dz-az)-(bz-az)*(dx-ax); return ((d1>0)!==(d2>0))&&((d3>0)!==(d4>0)); };
+      const x1RectSeg=(x0,x1,z0,z1,ax,az,bx,bz)=>{
+        if(x1RectPt(x0,x1,z0,z1,ax,az)===0||x1RectPt(x0,x1,z0,z1,bx,bz)===0) return 0;
+        const cs=[[x0,z0],[x1,z0],[x1,z1],[x0,z1]];
+        for(let e=0;e<4;e++){ const c=cs[e], d=cs[(e+1)%4]; if(x1SegInt(ax,az,bx,bz,c[0],c[1],d[0],d[1])) return 0; }
+        let m=Math.min(x1RectPt(x0,x1,z0,z1,ax,az), x1RectPt(x0,x1,z0,z1,bx,bz));
+        for(const c of cs) m=Math.min(m, x1PtSeg(c[0],c[1],ax,az,bx,bz));
+        return m;
+      };
+      const x1IsFadeCandidate=bi=>{
+        const bb=buildingsAABB[bi];
+        for(const f of FORAGE) if(x1RectPt(bb.x0,bb.x1,bb.z0,bb.z1,f.p.x,f.p.z)<=X1_FADE_RADIUS+f.r) return true;
+        for(const d of DRINK) if(x1RectPt(bb.x0,bb.x1,bb.z0,bb.z1,d.x,d.z)<=X1_FADE_RADIUS) return true;
+        for(let i=0;i<CIRCUIT.length;i++){ const a=CIRCUIT[i], b=CIRCUIT[(i+1)%CIRCUIT.length];
+          if(x1RectSeg(bb.x0,bb.x1,bb.z0,bb.z1,a.x,a.z,b.x,b.z)<=X1_FADE_RADIUS) return true; }
+        return false;
+      };
+      const x1SliceGeo=bis=>{
+        let tot=0; for(const bi of bis) tot+=buildingVertRanges[bi].count;
+        const sp=new Float64Array(tot*3), sc=new Float32Array(tot*3), sn=new Float32Array(tot*3), su=new Float32Array(tot*2), sb=new Float32Array(tot);
+        const list=[]; let cur=0;
+        for(const bi of bis){ const r=buildingVertRanges[bi];
+          sp.set(pos64.subarray(r.start*3,(r.start+r.count)*3), cur*3);
+          sc.set(col.subarray(r.start*3,(r.start+r.count)*3), cur*3);
+          sn.set(nor.subarray(r.start*3,(r.start+r.count)*3), cur*3);
+          su.set(uv.subarray(r.start*2,(r.start+r.count)*2), cur*2);
+          sb.set(bld.subarray(r.start,r.start+r.count), cur);
+          list.push({bi, start:cur, count:r.count}); cur+=r.count; }
+        const gg=new THREE.BufferGeometry();
+        gg.setAttribute('position', new THREE.Float32BufferAttribute(sp,3));
+        gg.setAttribute('color', new THREE.Float32BufferAttribute(sc,3));
+        gg.setAttribute('normal', new THREE.Float32BufferAttribute(sn,3));
+        gg.setAttribute('uv', new THREE.Float32BufferAttribute(su,2));
+        gg.setAttribute('aBld', new THREE.Float32BufferAttribute(sb,1));
+        gg.clearGroups(); gg.addGroup(0, tot, 0);
+        return {geo:gg, list};
+      };
+      const x1FadeBis=[], x1ChunkMap=new Map();
+      for(let bi=0; bi<B.length; bi++){
+        if(x1IsFadeCandidate(bi)){ x1FadeBis.push(bi); continue; }
+        const bb=buildingsAABB[bi];
+        const k=Math.floor((bb.x0+bb.x1)/2/X1_CELL)+','+Math.floor((bb.z0+bb.z1)/2/X1_CELL);
+        if(!x1ChunkMap.has(k)) x1ChunkMap.set(k,[]);
+        x1ChunkMap.get(k).push(bi);
+      }
+      const x1Fade=x1SliceGeo(x1FadeBis);
+      const x1Chunks=[]; for(const bis of x1ChunkMap.values()) x1Chunks.push(x1SliceGeo(bis));
+      x1State.chunks=x1Chunks.length;
+      x1State.fadeBuildings=x1FadeBis.length;
+      x1State.chunkedBuildings=B.length-x1FadeBis.length;
+      x1State.fadeVerts=x1Fade.geo.attributes.position.count;
+      let x1ChunkVerts=0; for(const rec of x1Chunks) x1ChunkVerts+=rec.geo.attributes.position.count;
+      x1State.chunkVerts=x1ChunkVerts;
       /* C1: PBR facade material. One shared onBeforeCompile modulates
          the stock MeshStandardMaterial per building via aBld:
          - vertex: wall vertices (normal.y < 0.7) get their vUv.y
@@ -1108,12 +1208,24 @@
         {transparent:true, opacity:1, depthWrite:false}));
       cityGhostMat.onBeforeCompile=facadeShaderMod;
       cityGhostMat.customProgramCacheKey=()=>'facade-c1';
-      const mesh=new THREE.Mesh(g,[m, cityGhostMat]);
-      g.clearGroups(); g.addGroup(0, totalVerts, 0);
+      const mesh=new THREE.Mesh(x1Fade.geo,[m, cityGhostMat]);
       cityMeshRef=mesh;
+      cityFadeRecs.push(x1Fade);
       c6Tag(mesh); // C6: buildings enter the planar reflection
       mesh.castShadow=false; mesh.receiveShadow=true;
       scene.add(mesh);
+      /* X1 (Issue #28): one mesh per spatial chunk, sharing the
+         same two materials as the fade mesh (no new program), the
+         same shadow flags (castShadow stays false -- the B5 shadow
+         gate is untouched) and a c6Tag each, so every chunk is in
+         the C6 reflection layer and frustum-culls independently. */
+      for(const rec of x1Chunks){
+        const cm=new THREE.Mesh(rec.geo,[m, cityGhostMat]);
+        cityFadeRecs.push(rec);
+        c6Tag(cm); // C6: chunked buildings also enter the reflection
+        cm.castShadow=false; cm.receiveShadow=true;
+        scene.add(cm);
+      }
       // ledge points were collected separately; merge them into the perch
       // pool so 'ledge' lookups (shelters, two-stage landings) actually hit
       for(const lp of ledgePoints) perchPoints.push(lp);
@@ -5486,19 +5598,30 @@
       return out;
     }
     function applyOcclGroups(){
-      const g=cityMeshRef.geometry, total=g.attributes.position.count;
-      g.clearGroups();
-      if(!occl.set.size){ g.addGroup(0, total, 0); }
-      else{
-        const sorted=[...occl.set].sort((x,y)=>buildingVertRanges[x].start-buildingVertRanges[y].start);
+      /* X1 (Issue #28): the fade groups are rebuilt on every city
+         geometry -- the legacy fade mesh (holding the
+         fade-candidate buildings) and each spatial chunk. Each
+         record's list carries that geometry's local per-building
+         ranges, so a building in occl.set receives material index
+         1 in exactly the one geometry that contains it, and every
+         geometry without an occluded building collapses to a
+         single material-0 group, as the pre-X1 single mesh did. */
+      for(const rec of cityFadeRecs){
+        const g=rec.geo, total=g.attributes.position.count;
+        g.clearGroups();
+        const hits=occl.set.size?rec.list.filter(r=>occl.set.has(r.bi)):[];
+        if(!hits.length){ g.addGroup(0, total, 0); continue; }
+        hits.sort((a,b)=>a.start-b.start);
         let cursor=0;
-        for(const bi of sorted){
-          const r=buildingVertRanges[bi];
+        for(const r of hits){
           if(r.start>cursor) g.addGroup(cursor, r.start-cursor, 0);
           g.addGroup(r.start, r.count, 1);
           cursor=r.start+r.count;
         }
         if(cursor<total) g.addGroup(cursor, total-cursor, 0);
+      }
+      if(occl.set.size){
+        const sorted=[...occl.set].sort((x,y)=>buildingVertRanges[x].start-buildingVertRanges[y].start);
         occlEdges.forEach((eg,i)=>{
           const bi=sorted[i];
           if(bi===undefined){ eg.visible=false; return; }
@@ -6444,6 +6567,12 @@
             threshold:C7_THRESHOLD, knee:C7_KNEE, bloomStrength:C7_BLOOM_STRENGTH,
             halfRes:{w:c7State.w, h:c7State.h}, renders:c7State.renders,
             aoBaseM:C7_AO_BASE_M, aoVia:'facade-shader', ssao:false},
+          /* X1 (Issue #28): city spatial chunking state. */
+          x1:{cellM:X1_CELL, fadeRadiusM:X1_FADE_RADIUS, chunks:x1State.chunks,
+            fadeBuildings:x1State.fadeBuildings, chunkedBuildings:x1State.chunkedBuildings,
+            fadeVerts:x1State.fadeVerts, chunkVerts:x1State.chunkVerts,
+            totalVerts:x1State.fadeVerts+x1State.chunkVerts,
+            cityGeometries:cityFadeRecs.length},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -6626,6 +6755,18 @@
           +row('p9.shellsPerBird', fmt(p9v.shellsPerBird))
           +row('p9.focusFringeVisible', fmt(p9v.focusFringeVisible))
           +row('p9.closeOnly', fmt(p9v.closeOnly))
+          +'</dl>';
+        var x1v=snap.x1||{};
+        html+='<h3>都市チャンク化（X1）</h3><dl class="tgrid">'
+          +row('x1.cellM', fmt(x1v.cellM))
+          +row('x1.fadeRadiusM', fmt(x1v.fadeRadiusM))
+          +row('x1.chunks', fmt(x1v.chunks))
+          +row('x1.fadeBuildings', fmt(x1v.fadeBuildings))
+          +row('x1.chunkedBuildings', fmt(x1v.chunkedBuildings))
+          +row('x1.fadeVerts', fmt(x1v.fadeVerts))
+          +row('x1.chunkVerts', fmt(x1v.chunkVerts))
+          +row('x1.totalVerts', fmt(x1v.totalVerts))
+          +row('x1.cityGeometries', fmt(x1v.cityGeometries))
           +'</dl>';
         var c6v=snap.c6||{};
         html+='<h3>川面反射（C6）</h3><dl class="tgrid">'
