@@ -631,6 +631,7 @@
     renderer.setSize(innerWidth, innerHeight);
     renderer.shadowMap.enabled=true;
     renderer.shadowMap.type=THREE.PCFSoftShadowMap;
+    renderer.shadowMap.autoUpdate=false; // B5: redraws are gated by the shadow update controller (needsUpdate)
     renderer.outputEncoding=THREE.sRGBEncoding;
     renderer.toneMapping=THREE.ACESFilmicToneMapping;
     renderer.toneMappingExposure=1.02;
@@ -3262,6 +3263,10 @@
     const SKY={ night:new THREE.Color(0x141e2a), dawn:new THREE.Color(0xd9a878), dusk:new THREE.Color(0xdd8f5e), gray:new THREE.Color(0x878e94) };
     const SUN_LOW=new THREE.Color(0xff9a4d), SUN_HIGH=new THREE.Color(0xfff3e2);
     const _skyC=new THREE.Color();
+    /* B5: the 10 m shadow-centre cell updateDaylight() picks each
+       frame, mirrored to module scope so the shadow update
+       controller can detect cell moves without recomputing focus. */
+    let shadowCellX=null, shadowCellZ=null;
     function updateDaylight(){
       const st=solarTimes(ENV.doy); SUN.rise=st.rise; SUN.set=st.set; SUN.decl=st.decl;
       const sa=sunPos(simMin, st.decl), sinEl=sa.sinEl;
@@ -3281,6 +3286,7 @@
       const R=640, ce=Math.cos(sa.el);
       const fpS=focus(); // shadow camera rides along with the watched bird
       const txS=Math.round(fpS.pos.x/10)*10, tzS=Math.round(fpS.pos.z/10)*10;
+      shadowCellX=txS; shadowCellZ=tzS;
       sun.target.position.set(txS, 0, tzS);
       sun.position.set(txS+Math.sin(sa.az)*ce*R, Math.max(sinEl,0.03)*R, tzS-Math.cos(sa.az)*ce*R);
       sun.intensity=(0.05+dayF*1.45)*(1-ENV.cloud*0.85);
@@ -3526,9 +3532,65 @@
     let renderScale=1, frameEMA=16, slowT=0, fastT=0;
     let fpsFrames=0, fpsTime=0, fpsValue=0;
     function dprCap(){ return qualityMode==='ultra'?2.0:1.5; }
+    /* ---- shadow-map throttling (B5) ----
+       shadowMap.autoUpdate is false, so the shadow map is redrawn
+       only on frames where updateShadowGate() sets
+       renderer.shadowMap.needsUpdate. The gate remembers the state
+       at the last redraw and fires when any trigger holds:
+       (a) the sun key — each sun.position component rounded to 2 m —
+           changed, (b) the 10 m shadow-centre cell moved,
+       (c) the frame cadence cap since the last redraw was reached
+           (timeScale<=2: 3 frames, <=10: 6, else 12),
+       (d) a discrete environment change: season / weather key, or
+           sun.castShadow flipping.
+       framesSince starts huge so the first frame always redraws. */
+    const shadowGate={
+      sunKey:null, cellX:null, cellZ:null,
+      envKey:null, cast:null,
+      framesSince:1e9,
+    };
+    function shadowCadenceCap(){
+      if(timeScale<=2) return 3;
+      if(timeScale<=10) return 6;
+      return 12;
+    }
+    function updateShadowGate(){
+      shadowGate.framesSince++;
+      const sunKey=Math.round(sun.position.x/2)+':'+Math.round(sun.position.y/2)+':'+Math.round(sun.position.z/2);
+      const envKey=seasonKey+'|'+weatherKey;
+      const cast=sun.castShadow;
+      const due=
+        shadowGate.framesSince>=shadowCadenceCap() ||
+        sunKey!==shadowGate.sunKey ||
+        shadowCellX!==shadowGate.cellX || shadowCellZ!==shadowGate.cellZ ||
+        envKey!==shadowGate.envKey || cast!==shadowGate.cast;
+      if(!due) return false;
+      renderer.shadowMap.needsUpdate=true;
+      shadowGate.sunKey=sunKey;
+      shadowGate.cellX=shadowCellX; shadowGate.cellZ=shadowCellZ;
+      shadowGate.envKey=envKey; shadowGate.cast=cast;
+      shadowGate.framesSince=0;
+      return true;
+    }
+    /* quality-linked shadow resolution: Ultra is always 2048; High
+       is 2048 except while dynamic resolution sits at its deepest
+       step (renderScale<=0.7), where it drops to 1024 and comes
+       back on recovery. */
+    function desiredShadowMapSize(){
+      if(qualityMode==='ultra') return 2048;
+      return renderScale<=0.7?1024:2048;
+    }
+    function applyShadowMapSize(){
+      const size=desiredShadowMapSize();
+      if(sun.shadow.mapSize.x===size) return;
+      sun.shadow.mapSize.set(size, size);
+      if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; }
+      shadowGate.framesSince=1e9; // force a redraw at the new size on the next frame
+    }
     function applyRenderScale(){
       renderer.setPixelRatio(Math.min(window.devicePixelRatio||1, dprCap())*renderScale);
       renderer.setSize(innerWidth, innerHeight);
+      applyShadowMapSize();
     }
     function updateDynamicResolution(dt){
       frameEMA=frameEMA*0.95+(dt*1000)*0.05;
@@ -3938,9 +4000,10 @@
     let firstFrames=0, lodT=0;
     /* frame / shadow-map counters (計測専用): framesRendered counts
        every completed renderer.render(); shadowUpdates counts the
-       frames in which the shadow map was (re)drawn — with the current
-       settings (shadowMap.enabled && shadowMap.autoUpdate, and
-       needsUpdate unused) that is every rendered frame. */
+       frames in which a shadow-map redraw was requested — with
+       shadowMap.autoUpdate=false that is only the frames where the
+       shadow update controller set needsUpdate (or every frame if
+       autoUpdate is ever turned back on). */
     let framesRendered=0, shadowUpdates=0;
     /* bench collectors (計測専用): while a bench is active, animate()
        feeds it one sample per rendered frame after the render; it
@@ -4000,9 +4063,10 @@
       updateRosterTick(dt);
       updateTelemetry(dt);
       updateDynamicResolution(dt);
+      const shadowRequested=updateShadowGate();
       renderer.render(scene, camera);
       framesRendered++;
-      if(renderer.shadowMap.enabled && renderer.shadowMap.autoUpdate) shadowUpdates++;
+      if(renderer.shadowMap.enabled && (renderer.shadowMap.autoUpdate || shadowRequested)) shadowUpdates++;
       if(__boot.firstFrame===null) __boot.firstFrame=performance.now();
       collectBenchSamples();
       if(firstFrames<3){ firstFrames++; if(firstFrames===3){ setLoad(1,'準備完了'); setTimeout(()=>{ document.getElementById('loader').style.display='none'; if(__boot.interactive===null) __boot.interactive=performance.now(); }, 250); } }
@@ -4053,7 +4117,7 @@
             vendingMachines:streetPropCounts.vending, manholes:streetPropCounts.manholes,
             markingStripes:streetPropCounts.stripes, sleeveSigns:streetPropCounts.sleeveSigns,
             bodyY:BODY_Y},
-          shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:2048, extentM:170,
+          shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
             dprCap:dprCap(), renderScale:+renderScale.toFixed(2), frameMs:+frameEMA.toFixed(1)},
