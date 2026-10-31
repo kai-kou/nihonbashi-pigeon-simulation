@@ -28,8 +28,14 @@ A 3D simulation of 24 rock pigeons living autonomously on a real-data map of Nip
 - **イベント**: 餌まき、ハヤブサの襲撃（集団逃避モデル）、夕方へのスキップなど。
 - **時間速度**: 停止・×1・×2・×10・×60・×600。路面視点・川面視点・高架の遮音壁へのビューポイントボタン付き。
 
+## 開発（ソースとビルド）
+
+- 編集するソースは `src/` に分割して置き（正本）、ルートの `index.html` は `python3 tools/build.py build` で生成する生成物です。`index.html` を直接編集しないでください。
+- ビルドの検証（再生成の決定論と生成物の一致確認）は `python3 tools/build.py verify` で行います。アーティファクト側の作業コピーとの同期手順も含め、詳細は [開発手順: ソース分割とビルド](docs/build.md) を参照してください。
+
 ## ドキュメント
 
+- [開発手順: ソース分割とビルド](docs/build.md) — 正本の所在、ビルドと検証、アーティファクト側との同期手順
 - [コンセプトとモチベーション](docs/concept.md) — なぜ作ったか、何を大切にしたか
 - [開発の経緯](docs/development-history.md) — 2026-10-24 の初版から OSS 公開までの記録
 - [改善の記録](docs/improvement-log.md) — 改善項目ごとの内容と検証結果（未確認のまま閉じた項目も含む）
