@@ -9,6 +9,16 @@ A 3D simulation of 24 rock pigeons living autonomously on a real-data map of Nip
 - 公開ページ（Muse 上でホストされている現行ビルド）: https://muse.ai/s/space-xdc6mv97xuxd4xr/nr2bYkPKLhiTqrmyrvWZurI5aNg5RuHng7chD1OaA4k
 - このリポジトリの `index.html` は単一ファイル版です。ローカルでは任意の静的サーバーで配信してください（例: `python3 -m http.server` でこのフォルダを開き、`http://localhost:8000/` へアクセス）。
 
+## スクリーンショット
+
+クラウド環境のブラウザ（GPU なし・ソフトウェア WebGL、1440x810）で撮影したものです。実機の GPU では描画の見え方や速度が異なる場合があります。
+
+![追跡モード。注目個体のタグが付き、街並みを見下ろす](docs/screenshots/follow-mode.png)
+
+![鳩視点＋紫外線視。左下に視野図が出る](docs/screenshots/pigeon-view-uv.png)
+
+![研究ノート。各数値に確立・設計案・未検証のタグが付く](docs/screenshots/research-notes.png)
+
 ## 特徴
 
 - **実データの街**: OpenStreetMap の実データから構築した日本橋エリア（建物 9,079 棟、堺筋・千日前通・御堂筋などの道路名、阪神高速の高架、道頓堀川・東横堀川）。建物は用途別にファサードを描き分け（オフィス／商業／住宅／低層店舗）、屋上設備、街路樹、電柱・架線、自販機、マンホール、横断歩道、袖看板、半透明の遮音壁まで配置。
