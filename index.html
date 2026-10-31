@@ -1061,11 +1061,19 @@
          - fragment: a per-building brightness / warm-cool tint on the
            diffuse, and a per-building gain on the emissive windows.
          Both city materials share the function and a constant cache
-         key so they compile a single program. */
+         key so they compile a single program.
+         C7 (Issue #26): the same modulation also darkens the building
+         base with an AO-like gradient driven by the vertex height
+         (position.y, 0-4.5 m). The issue text assigns this to vertex
+         colours, but the merged geometry's colour array is a verified
+         invariant of the CITYGEO equivalence checks in earlier units;
+         doing it here keeps the visual result while leaving CITYGEO,
+         the colour array, the vertex count, uv and aBld untouched. */
       const facadeShaderMod=shader=>{
-        shader.vertexShader=('attribute float aBld;\nvarying float vBSeed;\n'+shader.vertexShader)
+        shader.vertexShader=('attribute float aBld;\nvarying float vBSeed;\nvarying float vC7BaseY;\n'+shader.vertexShader)
           .replace('#include <uv_vertex>', `#include <uv_vertex>
             vBSeed = aBld;
+            vC7BaseY = position.y;
             if(normal.y < 0.7){
               float tileRow = floor(vUv.y * 2.0);
               float fv = fract(vUv.y * 2.0);
@@ -1073,12 +1081,16 @@
               float fOff = fract(vBSeed * 13.7) * 0.61;
               vUv.y = (tileRow + fract(fv * fScale + fOff)) * 0.5;
             }`);
-        shader.fragmentShader=('varying float vBSeed;\n'+shader.fragmentShader)
+        shader.fragmentShader=('varying float vBSeed;\nvarying float vC7BaseY;\n'+shader.fragmentShader)
           .replace('#include <map_fragment>', `#include <map_fragment>
             float bs1 = fract(vBSeed * 7.13);
             float bs2 = fract(vBSeed * 13.7);
             diffuseColor.rgb *= (0.90 + 0.18 * bs1);
-            diffuseColor.rgb *= vec3(0.97 + 0.05 * bs2, 1.0, 1.03 - 0.05 * bs2);`)
+            diffuseColor.rgb *= vec3(0.97 + 0.05 * bs2, 1.0, 1.03 - 0.05 * bs2);
+            /* C7 (Issue #26): AO-like base gradient, 0.72 at ground
+               level rising to 1.0 at 4.5 m (shader-side; the vertex
+               colour array is not modified). */
+            diffuseColor.rgb *= mix(0.72, 1.0, smoothstep(0.0, 4.5, vC7BaseY));`)
           .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
             totalEmissiveRadiance *= (0.45 + 1.10 * fract(vBSeed * 29.3));`);
       };
@@ -5236,6 +5248,7 @@
       // C1: facade emissive windows have their own, slightly earlier
       // ramp, independent of the winLight instanced planes above
       const glowF=clamp((0.12-sinEl)/0.24,0,1);
+      c7GlowF=glowF; // C7 (Issue #26): dusk/night gate for the post pass
       if(cityMeshMat) cityMeshMat.emissiveIntensity=glowF*1.3;
       if(cityGhostMat) cityGhostMat.emissiveIntensity=glowF*1.3;
     }
@@ -5590,6 +5603,161 @@
       renderer.render(scene, c6VirtualCamera);
       renderer.setRenderTarget(prevTarget);
       c6State.renders++;
+    }
+    /* ---- C7 (Issue #26): post process, Ultra only, half resolution ----
+       Hand-rolled on three r128 core only (no EffectComposer /
+       UnrealBloomPass in this build). The pass runs only while the
+       quality is Ultra AND the C1 lit-window ramp glowF is up
+       (> 0.02), i.e. dusk to night; in every other state
+       renderPostC7() returns before touching any target, so the
+       default (non-Ultra) path is byte-for-byte the pre-C7 render.
+       Pipeline, all at half the drawing-buffer resolution:
+       (1) the scene is re-rendered into c7SrcRT, (2) a bright pass
+       keeps only pixels whose luminance clears the 0.72 threshold
+       (soft knee 0.25) -- at dusk/night those are the emissive
+       parts: C1 lit windows (emissiveIntensity up to 1.3), the
+       window-light planes and street lights, (3) two horizontal /
+       vertical gaussian round trips blur the extraction, and
+       (4) the result is additively composited over the main image,
+       preceded by a grading pass (multiply blending: a slight warm
+       shift plus vignette, both proportional to glowF). The main
+       render itself still goes straight to the canvas (MSAA and
+       draw order unchanged); the C6 reflection render and the B5
+       shadow gate both run before it and are not touched -- the
+       shadow map the post re-render consumes is the one the main
+       render already updated. renderer.info is preserved across
+       the post passes (autoReset off, main-pass calls / triangles
+       restored) so the bench keeps describing the main pass.
+       No SSAO (explicitly out of scope for this unit). */
+    const C7_THRESHOLD=0.72, C7_KNEE=0.25, C7_BLOOM_STRENGTH=0.85, C7_AO_BASE_M=4.5;
+    let c7GlowF=0; // written by updateDaylight() alongside emissiveIntensity
+    function c7MakeRT(){
+      const rt=new THREE.WebGLRenderTarget(2, 2,
+        {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat});
+      return rt;
+    }
+    const c7SrcRT=c7MakeRT(); c7SrcRT.depthBuffer=true; c7SrcRT.texture.encoding=THREE.sRGBEncoding;
+    const c7BrightRT=c7MakeRT(), c7BlurRT=c7MakeRT();
+    const C7_QUAD_VS='varying vec2 vUv;\nvoid main(){ vUv=uv; gl_Position=vec4(position.xy, 0.0, 1.0); }';
+    const c7BrightMat=new THREE.ShaderMaterial({
+      uniforms:{tDiffuse:{value:null}, uThreshold:{value:C7_THRESHOLD}, uKnee:{value:C7_KNEE}},
+      vertexShader:C7_QUAD_VS,
+      fragmentShader:[
+        'uniform sampler2D tDiffuse; uniform float uThreshold; uniform float uKnee;',
+        'varying vec2 vUv;',
+        'void main(){',
+        '  vec3 c=texture2D(tDiffuse, vUv).rgb;',
+        '  float lum=dot(c, vec3(0.2126, 0.7152, 0.0722));',
+        '  float w=smoothstep(uThreshold, uThreshold+uKnee, lum);',
+        '  gl_FragColor=vec4(c*w, 1.0);',
+        '}',
+      ].join('\n'),
+      depthTest:false, depthWrite:false});
+    const c7BlurMat=new THREE.ShaderMaterial({
+      uniforms:{tDiffuse:{value:null}, uDir:{value:new THREE.Vector2(0,0)}},
+      vertexShader:C7_QUAD_VS,
+      fragmentShader:[
+        'uniform sampler2D tDiffuse; uniform vec2 uDir;',
+        'varying vec2 vUv;',
+        'void main(){',
+        '  vec3 s=texture2D(tDiffuse, vUv).rgb*0.227027;',
+        '  s+=texture2D(tDiffuse, vUv+uDir*1.3846).rgb*0.3162162;',
+        '  s+=texture2D(tDiffuse, vUv-uDir*1.3846).rgb*0.3162162;',
+        '  s+=texture2D(tDiffuse, vUv+uDir*3.2308).rgb*0.0702703;',
+        '  s+=texture2D(tDiffuse, vUv-uDir*3.2308).rgb*0.0702703;',
+        '  gl_FragColor=vec4(s, 1.0);',
+        '}',
+      ].join('\n'),
+      depthTest:false, depthWrite:false});
+    const c7GradeMat=new THREE.ShaderMaterial({
+      uniforms:{uGrade:{value:0}},
+      vertexShader:C7_QUAD_VS,
+      fragmentShader:[
+        'uniform float uGrade;',
+        'varying vec2 vUv;',
+        'void main(){',
+        '  float d=distance(vUv, vec2(0.5, 0.42));',
+        '  float vig=1.0-0.22*uGrade*smoothstep(0.45, 0.95, d);',
+        '  vec3 mul=vec3(1.0, 1.0-0.03*uGrade, 1.0-0.10*uGrade)*vig;',
+        '  gl_FragColor=vec4(mul, 1.0);',
+        '}',
+      ].join('\n'),
+      blending:THREE.CustomBlending, blendEquation:THREE.AddEquation,
+      blendSrc:THREE.DstColorFactor, blendDst:THREE.ZeroFactor,
+      transparent:true, depthTest:false, depthWrite:false});
+    const c7BloomMat=new THREE.ShaderMaterial({
+      uniforms:{tBloom:{value:null}, uStrength:{value:0}},
+      vertexShader:C7_QUAD_VS,
+      fragmentShader:[
+        'uniform sampler2D tBloom; uniform float uStrength;',
+        'varying vec2 vUv;',
+        'void main(){',
+        '  vec3 b=texture2D(tBloom, vUv).rgb;',
+        '  gl_FragColor=vec4(b*uStrength, 1.0);',
+        '}',
+      ].join('\n'),
+      blending:THREE.AdditiveBlending,
+      transparent:true, depthTest:false, depthWrite:false});
+    const c7QuadCam=new THREE.OrthographicCamera(-1, 1, 1, -1, 0, 1);
+    const c7QuadGeo=new THREE.PlaneGeometry(2, 2);
+    const c7PassScene=new THREE.Scene();
+    const c7PassMesh=new THREE.Mesh(c7QuadGeo, c7BrightMat);
+    c7PassMesh.frustumCulled=false; c7PassScene.add(c7PassMesh);
+    const c7OverlayScene=new THREE.Scene();
+    const c7GradeMesh=new THREE.Mesh(c7QuadGeo, c7GradeMat);
+    c7GradeMesh.frustumCulled=false; c7GradeMesh.renderOrder=10; c7OverlayScene.add(c7GradeMesh);
+    const c7BloomMesh=new THREE.Mesh(c7QuadGeo, c7BloomMat);
+    c7BloomMesh.frustumCulled=false; c7BloomMesh.renderOrder=11; c7OverlayScene.add(c7BloomMesh);
+    const c7State={enabled:false, renders:0, w:0, h:0};
+    const _c7DbSize=new THREE.Vector2();
+    function c7EffectiveEnabled(){ return qualityMode==='ultra' && c7GlowF>0.02; }
+    function c7EnsureSize(){
+      renderer.getDrawingBufferSize(_c7DbSize);
+      const w=Math.max(2, Math.floor(_c7DbSize.x/2)), h=Math.max(2, Math.floor(_c7DbSize.y/2));
+      if(w===c7State.w && h===c7State.h) return;
+      c7State.w=w; c7State.h=h;
+      c7SrcRT.setSize(w, h); c7BrightRT.setSize(w, h); c7BlurRT.setSize(w, h);
+    }
+    function renderPostC7(){
+      c7State.enabled=c7EffectiveEnabled();
+      if(!c7State.enabled) return;
+      c7EnsureSize();
+      const info=renderer.info;
+      const savedCalls=info.render.calls, savedTris=info.render.triangles;
+      info.autoReset=false;
+      try{
+        renderer.setRenderTarget(c7SrcRT);
+        renderer.render(scene, camera);
+        c7PassMesh.material=c7BrightMat;
+        c7BrightMat.uniforms.tDiffuse.value=c7SrcRT.texture;
+        renderer.setRenderTarget(c7BrightRT);
+        renderer.render(c7PassScene, c7QuadCam);
+        c7PassMesh.material=c7BlurMat;
+        const tx=1/c7State.w, ty=1/c7State.h;
+        for(let i=0;i<2;i++){
+          c7BlurMat.uniforms.tDiffuse.value=c7BrightRT.texture;
+          c7BlurMat.uniforms.uDir.value.set(tx, 0);
+          renderer.setRenderTarget(c7BlurRT);
+          renderer.render(c7PassScene, c7QuadCam);
+          c7BlurMat.uniforms.tDiffuse.value=c7BlurRT.texture;
+          c7BlurMat.uniforms.uDir.value.set(0, ty);
+          renderer.setRenderTarget(c7BrightRT);
+          renderer.render(c7PassScene, c7QuadCam);
+        }
+        c7GradeMat.uniforms.uGrade.value=c7GlowF;
+        c7BloomMat.uniforms.tBloom.value=c7BrightRT.texture;
+        c7BloomMat.uniforms.uStrength.value=C7_BLOOM_STRENGTH*c7GlowF;
+        renderer.setRenderTarget(null);
+        const prevAutoClear=renderer.autoClear;
+        renderer.autoClear=false;
+        renderer.render(c7OverlayScene, c7QuadCam);
+        renderer.autoClear=prevAutoClear;
+        c7State.renders++;
+      } finally {
+        renderer.setRenderTarget(null);
+        info.autoReset=true;
+        info.render.calls=savedCalls; info.render.triangles=savedTris;
+      }
     }
     function updateDynamicResolution(dt){
       frameEMA=frameEMA*0.95+(dt*1000)*0.05;
@@ -6067,6 +6235,7 @@
       const shadowRequested=updateShadowGate();
       renderReflectionC6();
       renderer.render(scene, camera);
+      renderPostC7(); // C7 (Issue #26): Ultra + dusk/night only; no-op otherwise
       framesRendered++;
       if(renderer.shadowMap.enabled && (renderer.shadowMap.autoUpdate || shadowRequested)) shadowUpdates++;
       if(__boot.firstFrame===null) __boot.firstFrame=performance.now();
@@ -6182,6 +6351,11 @@
           c6:{layer:C6_REFL_LAYER, planeY:C6_REFL_Y, mode:c6State.mode,
             enabled:c6State.enabled, qualityMode, rtSize:c6RtSize,
             overlays:c6Overlays.length, tagged:c6State.tagged, renders:c6State.renders},
+          /* C7 (Issue #26): post process (Ultra + glow) state. */
+          c7:{enabled:c7State.enabled, qualityMode, glowF:+c7GlowF.toFixed(3),
+            threshold:C7_THRESHOLD, knee:C7_KNEE, bloomStrength:C7_BLOOM_STRENGTH,
+            halfRes:{w:c7State.w, h:c7State.h}, renders:c7State.renders,
+            aoBaseM:C7_AO_BASE_M, aoVia:'facade-shader', ssao:false},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -6363,6 +6537,17 @@
           +row('c6.overlays', fmt(c6v.overlays))
           +row('c6.tagged', fmt(c6v.tagged))
           +row('c6.renders', fmt(c6v.renders))
+          +'</dl>';
+        var c7v=snap.c7||{};
+        html+='<h3>ポストプロセス（C7）</h3><dl class="tgrid">'
+          +row('c7.enabled', fmt(c7v.enabled))
+          +row('c7.glowF', fmt(c7v.glowF))
+          +row('c7.threshold', fmt(c7v.threshold))
+          +row('c7.bloomStrength', fmt(c7v.bloomStrength))
+          +row('c7.halfRes', c7v.halfRes?(fmt(c7v.halfRes.w)+'x'+fmt(c7v.halfRes.h)):'-')
+          +row('c7.renders', fmt(c7v.renders))
+          +row('c7.aoBaseM', fmt(c7v.aoBaseM))
+          +row('c7.aoVia', fmt(c7v.aoVia))
           +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
