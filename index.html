@@ -2788,6 +2788,60 @@
       return geo;
     }
     const wingGeo=makeWingGeo();
+    /* P3 (Issue #24): two-joint wing. The wing shape is split at the
+       wrist (x = P3_WRIST_X in wing-geometry coordinates) into inner
+       and outer geometries by clipping every triangle of wingGeo
+       against the wrist plane, interpolating position / normal / uv,
+       so the silhouette and the UV layout (P1 morph wing patterns,
+       P7 variant UV offsets) are preserved exactly and the two parts
+       sum to the original wing area. The outer part is re-based to
+       the wrist so it can hang on a pivot group there; wingGeo itself
+       stays whole for the folded panels, the P4 underwing panels and
+       the P2 far-LOD full wing. */
+    const P3_WRIST_X=0.205;
+    const P3_LAG_RAD=0.55;
+    function clipWingGeo(src, W, keepOuter){
+      const posA=src.attributes.position, norA=src.attributes.normal, uvA=src.attributes.uv;
+      const idx=src.index.array;
+      const read=i=>({p:[posA.getX(i),posA.getY(i),posA.getZ(i)], n:[norA.getX(i),norA.getY(i),norA.getZ(i)], u:[uvA.getX(i),uvA.getY(i)]});
+      const out={p:[], n:[], u:[]};
+      const push=v=>{ out.p.push(v.p[0],v.p[1],v.p[2]); out.n.push(v.n[0],v.n[1],v.n[2]); out.u.push(v.u[0],v.u[1]); };
+      const inside=v=>keepOuter?(v.p[0]>=W):(v.p[0]<=W);
+      const cut=(a,b)=>{ const t=(W-a.p[0])/(b.p[0]-a.p[0]); const mix=(x,y)=>x+(y-x)*t;
+        return {p:[W, mix(a.p[1],b.p[1]), mix(a.p[2],b.p[2])], n:[mix(a.n[0],b.n[0]), mix(a.n[1],b.n[1]), mix(a.n[2],b.n[2])], u:[mix(a.u[0],b.u[0]), mix(a.u[1],b.u[1])]}; };
+      for(let t=0;t<idx.length;t+=3){
+        const poly=[read(idx[t]), read(idx[t+1]), read(idx[t+2])];
+        const clipped=[];
+        for(let i=0;i<poly.length;i++){
+          const a=poly[i], b=poly[(i+1)%poly.length];
+          if(inside(a)) clipped.push(a);
+          if(inside(a)!==inside(b)) clipped.push(cut(a,b));
+        }
+        for(let i=1;i+1<clipped.length;i++){ push(clipped[0]); push(clipped[i]); push(clipped[i+1]); }
+      }
+      const g=new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute(out.p,3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute(out.n,3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute(out.u,2));
+      return g;
+    }
+    const wingInnerGeo=clipWingGeo(wingGeo, P3_WRIST_X, false);
+    const wingOuterGeo=clipWingGeo(wingGeo, P3_WRIST_X, true); wingOuterGeo.translate(-P3_WRIST_X,0,0);
+    /* P3 (Issue #24): primary flight-feather cards -- one shared
+       trapezoid (origin at the feather root, unit length along +x,
+       scaled per feather), 5 per wing along the outer wing's
+       trailing edge. The closed angles stack the cards parallel;
+       the open angles fan them. Driven only by flapPhase in
+       animate(), never by a new random source. */
+    const P3_PRIM_ROOTS=[[0.225,-0.062],[0.262,-0.068],[0.298,-0.062],[0.332,-0.050],[0.363,-0.034]];
+    const P3_PRIM_LENGTHS=[0.105,0.125,0.140,0.148,0.142];
+    const P3_PRIM_CLOSED=[0.98,0.98,0.98,0.98,0.98];
+    const P3_PRIM_OPEN=[1.30,1.12,0.94,0.76,0.58];
+    const primGeo=(()=>{ const g=new THREE.BufferGeometry();
+      g.setAttribute('position', new THREE.Float32BufferAttribute([0,0,0.011, 0,0,-0.011, 1,0,0.006, 1,0,-0.006],3));
+      g.setAttribute('normal', new THREE.Float32BufferAttribute([0,-1,0, 0,-1,0, 0,-1,0, 0,-1,0],3));
+      g.setAttribute('uv', new THREE.Float32BufferAttribute([0.55,0.32, 0.55,0.68, 0.98,0.32, 0.98,0.68],2));
+      g.setIndex([0,1,2, 1,3,2]); return g; })();
     const tailGeo=new THREE.PlaneGeometry(0.175, 0.2); tailGeo.rotateX(-Math.PI/2); tailGeo.translate(0,0,-0.095);
     /* P4 (Issue #13): shared geometry for the close-LOD tail fan's
        white outer-edge strips — same transform chain as the fan's
@@ -3184,9 +3238,41 @@
       }
       const wingMat=mm.wingLo;
       const wingLP=new THREE.Group(); wingLP.position.set(0.05,0.045,0.015); bodyG.add(wingLP);
-      const wingL=new THREE.Mesh(wingGeo, wingMat); wingL.castShadow=true; wingLP.add(wingL);
+      const wingL=new THREE.Mesh(wingInnerGeo, wingMat); wingL.castShadow=true; wingLP.add(wingL);
       const wingRP=new THREE.Group(); wingRP.position.set(-0.05,0.045,0.015); bodyG.add(wingRP);
-      const wingR=new THREE.Mesh(wingGeo, wingMat); wingR.scale.x=-1; wingR.castShadow=true; wingRP.add(wingR);
+      const wingR=new THREE.Mesh(wingInnerGeo, wingMat); wingR.scale.x=-1; wingR.castShadow=true; wingRP.add(wingR);
+      /* P3 (Issue #24): outer wing on a wrist pivot (group at the
+         wrist, mesh geometry re-based to the wrist), so animate()
+         can add the phase-lagged bend and the reversal twist on top
+         of the root pivot's flap. The right pivot sits at -wrist and
+         its mesh keeps the usual scale.x=-1 mirror. */
+      const wingOLP=new THREE.Group(); wingOLP.position.set(P3_WRIST_X,0,0); wingLP.add(wingOLP);
+      const wingOL=new THREE.Mesh(wingOuterGeo, wingMat); wingOL.castShadow=true; wingOLP.add(wingOL);
+      const wingORP=new THREE.Group(); wingORP.position.set(-P3_WRIST_X,0,0); wingRP.add(wingORP);
+      const wingOR=new THREE.Mesh(wingOuterGeo, wingMat); wingOR.scale.x=-1; wingOR.castShadow=true; wingORP.add(wingOR);
+      /* P3 (Issue #24): far-LOD full wings -- the P2 far LOD keeps
+         the pre-P3 single-mesh wing (whole wingGeo, wingFar
+         material); the split wing and the primary cards are never
+         applied to far birds. Hidden until setFarLOD / animate()
+         show them in the far state. */
+      const wingFullL=new THREE.Mesh(wingGeo, wingMat); wingFullL.castShadow=true; wingFullL.visible=false; wingLP.add(wingFullL);
+      const wingFullR=new THREE.Mesh(wingGeo, wingMat); wingFullR.scale.x=-1; wingFullR.castShadow=true; wingFullR.visible=false; wingRP.add(wingFullR);
+      /* P3 (Issue #24): primary flight-feather cards, 5 per wing,
+         children of the outer-wing meshes so they inherit the wrist
+         lag and twist. They share the wing material, so the LOD
+         material swaps carry them along and no texture or program
+         is added. Hidden until animate() shows them for near /
+         mid-range flying birds outside a collective escape. */
+      const primL=[], primR=[];
+      for(let k=0;k<P3_PRIM_ROOTS.length;k++){
+        const pl=new THREE.Mesh(primGeo, wingMat);
+        pl.position.set(P3_PRIM_ROOTS[k][0]-P3_WRIST_X, -0.0015, P3_PRIM_ROOTS[k][1]);
+        pl.scale.x=P3_PRIM_LENGTHS[k]; pl.castShadow=false; pl.visible=false; pl.rotation.y=P3_PRIM_CLOSED[k];
+        wingOL.add(pl); primL.push(pl);
+        const pr=new THREE.Mesh(primGeo, wingMat);
+        pr.position.copy(pl.position); pr.scale.x=P3_PRIM_LENGTHS[k]; pr.castShadow=false; pr.visible=false; pr.rotation.y=P3_PRIM_CLOSED[k];
+        wingOR.add(pr); primR.push(pr);
+      }
       /* P4 (Issue #13): underwing flash panels, 3mm below each wing
          plane, sharing the wing silhouette and the one underwing
          material. Hidden by default; animate() shows them only while
@@ -3225,6 +3311,17 @@
         for(const host of [wingL, wingR, foldL, foldR]){
           const b1=new THREE.Mesh(barGeos[0], barMat); b1.position.set(0.184,0.0035,0); host.add(b1); barMeshes.push(b1);
           const b2=new THREE.Mesh(barGeos[1], barMat); b2.position.set(0.246,0.0035,0); host.add(b2); barMeshes.push(b2);
+        }
+        /* P3 (Issue #24): on the flying wings the outer bar (centre
+           x=0.246) lies past the wrist, so the b2 copies just added
+           to wingL / wingR (barMeshes[0..3] when barsGeo is on) are
+           re-parented to the outer-wing meshes at wrist-local x, so
+           the bar bends with the outer wing. The folded panels keep
+           their whole-wing bars as before. */
+        if(morph.barsGeo){
+          const obL=barMeshes[1], obR=barMeshes[3];
+          wingOL.add(obL); obL.position.set(0.246-P3_WRIST_X,0.0035,0);
+          wingOR.add(obR); obR.position.set(0.246-P3_WRIST_X,0.0035,0);
         }
       }
       /* scarlet legs + feet: pure vivid red with almost no green
@@ -3334,6 +3431,7 @@
       scene.add(g);
       return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, covertTintL, covertTintR, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
+        wingOLP, wingORP, wingOL, wingOR, wingFullL, wingFullR, primL, primR,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat,
         variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase:hash(pi*57+13)}; // P7 (Issue #22)
@@ -3369,6 +3467,13 @@
       if(m.headMesh) m.headMesh.material=headMat;
       if(m.wingL) m.wingL.material=wingMat;
       if(m.wingR) m.wingR.material=wingMat;
+      /* P3 (Issue #24): split / far-full wings and primary cards follow the same swap. */
+      if(m.wingOL) m.wingOL.material=wingMat;
+      if(m.wingOR) m.wingOR.material=wingMat;
+      if(m.wingFullL) m.wingFullL.material=wingMat;
+      if(m.wingFullR) m.wingFullR.material=wingMat;
+      if(m.primL) for(const pm of m.primL) pm.material=wingMat;
+      if(m.primR) for(const pm of m.primR) pm.material=wingMat;
       if(m.foldL) m.foldL.material=wingMat;
       if(m.foldR) m.foldR.material=wingMat;
       if(m.tail) m.tail.material=tailMat;
@@ -3397,6 +3502,13 @@
       const tailMat=on?mm.tailFar:(p.closeLOD?mm.tailHi:mm.tailLo);
       if(m.wingL) m.wingL.material=wingMat;
       if(m.wingR) m.wingR.material=wingMat;
+      /* P3 (Issue #24): split / far-full wings and primary cards follow the same swap. */
+      if(m.wingOL) m.wingOL.material=wingMat;
+      if(m.wingOR) m.wingOR.material=wingMat;
+      if(m.wingFullL) m.wingFullL.material=wingMat;
+      if(m.wingFullR) m.wingFullR.material=wingMat;
+      if(m.primL) for(const pm of m.primL) pm.material=wingMat;
+      if(m.primR) for(const pm of m.primR) pm.material=wingMat;
       if(m.foldL) m.foldL.material=wingMat;
       if(m.foldR) m.foldR.material=wingMat;
       if(m.tail) m.tail.material=tailMat;
@@ -4105,10 +4217,60 @@
       m.wingLP.rotation.z=lerp(m.wingLP.rotation.z, wingA*(1-p.fold*0.85), 0.65);
       m.wingRP.rotation.z=lerp(m.wingRP.rotation.z, -wingA*(1-p.fold*0.85), 0.65);
       m.wingLP.rotation.y=foldA; m.wingRP.rotation.y=-foldA;
+      /* P3 (Issue #24): outer-wing articulation, driven only by the
+         existing flapPhase (no new random or time source). The outer
+         wing repeats the root flap with a fixed phase lag
+         (P3_LAG_RAD), so its relative bend peaks after the root's;
+         the twist is proportional to the lagged downstroke amount
+         (-cos of the lagged phase), so it reverses sign at each
+         stroke reversal. Glides hold a slight extra dihedral, a
+         fixed pronation and splayed primaries. Folding adds a
+         wrist sweep-back on top of the root fold. */
+      let p3OuterRel=0, p3Twist=0, p3Spread=0;
+      if(flying){
+        if(p.glide && p.state==='fly'){ p3OuterRel=0.06; p3Twist=0.10; p3Spread=0.85; }
+        else{
+          const ph=p.flapPhase;
+          p3OuterRel=((Math.sin(ph-P3_LAG_RAD)*1.02-0.08)-wingA)*(1-p.fold*0.85);
+          p3Twist=0.32*clamp(-Math.cos(ph-P3_LAG_RAD),-1,1)*(1-p.fold*0.85);
+          p3Spread=Math.pow(clamp(-Math.cos(ph),0,1),0.75);
+        }
+      }
+      p._p3Spread=p3Spread;
+      if(m.wingOLP){
+        m.wingOLP.rotation.z=lerp(m.wingOLP.rotation.z, p3OuterRel, 0.65);
+        m.wingORP.rotation.z=lerp(m.wingORP.rotation.z, -p3OuterRel, 0.65);
+        m.wingOLP.rotation.x=lerp(m.wingOLP.rotation.x, p3Twist, 0.65);
+        m.wingORP.rotation.x=lerp(m.wingORP.rotation.x, -p3Twist, 0.65);
+        m.wingOLP.rotation.y=lerp(m.wingOLP.rotation.y, p.fold*0.9, 0.65);
+        m.wingORP.rotation.y=lerp(m.wingORP.rotation.y, -p.fold*0.9, 0.65);
+      }
+      /* P3 (Issue #24): collective-escape gate for the primary
+         cards -- while the falcon is active and at least 6 birds
+         are in escape flight, the cards are omitted flock-wide. */
+      let p3EscN=0; for(const q of pigeons) if(q.escapeT>0) p3EscN++;
+      const p3EscapeGate=falcon.active && p3EscN>=6;
+      p._p3EscapeGate=p3EscapeGate;
       // swap between animated wings (flight) and back panels (folded)
       const foldedNow=p.fold>0.7;
       m.foldL.visible=m.foldR.visible=foldedNow;
-      m.wingL.visible=m.wingR.visible=!foldedNow;
+      /* P3 (Issue #24): the split wing shows only outside the far
+         LOD; far birds keep the single full wing (P2). */
+      const wingSplitShow=!foldedNow && !p.farLOD;
+      m.wingL.visible=m.wingR.visible=wingSplitShow;
+      if(m.wingOL) m.wingOL.visible=m.wingOR.visible=wingSplitShow;
+      if(m.wingFullL) m.wingFullL.visible=m.wingFullR.visible=(!foldedNow && p.farLOD);
+      /* P3 (Issue #24): primary cards -- flying, near/mid range
+         only, omitted in a collective escape; the fan angle follows
+         the downstroke spread computed above. */
+      const primShow=flying && wingSplitShow && !p3EscapeGate;
+      if(m.primL){
+        for(let k=0;k<m.primL.length;k++){
+          const pa=lerp(P3_PRIM_CLOSED[k], P3_PRIM_OPEN[k], p3Spread);
+          m.primL[k].rotation.y=pa; m.primR[k].rotation.y=pa;
+          m.primL[k].visible=primShow; m.primR[k].visible=primShow;
+        }
+      }
       /* P4 (Issue #13): underwing flash panels show only in flight
          with the wings unfolded — never on the ground, and not during
          the fold transition right after takeoff. */
@@ -5860,6 +6022,13 @@
           p8:{neckStopOffsets:P8_NECK_STOPS.map(s=>s[0]), neckStopColors:P8_NECK_STOPS.map(s=>s[1]),
             covertTintMat:!!SHARED_COVERT_TINT_MAT,
             focusCovertTintVisible:!!(fp.mesh&&fp.mesh.covertTintL&&fp.mesh.covertTintL.visible&&fp.mesh.covertTintR&&fp.mesh.covertTintR.visible)},
+          /* P3 (Issue #24): two-joint wing + primary card state. */
+          p3:{wristX:P3_WRIST_X, lagRad:P3_LAG_RAD, primariesPerWing:P3_PRIM_ROOTS.length,
+            primaryVisible:pigeons.reduce((n,p)=>n+((p.mesh&&p.mesh.primL)?p.mesh.primL.filter(x=>x.visible).length+p.mesh.primR.filter(x=>x.visible).length:0),0),
+            focusSpread:+(fp._p3Spread||0).toFixed(3),
+            focusOuterLagDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.z*57.29578).toFixed(2):0,
+            focusOuterTwistDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.x*57.29578).toFixed(2):0,
+            escapeGateActive:!!fp._p3EscapeGate},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -6020,6 +6189,17 @@
           +row('p8.neckStopOffsets', (p8v.neckStopOffsets||[]).map(function(v){ return fmt(v); }).join(' / '))
           +row('p8.covertTintMat', fmt(p8v.covertTintMat))
           +row('p8.focusCovertTintVisible', fmt(p8v.focusCovertTintVisible))
+          +'</dl>';
+        var p3v=snap.p3||{};
+        html+='<h3>翼2関節・初列風切（P3）</h3><dl class="tgrid">'
+          +row('p3.wristX', fmt(p3v.wristX))
+          +row('p3.lagRad', fmt(p3v.lagRad))
+          +row('p3.primariesPerWing', fmt(p3v.primariesPerWing))
+          +row('p3.primaryVisible', fmt(p3v.primaryVisible))
+          +row('p3.focusSpread', fmt(p3v.focusSpread))
+          +row('p3.focusOuterLagDeg', fmt(p3v.focusOuterLagDeg))
+          +row('p3.focusOuterTwistDeg', fmt(p3v.focusOuterTwistDeg))
+          +row('p3.escapeGateActive', fmt(p3v.escapeGateActive))
           +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
