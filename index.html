@@ -665,6 +665,23 @@
     let cityMeshRef=null, cityGhostMat=null;
     let waterTex=null, rippleTex=null;
     const streetPropCounts={poles:0, wires:0, vending:0, manholes:0, stripes:0, sleeveSigns:0};
+    /* C3 (Issue #17) near-distance layer: placements recorded by
+       buildStreetProps() so the dedicated close-range layer can attach
+       to the exact same spots without touching the merged city
+       geometry (CITYGEO) or the existing prop builders. */
+    const vendPlacements=[];   // {x,z,rot}
+    const sleevePlacements=[]; // {x,y,z,dirX,di}
+    const polePlacements=[];   // {x,z,px,pz}
+    /* C3: widened wire-bundle offsets [lateral, dy] — the ONLY change
+       to the wire layout; pole positions and span data are unchanged.
+       Upper three spread ±1.8 m laterally and 0.35–0.62 m vertically,
+       the lower wire sits 1.0 m below on the second arm, so all four
+       wires separate into individual lines at street level. */
+    const WIRE_OFFS=[[-1.8,0.35],[0,0.62],[1.8,0.35],[-1.05,-1.0]];
+    const nearLayerCounts={barrierPosts:0, barrierRails:0, pricePlanes:0,
+      sleeveCells:0, sleeveArms:0, decalIntersections:0, crossarms:0,
+      wireBundleSpacing:{lateral:1.8, upperLift:0.62, lowerDrop:1.0,
+        offsets:WIRE_OFFS.map(o=>[o[0],o[1]])}};
     /* handles the season/weather system (later script) drives */
     let cityMeshMat=null, roadsMat=null, groundMat=null, waterMatRef=null, canopyMesh=null;
     const canopyBase=[]; // per-tree canopy {x,y,z,sx,sy,sz} for wind sway
@@ -1281,7 +1298,8 @@
       const upAxis=new THREE.Vector3(0,1,0), tmpDir=new THREE.Vector3(), tmpQ=new THREE.Quaternion();
       function addWireBundle(ax,ay,az, bx,by,bz, px,pz){
         // 4 wires: three across the main crossarm, one on the lower arm
-        const offs=[[-1.15,0],[0,0.12],[1.15,0],[-0.6,-0.95]];
+        // C3: bundle spacing widened via the shared WIRE_OFFS table
+        const offs=WIRE_OFFS;
         for(const [off,dy] of offs){
           const x0=ax+px*off, z0=az+pz*off, x1=bx+px*off, z1=bz+pz*off, y0=ay+dy, y1=by+dy;
           let prevP=new THREE.Vector3(x0,y0,z0);
@@ -1314,6 +1332,7 @@
         for(let i=0;i<=n;i++){
           const t=i/n, x=lerp(r.x0,r.x1,t), z=lerp(r.z0,r.z1,t);
           poles.push({x, y:5.5, z});
+          polePlacements.push({x, z, px, pz});
           arms.push({x, y:10.55, z, sx:Math.abs(px)*2.6+0.14, sy:0.14, sz:Math.abs(pz)*2.6+0.14});
           arms.push({x, y:9.6, z, sx:Math.abs(px)*1.9+0.12, sy:0.12, sz:Math.abs(pz)*1.9+0.12});
           if(hash(x*0.37+z*0.91)>0.62) trans.push({x:x+px*0.55, y:9.7, z:z+pz*0.55});
@@ -1383,6 +1402,7 @@
       const vendSideMats=vendDefs.map(d=>new THREE.MeshLambertMaterial({color:new THREE.Color(d.main)}));
       let vendCount=0;
       function addVending(x, z, faceRotY, vi){
+        vendPlacements.push({x, z, rot:faceRotY});
         const grp=new THREE.Group(); grp.position.set(x,0,z); grp.rotation.y=faceRotY;
         const body=new THREE.Mesh(new THREE.BoxGeometry(1.18,1.92,0.74), vendSideMats[vi%5]);
         body.position.y=0.98; body.castShadow=true; grp.add(body);
@@ -1518,6 +1538,7 @@
       function addSleeveSign(wallX, z, dirX, di){
         // dirX=+1: sign protrudes toward +x from a wall at wallX
         const cy=3.6+hash(z*1.31+wallX)*1.1;
+        sleevePlacements.push({x:wallX+dirX*0.62, y:cy, z, dirX, di:di%10});
         const grp=new THREE.Group(); grp.position.set(wallX+dirX*0.62, cy, z);
         const body=new THREE.Mesh(new THREE.BoxGeometry(1.05,2.35,0.17), sleeveSideMats[di%10]);
         grp.add(body);
@@ -1537,6 +1558,250 @@
       for(let z=-120; z<=420; z+=34){ if(hash(z*0.7)>0.25) addSleeveSign(18.6, z+rand(-3,3), 1, sdi++); }
       for(let z=-320; z<=-40; z+=32){ if(hash(z*1.9)>0.4) addSleeveSign(-398, z, 1, sdi++); }
       streetPropCounts.sleeveSigns=sleeveCount;
+    }
+
+    /* ================= C3 near-distance layer (Issue #17) =================
+       Five close-range detail sets that only need to resolve at
+       5–20 m (barrier: from the expressway viewpoint). Everything is
+       a separate mesh added on top of the existing scene — the merged
+       CITYGEO vertex data, C1 facade shader, B5 shadow gate and C2
+       environment are untouched. Budget: +3 canvas textures, +7 nodes
+       (instanced / merged geometry only), castShadow=false throughout,
+       new MeshStandardMaterials carry envMapIntensity 0.7 (C2 rule),
+       materials are module-shared instances (B3 rule). */
+    const nearDarkMetalMat=new THREE.MeshStandardMaterial({color:0x2e343a, metalness:0.65, roughness:0.45, envMapIntensity:0.7});
+    const nearRailMat=new THREE.MeshStandardMaterial({color:0x3a4249, metalness:0.6, roughness:0.5, envMapIntensity:0.7});
+    function buildNearLayerC3(){
+      const mtx=new THREE.Matrix4(), q=new THREE.Quaternion(), eu=new THREE.Euler(),
+        sv=new THREE.Vector3(), pv=new THREE.Vector3();
+      function instanced(geo, mat, items){
+        if(!items.length) return null;
+        const im=new THREE.InstancedMesh(geo, mat, items.length);
+        items.forEach((it,i)=>{
+          eu.set(it.rx||0, it.rot||0, it.rz||0); q.setFromEuler(eu);
+          sv.set(it.sx||1, it.sy||1, it.sz||1); pv.set(it.x, it.y, it.z);
+          mtx.compose(pv,q,sv); im.setMatrixAt(i,mtx);
+        });
+        im.castShadow=false; im.receiveShadow=true; scene.add(im);
+        return im;
+      }
+      /* merged-quad accumulator: pos/nor/uv arrays, one geometry out */
+      function quadSink(){
+        return {pos:[], nor:[], uv:[],
+          push(verts, normal, uvs){
+            // verts: 4 corners [x,y,z] in order BL,BR,TR,TL (outward)
+            const idx=[[0,1,2],[0,2,3]];
+            for(const t of idx) for(const k of t){
+              this.pos.push(verts[k][0], verts[k][1], verts[k][2]);
+              this.nor.push(normal[0], normal[1], normal[2]);
+              this.uv.push(uvs[k][0], uvs[k][1]);
+            }
+          },
+          build(mat, renderOrder){
+            const g=new THREE.BufferGeometry();
+            g.setAttribute('position', new THREE.Float32BufferAttribute(this.pos,3));
+            g.setAttribute('normal', new THREE.Float32BufferAttribute(this.nor,3));
+            g.setAttribute('uv', new THREE.Float32BufferAttribute(this.uv,2));
+            const mesh=new THREE.Mesh(g, mat);
+            mesh.castShadow=false; mesh.receiveShadow=false;
+            if(renderOrder!==undefined) mesh.renderOrder=renderOrder;
+            scene.add(mesh); return mesh;
+          }};
+      }
+
+      /* ---- 1. sound-barrier posts + top/bottom rails (expressway) ----
+         Seam positions are recomputed from CITY.elevated with the same
+         offset math buildRoadsWater() uses for the translucent panels
+         (panels themselves are untouched). Posts stand at every panel
+         joint over the full 11.45–14.30 m height; rails run per segment
+         along the top and bottom edges. */
+      {
+        const posts=[], rails=[];
+        for(const e of CITY.elevated){
+          const f=e[0], pts=[];
+          for(let i=0;i<f.length;i+=2) pts.push([f[i]/10, -f[i+1]/10]);
+          for(const side of [-1,1]){
+            for(let i=0;i<pts.length;i++){
+              const a=pts[i];
+              const b=pts[Math.min(i+1, pts.length-1)], pb=pts[Math.max(i-1,0)];
+              let dx=(i<pts.length-1? b[0]-a[0] : a[0]-pb[0]), dz=(i<pts.length-1? b[1]-a[1] : a[1]-pb[1]);
+              const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
+              posts.push({x:a[0]+(-dz*side)*6.8, y:12.875, z:a[1]+(dx*side)*6.8});
+            }
+            for(let i=0;i<pts.length-1;i++){
+              const a=pts[i], b=pts[i+1];
+              let dx=b[0]-a[0], dz=b[1]-a[1]; const l=Math.hypot(dx,dz)||1; dx/=l; dz/=l;
+              const ox=(-dz*side)*6.8, oz=(dx*side)*6.8;
+              const mx=(a[0]+b[0])/2+ox, mz=(a[1]+b[1])/2+oz, rot=Math.atan2(-dz,dx);
+              rails.push({x:mx, y:14.26, z:mz, sx:l, sy:0.1, sz:0.09, rot});
+              rails.push({x:mx, y:11.52, z:mz, sx:l, sy:0.12, sz:0.09, rot});
+            }
+          }
+        }
+        instanced(new THREE.BoxGeometry(0.17,2.85,0.17), nearDarkMetalMat, posts);
+        instanced(new THREE.BoxGeometry(1,1,1), nearRailMat, rails);
+        nearLayerCounts.barrierPosts=posts.length;
+        nearLayerCounts.barrierRails=rails.length;
+      }
+
+      /* ---- 2. vending-machine price tags ----
+         One shared canvas (3×2 price cells, plain numerals only), one
+         merged geometry of small unlit planes on every machine front,
+         each plane UV-baked to its own cell. */
+      {
+        const prices=['110','120','130','150','180','200'];
+        const cv=document.createElement('canvas'); cv.width=384; cv.height=128;
+        const c=cv.getContext('2d');
+        prices.forEach((p,i)=>{
+          const cx=(i%3)*128, cy=Math.floor(i/3)*64;
+          c.fillStyle=i%2?'#fdf6d8':'#eaf4ff'; c.fillRect(cx,cy,128,64);
+          c.strokeStyle='#8a8f96'; c.lineWidth=3; c.strokeRect(cx+2,cy+2,124,60);
+          c.fillStyle='#1c2733'; c.font='900 40px "Zen Kaku Gothic New", sans-serif';
+          c.textAlign='center'; c.textBaseline='middle';
+          c.fillText(p, cx+64, cy+34);
+        });
+        const tex=new THREE.CanvasTexture(cv); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
+        const mat=new THREE.MeshBasicMaterial({map:tex});
+        const sink=quadSink(); let n=0;
+        for(const v of vendPlacements){
+          const fx=Math.sin(v.rot), fz=Math.cos(v.rot);   // front direction
+          const rx=Math.cos(v.rot), rz=-Math.sin(v.rot);  // right direction
+          for(let k=0;k<6;k++){
+            const lx=-0.44+k*0.176, cy=1.32, hw=0.078, hh=0.055, d=0.386;
+            const cxp=v.x+rx*lx+fx*d, czp=v.z+rz*lx+fz*d;
+            const col=k%3, row=Math.floor(k/3);
+            const u0=col/3, u1=(col+1)/3, v1=1-row/2, v0=1-(row+1)/2;
+            sink.push([
+              [cxp-rx*hw, cy-hh, czp-rz*hw], [cxp+rx*hw, cy-hh, czp+rz*hw],
+              [cxp+rx*hw, cy+hh, czp+rz*hw], [cxp-rx*hw, cy+hh, czp-rz*hw]],
+              [fx,0,fz], [[u0,v0],[u1,v0],[u1,v1],[u0,v1]]);
+            n++;
+          }
+        }
+        if(n) sink.build(mat);
+        nearLayerCounts.pricePlanes=n;
+      }
+
+      /* ---- 3. sleeve signs: dedicated atlas cells + support arms ----
+         One atlas canvas (6×5 portrait cells); every sign gets its own
+         cell with a distinct generic trade word in vertical lettering.
+         Overlay planes sit just proud of both broad faces, UV-baked to
+         the sign's cell and wound so the text reads correctly from
+         both sides. Support arms are one InstancedMesh. */
+      {
+        const words=['食堂','喫茶','薬局','本屋','理髪','酒店','花屋','時計','眼鏡','写真',
+          '電器','洋食','そば','古本','質屋','靴屋','文具','パン','寿司','菓子'];
+        const bgs=['#c22e22','#f2ede2','#1d4f9c','#e8a713','#1e7a46','#7a3fa0','#26262b','#0f766e'];
+        const COLS=6, ROWS=5, CW=128, CH=256;
+        const cv=document.createElement('canvas'); cv.width=COLS*CW; cv.height=ROWS*CH;
+        const c=cv.getContext('2d');
+        const nCells=Math.min(sleevePlacements.length, COLS*ROWS);
+        for(let i=0;i<nCells;i++){
+          const cx=(i%COLS)*CW, cy=Math.floor(i/COLS)*CH;
+          const bg=bgs[i%bgs.length], fg=(i%bgs.length===1||i%bgs.length===3)?'#26221a':'#ffffff';
+          c.fillStyle=bg; c.fillRect(cx,cy,CW,CH);
+          c.lineWidth=6; c.strokeStyle=fg; c.strokeRect(cx+8,cy+8,CW-16,CH-16);
+          c.fillStyle=fg; c.textAlign='center'; c.textBaseline='middle';
+          c.font='900 56px "Zen Kaku Gothic New", serif';
+          const chars=words[i%words.length].split('');
+          chars.forEach((ch,k)=>{ c.fillText(ch, cx+CW/2, cy+62+k*66); });
+        }
+        const tex=new THREE.CanvasTexture(cv); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
+        const mat=new THREE.MeshBasicMaterial({map:tex});
+        const sink=quadSink();
+        for(let i=0;i<nCells;i++){
+          const s=sleevePlacements[i];
+          const col=i%COLS, row=Math.floor(i/COLS);
+          const u0=col/COLS, u1=(col+1)/COLS, v1=1-row/ROWS, v0=1-(row+1)/ROWS;
+          const hw=0.475, hh=1.125, d=0.098;
+          // +z face (wound CCW seen from +z), then −z face (from −z)
+          sink.push([
+            [s.x-hw,s.y-hh,s.z+d],[s.x+hw,s.y-hh,s.z+d],[s.x+hw,s.y+hh,s.z+d],[s.x-hw,s.y+hh,s.z+d]],
+            [0,0,1], [[u0,v0],[u1,v0],[u1,v1],[u0,v1]]);
+          sink.push([
+            [s.x+hw,s.y-hh,s.z-d],[s.x-hw,s.y-hh,s.z-d],[s.x-hw,s.y+hh,s.z-d],[s.x+hw,s.y+hh,s.z-d]],
+            [0,0,-1], [[u0,v0],[u1,v0],[u1,v1],[u0,v1]]);
+        }
+        if(nCells) sink.build(mat);
+        nearLayerCounts.sleeveCells=nCells;
+        const armItems=[];
+        for(const s of sleevePlacements){
+          for(const dy of [1.02,0.55])
+            armItems.push({x:s.x-s.dirX*0.6, y:s.y+dy, z:s.z, sx:1.3, sy:0.07, sz:0.07});
+        }
+        instanced(new THREE.BoxGeometry(1,1,1), nearDarkMetalMat, armItems);
+        nearLayerCounts.sleeveArms=armItems.length;
+      }
+
+      /* ---- 4. high-resolution intersection decals (max 4) ----
+         One shared 2048 canvas (2×2 cells). Each cell draws crisp
+         zebra bands on all four approaches, stop lines and straight /
+         left / right arrows. One merged geometry, floated just above
+         the existing painted stripes, polygonOffset against flicker. */
+      {
+        const spots=[{x:37,z:33},{x:-491,z:33},{x:37,z:445},{x:37,z:-239}];
+        const S=1024;
+        const cv=document.createElement('canvas'); cv.width=S*2; cv.height=S*2;
+        const c=cv.getContext('2d');
+        function arrow(cx,cy,len,ang){
+          c.save(); c.translate(cx,cy); c.rotate(ang);
+          c.beginPath();
+          c.moveTo(0,-len/2); c.lineTo(len*0.30,-len*0.08); c.lineTo(len*0.11,-len*0.08);
+          c.lineTo(len*0.11,len/2); c.lineTo(-len*0.11,len/2); c.lineTo(-len*0.11,-len*0.08);
+          c.lineTo(-len*0.30,-len*0.08); c.closePath(); c.fill(); c.restore();
+        }
+        spots.forEach((sp,ci)=>{
+          const ox=(ci%2)*S, oy=Math.floor(ci/2)*S;
+          c.save(); c.beginPath(); c.rect(ox,oy,S,S); c.clip();
+          c.translate(ox,oy);
+          c.fillStyle='rgba(246,246,240,0.96)';
+          // zebra bands: horizontal crossings (top & bottom), bars along x
+          for(const zy of [70, S-190]){
+            for(let bx=90; bx<=S-150; bx+=86) c.fillRect(bx, zy, 52, 120);
+          }
+          // zebra bands: vertical crossings (left & right), bars along z
+          for(const zx of [70, S-190]){
+            for(let bz=90; bz<=S-150; bz+=86) c.fillRect(zx, bz, 120, 52);
+          }
+          // stop lines inside each approach
+          c.fillRect(300, 216, 424, 22); c.fillRect(300, S-238, 424, 22);
+          c.fillRect(216, 300, 22, 424); c.fillRect(S-238, 300, 22, 424);
+          // lane arrows near the centre: straight / right / left
+          arrow(S/2, S/2+215, 190, 0);
+          arrow(S/2-215, S/2, 170, Math.PI/2);
+          arrow(S/2+215, S/2, 170, -Math.PI/2);
+          c.restore();
+        });
+        const tex=new THREE.CanvasTexture(cv); tex.encoding=THREE.sRGBEncoding; tex.anisotropy=8;
+        const mat=new THREE.MeshBasicMaterial({map:tex, transparent:true, depthWrite:false,
+          polygonOffset:true, polygonOffsetFactor:-2, polygonOffsetUnits:-2});
+        const sink=quadSink();
+        spots.forEach((sp,ci)=>{
+          const col=ci%2, row=Math.floor(ci/2), H=8.5, y=0.175;
+          const u0=col/2, u1=(col+1)/2, v1=1-row/2, v0=1-(row+1)/2;
+          // ground plane wound CCW seen from above (+y normal)
+          sink.push([
+            [sp.x-H,y,sp.z+H],[sp.x+H,y,sp.z+H],[sp.x+H,y,sp.z-H],[sp.x-H,y,sp.z-H]],
+            [0,1,0], [[u0,v0],[u1,v0],[u1,v1],[u0,v1]]);
+        });
+        sink.build(mat, 2);
+        nearLayerCounts.decalIntersections=spots.length;
+      }
+
+      /* ---- 5. crossarms for the widened wire bundles ----
+         Pole positions / perpendiculars recorded from the existing
+         runs; two instanced arms per pole (upper at the 10.62 m wire
+         height, lower at 9.6 m), sized to the widened WIRE_OFFS span
+         so the wires visibly hang from the arms. */
+      {
+        const items=[];
+        for(const p of polePlacements){
+          items.push({x:p.x, y:10.68, z:p.z, sx:Math.abs(p.px)*3.9+0.16, sy:0.13, sz:Math.abs(p.pz)*3.9+0.16});
+          items.push({x:p.x, y:9.62, z:p.z, sx:Math.abs(p.px)*2.5+0.14, sy:0.12, sz:Math.abs(p.pz)*2.5+0.14});
+        }
+        instanced(new THREE.BoxGeometry(1,1,1), nearDarkMetalMat, items);
+        nearLayerCounts.crossarms=items.length;
+      }
     }
 
     /* place labels (canvas sprites) */
@@ -1591,7 +1856,7 @@
         aabbGrid.get(k).push(i);
       }
     }
-    buildRoadsWater(); buildStreetProps(); makeLabels();
+    buildRoadsWater(); buildStreetProps(); buildNearLayerC3(); makeLabels();
     </script>
     <script>
     'use strict';
@@ -4727,6 +4992,12 @@
             vendingMachines:streetPropCounts.vending, manholes:streetPropCounts.manholes,
             markingStripes:streetPropCounts.stripes, sleeveSigns:streetPropCounts.sleeveSigns,
             bodyY:BODY_Y},
+          nearLayer:{barrierPosts:nearLayerCounts.barrierPosts, barrierRails:nearLayerCounts.barrierRails,
+            pricePlanes:nearLayerCounts.pricePlanes,
+            sleeveCells:nearLayerCounts.sleeveCells, sleeveArms:nearLayerCounts.sleeveArms,
+            decalIntersections:nearLayerCounts.decalIntersections,
+            crossarms:nearLayerCounts.crossarms,
+            wireBundleSpacing:nearLayerCounts.wireBundleSpacing},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
