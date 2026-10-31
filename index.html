@@ -3068,6 +3068,66 @@
       transparent:true, blending:THREE.AdditiveBlending, depthWrite:false, side:THREE.DoubleSide
     });
 
+    /* P9 (Issue #27): feather fringe trial, close LOD only -- shell
+       texturing deliberately weakened to the minimum. At most two
+       shells per volume, offset 1 mm / 2 mm from the host surface
+       (the 0.001 / 0.002 convention of the P8 covert shells above),
+       no shell texture or strand pattern at all, and an alpha that
+       is exactly zero face-on and reaches only 0.16 (inner shell) /
+       0.08 (outer shell) at a grazing silhouette angle
+       (fres = pow(1 - ndv, 2)), so under back / side light the rim
+       can soften without ever reading as a solid halo. The shells
+       reuse each host mesh's own geometry (body / neck / head --
+       the volumetric parts that carry the silhouette; the flat
+       wing / tail planes get no shell, because offsetting a plane
+       along its normal cannot widen its silhouette) and are
+       children of the host meshes, so the existing transforms
+       (body squash, neck scale, head-group motion) carry them with
+       no per-frame code. Two shared materials, one per layer, with
+       identical shader code compile to a single program; no new
+       textures and no new geometry.
+       Draw order (this unit's stop condition concerns the
+       occlusion ghost): the shells are transparent with
+       depthWrite:false and depthTest left on, and
+       renderOrder = P9_RENDER_ORDER (1), so in the transparent
+       pass they draw after every renderOrder-0 transparent in the
+       scene -- the occlusion ghost material (cityGhostMat:
+       transparent, depthWrite:false, renderOrder 0), the P6 cornea
+       caps, the P8 covert tint and the neck sheen shell. They
+       never write depth, so they cannot hide or punch through a
+       ghosted building behind them, and they never touch the city
+       mesh, its geometry groups or cityGhostMat:
+       applyOcclGroups() / updateOcclusion() are unchanged. Being
+       a ShaderMaterial outside morphMatsFor, the shells are also
+       not reached by C2's env traverse or the P5 / P7 sharing. */
+    const P9_OFFSETS=[0.001, 0.002];
+    const P9_PEAK_ALPHA=[0.16, 0.08];
+    const P9_RENDER_ORDER=1;
+    function makeFringeMat(peak){
+      return new THREE.ShaderMaterial({
+        uniforms:{ uPeak:{value:peak}, uTint:{value:new THREE.Color(0x9aa0a6)} },
+        vertexShader:[
+          'varying vec3 vN; varying vec3 vV;',
+          'void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0);',
+          ' vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);',
+          ' gl_Position=projectionMatrix*mv; }'
+        ].join('\n'),
+        fragmentShader:[
+          'uniform float uPeak; uniform vec3 uTint;',
+          'varying vec3 vN; varying vec3 vV;',
+          'void main(){',
+          ' vec3 N=normalize(vN); vec3 V=normalize(vV);',
+          ' float ndv=clamp(dot(N,V),0.0,1.0);',
+          ' float fres=pow(1.0-ndv,2.0);',
+          ' gl_FragColor=vec4(uTint, fres*uPeak);',
+          '}'
+        ].join('\n'),
+        transparent:true, depthWrite:false
+      });
+    }
+    const SHARED_FRINGE_MAT_1=makeFringeMat(P9_PEAK_ALPHA[0]);
+    const SHARED_FRINGE_MAT_2=makeFringeMat(P9_PEAK_ALPHA[1]);
+
     /* ---- B3 (Issue #7): shared pigeon materials ----
        Previously every bird allocated its own copy of every material
        below. Materials whose parameters are identical for all birds are
@@ -3396,6 +3456,24 @@
       covertTintL.position.y=0.0025; covertTintL.castShadow=false; covertTintL.visible=false; foldL.add(covertTintL);
       const covertTintR=new THREE.Mesh(wingGeo, SHARED_COVERT_TINT_MAT);
       covertTintR.position.y=0.0025; covertTintR.castShadow=false; covertTintR.visible=false; foldR.add(covertTintR);
+      /* P9 (Issue #27): fringe shells, two per volumetric host
+         (body r 0.16 / neck r 0.105 / head r 0.056), each shell
+         scaled per axis by 1 + offset / (hostRadius x hostScale)
+         so the surface offset is the P9_OFFSETS value itself. The shell reuses the host's
+         geometry instance -- no new geometry. Hidden until
+         setCloseLOD turns them on. */
+      const fringe=[];
+      for(const [host, hr, hs] of [[body, 0.16, [1, 0.86, 1.38]], [neck, 0.105, [1, 1.18, 1]], [head, 0.056, [1, 1, 1]]]){
+        for(let li=0; li<P9_OFFSETS.length; li++){
+          const sh=new THREE.Mesh(host.geometry, li===0?SHARED_FRINGE_MAT_1:SHARED_FRINGE_MAT_2);
+          /* per-axis scale compensates the host's anisotropic
+             scale, so the surface offset is P9_OFFSETS[li] itself
+             on every axis, not offset x host-scale. */
+          sh.scale.set(1+P9_OFFSETS[li]/(hr*hs[0]), 1+P9_OFFSETS[li]/(hr*hs[1]), 1+P9_OFFSETS[li]/(hr*hs[2]));
+          sh.castShadow=false; sh.visible=false; sh.renderOrder=P9_RENDER_ORDER;
+          host.add(sh); fringe.push(sh);
+        }
+      }
       const tailG=new THREE.Group(); tailG.position.set(0,0.008,-0.15); bodyG.add(tailG);
       const tailMat=mm.tailLo;
       const tail=new THREE.Mesh(tailGeo, tailMat);
@@ -3528,7 +3606,7 @@
       exclaim.scale.setScalar(0.21); exclaim.position.set(0,0.34,0); exclaim.visible=false; g.add(exclaim);
       g.scale.setScalar(DISPLAY_SCALE);
       scene.add(g);
-      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, covertTintL, covertTintR, wingL, wingR, underL, underR, body, twig,
+      return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, covertTintL, covertTintR, fringe, wingL, wingR, underL, underR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
         wingOLP, wingORP, wingOL, wingOR, wingFullL, wingFullR, primL, primR,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
@@ -3547,6 +3625,8 @@
       /* P8 (Issue #23): covert tint shells follow the close LOD only. */
       if(m.covertTintL) m.covertTintL.visible=on&&!p.farLOD;
       if(m.covertTintR) m.covertTintR.visible=on&&!p.farLOD;
+      /* P9 (Issue #27): fringe shells follow the close LOD only. */
+      if(m.fringe) for(const sh of m.fringe) sh.visible=on&&!p.farLOD;
       for(const part of m.basicHeadParts) part.visible=!on;
       // basic feet yield to the jointed toes (per-frame leg logic honours p.closeLOD)
       // B3: materials are shared per morph, so do not mutate .map on the
@@ -3595,6 +3675,8 @@
       for(const b of m.barMeshes) b.visible=!on;
       /* P8 (Issue #23): the far LOD never shows the covert tint. */
       if(on){ if(m.covertTintL) m.covertTintL.visible=false; if(m.covertTintR) m.covertTintR.visible=false; }
+      /* P9 (Issue #27): the far LOD never shows the fringe. */
+      if(on && m.fringe) for(const sh of m.fringe) sh.visible=false;
       const morph=MORPH_OF_BIRD[p.i%MORPH_OF_BIRD.length];
       const mm=morphMatsFor(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]);
       const wingMat=on?mm.wingFar:(p.closeLOD?morphWingHiMat(morph, BIRD_VARIANT[p.i%BIRD_VARIANT.length]):mm.wingLo);
@@ -6347,6 +6429,12 @@
             focusOuterLagDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.z*57.29578).toFixed(2):0,
             focusOuterTwistDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.x*57.29578).toFixed(2):0,
             escapeGateActive:!!fp._p3EscapeGate},
+          /* P9 (Issue #27): close-LOD fringe trial state. */
+          p9:{layers:P9_OFFSETS.length, offsetsMm:P9_OFFSETS.map(o=>Math.round(o*1000)),
+            peakAlpha:P9_PEAK_ALPHA.slice(), renderOrder:P9_RENDER_ORDER,
+            shellsPerBird:6,
+            focusFringeVisible:fp.mesh&&fp.mesh.fringe?fp.mesh.fringe.filter(x=>x.visible).length:0,
+            closeOnly:true},
           /* C6 (Issue #25): planar reflection state. */
           c6:{layer:C6_REFL_LAYER, planeY:C6_REFL_Y, mode:c6State.mode,
             enabled:c6State.enabled, qualityMode, rtSize:c6RtSize,
@@ -6528,6 +6616,16 @@
           +row('p3.focusOuterLagDeg', fmt(p3v.focusOuterLagDeg))
           +row('p3.focusOuterTwistDeg', fmt(p3v.focusOuterTwistDeg))
           +row('p3.escapeGateActive', fmt(p3v.escapeGateActive))
+          +'</dl>';
+        var p9v=snap.p9||{};
+        html+='<h3>輪郭フリンジ（P9）</h3><dl class="tgrid">'
+          +row('p9.layers', fmt(p9v.layers))
+          +row('p9.offsetsMm', (p9v.offsetsMm||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('p9.peakAlpha', (p9v.peakAlpha||[]).map(function(v){ return fmt(v); }).join(' / '))
+          +row('p9.renderOrder', fmt(p9v.renderOrder))
+          +row('p9.shellsPerBird', fmt(p9v.shellsPerBird))
+          +row('p9.focusFringeVisible', fmt(p9v.focusFringeVisible))
+          +row('p9.closeOnly', fmt(p9v.closeOnly))
           +'</dl>';
         var c6v=snap.c6||{};
         html+='<h3>川面反射（C6）</h3><dl class="tgrid">'
