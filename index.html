@@ -327,6 +327,11 @@
           <option value="high" selected>画質 High</option>
           <option value="ultra">画質 Ultra</option>
         </select>
+        <select id="refl-sel" title="川面の平面反射（自動は Ultra でのみ有効、オフで常に無効）">
+          <option value="auto" selected>反射：自動</option>
+          <option value="on">反射：オン</option>
+          <option value="off">反射：オフ</option>
+        </select>
       </div>
     </div>
 
@@ -687,6 +692,69 @@
     /* C4 (Issue #18): public wet-state of the road surface, written by
        updateEnvironment() alongside roadsMat and read by __QA__. */
     const roadSurface={roughnessFactor:1.0, envMapIntensity:0.25, curbSegments:0};
+    /* C6 (Issue #25): limited planar reflection for the two rivers.
+       One reflection plane at the water height (y = C6_REFL_Y): every
+       water mesh shares the same transform (position (0, 0.35, 0),
+       rotation -PI/2 about X), so a single render target and a single
+       projective texture matrix cover both the Dotonbori and the
+       Higashi-Yokobori. Only objects tagged onto layer C6_REFL_LAYER
+       (the merged building mesh and the opaque elevated-expressway
+       meshes) are drawn by the mirrored camera — pigeons, props, the
+       ground, the water itself and the translucent barrier panels
+       never enter the reflection. The C2 water material is NOT
+       replaced: a transparent overlay reusing each water polygon's
+       ShapeGeometry is laid at y = 0.40 (between the water at 0.35
+       and the ripple layer at 0.44) and adds the mirrored image on
+       top, fresnel-weighted, with a small ripple-driven wobble. */
+    const C6_REFL_LAYER=1;
+    const C6_REFL_Y=0.35;
+    let c6RtSize=256; // render-target edge; 512 in Ultra, else 256 (spec: 256-512)
+    const c6RenderTarget=new THREE.WebGLRenderTarget(c6RtSize, c6RtSize,
+      {minFilter:THREE.LinearFilter, magFilter:THREE.LinearFilter, format:THREE.RGBAFormat});
+    const c6VirtualCamera=new THREE.PerspectiveCamera();
+    c6VirtualCamera.layers.set(C6_REFL_LAYER);
+    const c6TexMatrix=new THREE.Matrix4();
+    const c6ReflMat=new THREE.ShaderMaterial({
+      uniforms:{tReflect:{value:c6RenderTarget.texture}, tRipple:{value:null},
+        uRippleOff:{value:new THREE.Vector2(0,0)}, uTexMatrix:{value:c6TexMatrix},
+        uOpacity:{value:0.85}},
+      vertexShader:[
+        'uniform mat4 uTexMatrix;',
+        'varying vec4 vProj; varying vec2 vUvW; varying vec3 vView;',
+        'void main(){',
+        '  vUvW=uv;',
+        '  vec4 wp=modelMatrix*vec4(position,1.0);',
+        '  vView=cameraPosition-wp.xyz;',
+        '  vProj=uTexMatrix*vec4(position,1.0);',
+        '  gl_Position=projectionMatrix*viewMatrix*wp;',
+        '}',
+      ].join('\n'),
+      fragmentShader:[
+        'uniform sampler2D tReflect; uniform sampler2D tRipple;',
+        'uniform vec2 uRippleOff; uniform float uOpacity;',
+        'varying vec4 vProj; varying vec2 vUvW; varying vec3 vView;',
+        'void main(){',
+        '  float rip=texture2D(tRipple, vUvW*0.085+uRippleOff).a;',
+        '  vec4 proj=vProj;',
+        '  proj.xy+=(rip-0.30)*0.010*proj.w;',
+        '  vec2 uv=proj.xy/max(proj.w, 0.0001);',
+        '  float inside=step(0.0,uv.x)*step(uv.x,1.0)*step(0.0,uv.y)*step(uv.y,1.0)*step(0.0,proj.w);',
+        '  vec3 refl=texture2D(tReflect, uv).rgb;',
+        '  vec3 V=normalize(vView);',
+        '  float fres=pow(1.0-clamp(V.y,0.0,1.0), 2.0);',
+        '  float alpha=uOpacity*(0.10+0.80*fres)*inside;',
+        '  if(alpha<=0.001) discard;',
+        '  gl_FragColor=vec4(refl*vec3(0.82,0.93,0.97), alpha);',
+        '}',
+      ].join('\n'),
+      transparent:true, depthWrite:false});
+    const c6Overlays=[];   // one per water polygon, filled in buildRoadsWater()
+    let c6WaterBase=null;  // first base water mesh (its transform defines the plane)
+    const c6State={mode:'auto', enabled:false, renders:0, tagged:0};
+    function c6Tag(obj){ obj.layers.enable(C6_REFL_LAYER); c6State.tagged++; }
+    /* lights must answer the reflection camera as well, so the
+       mirrored image is lit like the main view */
+    hemi.layers.enable(C6_REFL_LAYER); sun.layers.enable(C6_REFL_LAYER); amb.layers.enable(C6_REFL_LAYER);
     /* C5 (Issue #19): rooftop-layer tallies, filled by
        buildRoofLayerC5() and read by __QA__. addedTriangles is the
        exact triangle count of the layer's own geometry, accumulated
@@ -1031,6 +1099,7 @@
       const mesh=new THREE.Mesh(g,[m, cityGhostMat]);
       g.clearGroups(); g.addGroup(0, totalVerts, 0);
       cityMeshRef=mesh;
+      c6Tag(mesh); // C6: buildings enter the planar reflection
       mesh.castShadow=false; mesh.receiveShadow=true;
       scene.add(mesh);
       // ledge points were collected separately; merge them into the perch
@@ -1217,6 +1286,7 @@
       g2.setAttribute('color', new THREE.Float32BufferAttribute(acc2.col,3));
       g2.setAttribute('normal', new THREE.Float32BufferAttribute(acc2.nor,3));
       const mesh2=new THREE.Mesh(g2, new THREE.MeshLambertMaterial({vertexColors:true, side:THREE.DoubleSide}));
+      c6Tag(mesh2); // C6: elevated deck enters the planar reflection
       mesh2.castShadow=true; scene.add(mesh2);
       if(pillarPts.length){
         const pg=new THREE.CylinderGeometry(1.1,1.3,11.5,7);
@@ -1224,6 +1294,7 @@
         const inst=new THREE.InstancedMesh(pg, pm, pillarPts.length);
         const mtx=new THREE.Matrix4();
         pillarPts.forEach((p,i)=>{ mtx.makeTranslation(p[0], 5.75, p[1]); inst.setMatrixAt(i, mtx); });
+        c6Tag(inst); // C6: elevated pillars enter the planar reflection
         inst.castShadow=false; scene.add(inst);
         // roost points under the expressway (report: 高架下 = communal roost)
         for(let i=0;i<pillarPts.length;i+=2){
@@ -1238,7 +1309,9 @@
       g3.setAttribute('position', new THREE.Float32BufferAttribute(acc3.pos,3));
       g3.setAttribute('color', new THREE.Float32BufferAttribute(acc3.col,3));
       g3.setAttribute('normal', new THREE.Float32BufferAttribute(acc3.nor,3));
-      scene.add(new THREE.Mesh(g3, new THREE.MeshLambertMaterial({vertexColors:true})));
+      const girderMesh=new THREE.Mesh(g3, new THREE.MeshLambertMaterial({vertexColors:true}));
+      c6Tag(girderMesh); // C6: elevated girder band enters the planar reflection
+      scene.add(girderMesh);
       /* translucent sound barriers: tall (deck 11.5 m → top ≈14.3 m),
          clearly see-through acrylic-style panels — light blue tint,
          low opacity, visible panel seams, steel posts and top/mid rails
@@ -1281,11 +1354,13 @@
       fg.setAttribute('position', new THREE.Float32BufferAttribute(framePos,3));
       fg.computeVertexNormals();
       const frameMesh=new THREE.Mesh(fg, new THREE.MeshLambertMaterial({color:0x4d565e, side:THREE.DoubleSide}));
+      c6Tag(frameMesh); // C6: barrier frame enters the reflection (the translucent panels do not)
       scene.add(frameMesh);
       if(postPts.length){
         const postInst=new THREE.InstancedMesh(new THREE.BoxGeometry(0.2,2.95,0.2), new THREE.MeshLambertMaterial({color:0x424a51}), postPts.length);
         const pm4=new THREE.Matrix4();
         postPts.forEach((p,i)=>{ pm4.makeTranslation(p.x,p.y,p.z); postInst.setMatrixAt(i,pm4); });
+        c6Tag(postInst); // C6: barrier posts enter the planar reflection
         postInst.castShadow=false; scene.add(postInst);
       }
       // water: high-contrast flow texture — deep teal base, long bright
@@ -1340,6 +1415,10 @@
       rippleTex.wrapS=rippleTex.wrapT=THREE.RepeatWrapping;
       rippleTex.repeat.set(0.085,0.085); rippleTex.encoding=THREE.sRGBEncoding;
       const rmat=new THREE.MeshBasicMaterial({map:rippleTex, transparent:true, opacity:0.5, depthWrite:false});
+      /* C6: share the ripple texture (and its live scroll offset) with
+         the reflection overlay material */
+      c6ReflMat.uniforms.tRipple.value=rippleTex;
+      c6ReflMat.uniforms.uRippleOff.value=rippleTex.offset;
       for(const w of CITY.water){
         const shape=new THREE.Shape();
         for(let i=0;i<w.length;i+=2){
@@ -1354,6 +1433,14 @@
         const rm=new THREE.Mesh(wg, rmat);
         rm.rotation.x=-Math.PI/2; rm.position.y=0.44; rm.renderOrder=2;
         scene.add(rm);
+        /* C6: reflection overlay — same geometry as the water polygon,
+           between the water surface and the ripple layer; visibility
+           follows the quality-linked reflection state */
+        const om=new THREE.Mesh(wg, c6ReflMat);
+        om.rotation.x=-Math.PI/2; om.position.y=0.40; om.renderOrder=1;
+        om.visible=false;
+        scene.add(om); c6Overlays.push(om);
+        if(!c6WaterBase) c6WaterBase=wm;
       }
       // ground
       groundMat=new THREE.MeshLambertMaterial({color:0x585c52});
@@ -5445,6 +5532,65 @@
       renderer.setSize(innerWidth, innerHeight);
       applyShadowMapSize();
     }
+    /* ---- C6 (Issue #25): planar-reflection state and render ----
+       Mode comes from the reflection selector: 'auto' enables the
+       reflection only in Ultra, 'on' forces it at any quality, 'off'
+       always disables it (the quality-linked off switch the issue
+       requires). The default is 'auto': the reflection pass redraws
+       the tagged building + elevated geometry (about 6 calls /
+       128k triangles) every frame, an estimated mid-to-large cost,
+       so High keeps its current default behaviour until the
+       post-release verification batch measures the real impact.
+       The render target is 512 in Ultra and 256 otherwise (the
+       issue's 256-512 range); resizing it reallocates the target. */
+    function c6EffectiveEnabled(){
+      if(c6State.mode==='off') return false;
+      if(c6State.mode==='on') return true;
+      return qualityMode==='ultra';
+    }
+    function applyReflectionC6(){
+      c6State.enabled=c6EffectiveEnabled();
+      for(const om of c6Overlays) om.visible=c6State.enabled;
+      const size=qualityMode==='ultra'?512:256;
+      if(size!==c6RtSize){ c6RtSize=size; c6RenderTarget.setSize(size, size); }
+    }
+    const _c6Tgt=new THREE.Vector3(), _c6Up=new THREE.Vector3();
+    const _c6Bias=new THREE.Matrix4().set(
+      0.5,0,0,0.5, 0,0.5,0,0.5, 0,0,0.5,0.5, 0,0,0,1);
+    /* Mirror the main camera across the water plane, render only the
+       reflection layer into the target, and rebuild the projective
+       texture matrix from the base water mesh's transform (shared by
+       every water polygon, so one matrix serves all overlays).
+       Runs immediately before the main render: when the B5 shadow
+       gate fires on this frame, the shadow map is drawn during this
+       pass instead — its content depends only on the light, so the
+       main render that follows uses the same, already-updated map.
+       renderer.info auto-resets per render, so bench figures keep
+       describing the main pass only. */
+    function renderReflectionC6(){
+      if(!c6State.enabled || !c6WaterBase) return;
+      camera.getWorldDirection(_c6Tgt); _c6Tgt.add(camera.position);
+      _c6Tgt.y=2*C6_REFL_Y-_c6Tgt.y;
+      c6VirtualCamera.position.set(camera.position.x,
+        2*C6_REFL_Y-camera.position.y, camera.position.z);
+      _c6Up.copy(camera.up); _c6Up.y=-_c6Up.y;
+      c6VirtualCamera.up.copy(_c6Up);
+      c6VirtualCamera.lookAt(_c6Tgt);
+      c6VirtualCamera.fov=camera.fov; c6VirtualCamera.aspect=camera.aspect;
+      c6VirtualCamera.near=camera.near; c6VirtualCamera.far=camera.far;
+      c6VirtualCamera.updateProjectionMatrix();
+      c6VirtualCamera.updateMatrixWorld();
+      c6WaterBase.updateMatrixWorld();
+      c6TexMatrix.copy(_c6Bias)
+        .multiply(c6VirtualCamera.projectionMatrix)
+        .multiply(c6VirtualCamera.matrixWorldInverse)
+        .multiply(c6WaterBase.matrixWorld);
+      const prevTarget=renderer.getRenderTarget();
+      renderer.setRenderTarget(c6RenderTarget);
+      renderer.render(scene, c6VirtualCamera);
+      renderer.setRenderTarget(prevTarget);
+      c6State.renders++;
+    }
     function updateDynamicResolution(dt){
       frameEMA=frameEMA*0.95+(dt*1000)*0.05;
       fpsFrames++; fpsTime+=dt;
@@ -5693,7 +5839,9 @@
       toast('透かし表示をオフにした（設定は右上のセレクタで変更できる）');
     });
     $('btn-occl-avoid').addEventListener('click', avoidOcclusion);
-    $('quality-sel').addEventListener('change', e=>{ qualityMode=e.target.value; applyRenderScale(); });
+    $('quality-sel').addEventListener('change', e=>{ qualityMode=e.target.value; applyRenderScale(); applyReflectionC6(); });
+    $('refl-sel').addEventListener('change', e=>{ c6State.mode=e.target.value; applyReflectionC6(); });
+    applyReflectionC6(); // C6: initial state (auto + High = disabled)
 
     /* ---- pigeon roster （鳩を選ぶ） ---- */
     const ROSTER_FILTERS={
@@ -5917,6 +6065,7 @@
       updateTelemetry(dt);
       updateDynamicResolution(dt);
       const shadowRequested=updateShadowGate();
+      renderReflectionC6();
       renderer.render(scene, camera);
       framesRendered++;
       if(renderer.shadowMap.enabled && (renderer.shadowMap.autoUpdate || shadowRequested)) shadowUpdates++;
@@ -6029,6 +6178,10 @@
             focusOuterLagDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.z*57.29578).toFixed(2):0,
             focusOuterTwistDeg:fp.mesh&&fp.mesh.wingOLP?+(fp.mesh.wingOLP.rotation.x*57.29578).toFixed(2):0,
             escapeGateActive:!!fp._p3EscapeGate},
+          /* C6 (Issue #25): planar reflection state. */
+          c6:{layer:C6_REFL_LAYER, planeY:C6_REFL_Y, mode:c6State.mode,
+            enabled:c6State.enabled, qualityMode, rtSize:c6RtSize,
+            overlays:c6Overlays.length, tagged:c6State.tagged, renders:c6State.renders},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
@@ -6074,6 +6227,7 @@
         setWeather:w=>{ const b=document.querySelector('#seg-weather button[data-weather="'+w+'"]'); if(b) b.click(); },
         setOcclusion:m=>{ const sel=$('occl-sel'); sel.value=m; sel.dispatchEvent(new Event('change')); },
         setQuality:q=>{ const sel=$('quality-sel'); sel.value=q; sel.dispatchEvent(new Event('change')); },
+        setReflection:m=>{ const sel=$('refl-sel'); sel.value=m; sel.dispatchEvent(new Event('change')); },
         selectPigeon:i=>{ const el=rosterItems[i]; if(el) el.click(); },
       }
     };
@@ -6200,6 +6354,15 @@
           +row('p3.focusOuterLagDeg', fmt(p3v.focusOuterLagDeg))
           +row('p3.focusOuterTwistDeg', fmt(p3v.focusOuterTwistDeg))
           +row('p3.escapeGateActive', fmt(p3v.escapeGateActive))
+          +'</dl>';
+        var c6v=snap.c6||{};
+        html+='<h3>川面反射（C6）</h3><dl class="tgrid">'
+          +row('c6.mode', fmt(c6v.mode))
+          +row('c6.enabled', fmt(c6v.enabled))
+          +row('c6.rtSize', fmt(c6v.rtSize))
+          +row('c6.overlays', fmt(c6v.overlays))
+          +row('c6.tagged', fmt(c6v.tagged))
+          +row('c6.renders', fmt(c6v.renders))
           +'</dl>';
         html+='<h3>boot（ms）</h3><dl class="tgrid">'
           +row('boot.scriptStart', fmt(bt.scriptStart))
