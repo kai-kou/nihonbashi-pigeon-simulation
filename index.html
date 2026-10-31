@@ -1580,6 +1580,41 @@
       t.anisotropy=Math.min(16, renderer.capabilities.getMaxAnisotropy());
       return t;
     }
+    /* P5 (Issue #12): the one new texture of this unit — a shared
+       procedural roughnessMap for every feathered material. Grayscale,
+       because three.js r128 drives roughness from the GREEN channel of
+       roughnessMap. The base value is RGB 230 (≈0.90): the feather
+       materials already sit at roughness 0.85–0.95, and in r128 the
+       map multiplies the scalar, so an 0.90 average leaves the
+       effective roughness level essentially unchanged — only the
+       modulation shows, in raking light. The modulation follows the
+       barb flow of wingTexBase (same slope: moveTo(x,256) →
+       lineTo(x+58,0)) as ~6px-period stripes swinging the value ±14,
+       plus a gentle ±8 global gradient perpendicular to that flow.
+       Fully deterministic (no Math.random). No sRGB encoding: this is
+       a data texture and must stay linear. */
+    function featherRoughTexture(){
+      const cv=document.createElement('canvas'); cv.width=256; cv.height=256;
+      const g=cv.getContext('2d');
+      g.fillStyle='rgb(230,230,230)'; g.fillRect(0,0,256,256);
+      g.lineWidth=3;
+      for(let x=-58,i=0;x<256+58;x+=3,i++){ // barb-direction stripes, ±14 around the base
+        const v=(i%2===0)?244:216;
+        g.strokeStyle='rgb('+v+','+v+','+v+')';
+        g.beginPath(); g.moveTo(x,256); g.lineTo(x+58,0); g.stroke();
+      }
+      // global gradient along (256,58) — perpendicular to the barb
+      // slope — scaled so its projection spans the whole canvas; the
+      // alpha swing is ≈±8 in RGB value.
+      const grad=g.createLinearGradient(0,0,299,68);
+      grad.addColorStop(0,'rgba(255,255,255,0.031)');
+      grad.addColorStop(1,'rgba(0,0,0,0.031)');
+      g.fillStyle=grad; g.fillRect(0,0,256,256);
+      const t=new THREE.CanvasTexture(cv); // no encoding: linear data texture
+      t.anisotropy=8; t.wrapS=THREE.RepeatWrapping; t.wrapT=THREE.RepeatWrapping;
+      return t;
+    }
+    const featherRoughTex=featherRoughTexture();
     const bodyTex=featherTexture(g=>{
       g.fillStyle='#f2f2f0'; g.fillRect(0,0,256,256);
       // darker mantle (sphere top = canvas top) fading to a pale belly
@@ -1860,23 +1895,36 @@
     const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
     const SHARED_CLAW_MAT=new THREE.MeshStandardMaterial({color:0x3a3430, roughness:0.4});
     const _morphMatCache=new Array(MORPHS.length).fill(null);
+    /* P5 (Issue #12): bumpMap reuses each material's own map instance
+       (no new textures) and every feathered material shares the one
+       featherRoughTex above as roughnessMap; the scalar roughness
+       values are unchanged. bumpScale is per region because r128 bump
+       mapping is screen-space derivative based — the stronger the
+       luminance gradient in texture space, the harder it bites. Body
+       scallops are soft gradients, so 0.04; wing barbs are thin,
+       high-gradient lines, so 0.02; tail sits between at 0.03. The aim
+       is feather overlap reading as shading at close range without
+       deforming the silhouette. Hi bumpMaps reference the same texture
+       instance as map, so they ride the B6 placeholder → real-canvas
+       swap in ensureHiTextures() untouched. */
+    const BUMP_BODY=0.04, BUMP_WING=0.02, BUMP_TAIL=0.03;
     function morphMatsFor(morph){
       const idx=MORPHS.indexOf(morph);
       if(_morphMatCache[idx]) return _morphMatCache[idx];
       const bc=morph.body;
       const entry={
-        bodyLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.92, metalness:0.02}),
-        bodyHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, roughness:0.92, metalness:0.02}),
-        breastLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.85}),
-        breastHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, roughness:0.85}),
-        headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTex, roughness:0.9}),
-        headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTexHi, roughness:0.9}),
-        wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFor(morph), roughness:0.95, side:THREE.DoubleSide}),
+        bodyLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        bodyHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        breastLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        breastHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
+        headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
+        wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFor(morph), bumpMap:wingTextureFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         wingHi:null, // lazy: wingTextureHiFor() builds a 2048px texture, as before only on first close LOD
-        tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, roughness:0.95, side:THREE.DoubleSide}),
-        tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide}),
+        tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, bumpMap:tailTex, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),
         rump:new THREE.MeshStandardMaterial({color:(morph.rump===null||morph.rump===undefined)?bc:morph.rump, roughness:0.9}),
-        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide})
+        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, bumpMap:tailTexHi, bumpScale:BUMP_TAIL, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide})
       };
       _morphMatCache[idx]=entry;
       return entry;
@@ -1885,7 +1933,8 @@
       const entry=morphMatsFor(morph);
       if(!entry.wingHi){
         const bc=morph.body;
-        entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureHiFor(morph), roughness:0.95, side:THREE.DoubleSide});
+        // P5 (Issue #12): same-instance bumpMap + shared roughnessMap, as in morphMatsFor above.
+        entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureHiFor(morph), bumpMap:wingTextureHiFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide});
       }
       return entry.wingHi;
     }
@@ -1912,7 +1961,13 @@
          close-up. */
       const neckTex=new THREE.CanvasTexture(neckCanvas);
       neckTex.wrapS=THREE.RepeatWrapping; neckTex.encoding=THREE.sRGBEncoding; neckTex.anisotropy=8;
-      const neckMat=new THREE.MeshStandardMaterial({map:neckTex, roughness:0.24, metalness:0.38,
+      /* P5 (Issue #12): neckTex doubles as its own bumpMap (same
+         instance). neckTex.offset.x is rewritten per bird per frame,
+         but the bundled three.js r128 shares a single vUv driven by
+         the map slot's transform across all texture slots, so the
+         bump follows the iridescence shift automatically. No
+         roughnessMap here: the 0.24 / 0.38 gloss stays as-is. */
+      const neckMat=new THREE.MeshStandardMaterial({map:neckTex, bumpMap:neckTex, bumpScale:0.03, roughness:0.24, metalness:0.38,
           emissive:0xffffff, emissiveMap:neckTex, emissiveIntensity:0.5});
       const neckSheenMat=makeNeckSheenMat();
       const neck=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14), neckMat);
