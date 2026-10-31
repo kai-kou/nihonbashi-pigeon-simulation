@@ -1726,19 +1726,83 @@
       });
     }
 
+    /* ---- B3 (Issue #7): shared pigeon materials ----
+       Previously every bird allocated its own copy of every material
+       below. Materials whose parameters are identical for all birds are
+       now single module-level instances, and materials whose colour is
+       fixed by the morph are cached per morph (at most MORPHS.length
+       entries, plus a Lo/Hi pair for the textures the close LOD swaps).
+       Textures were already shared and are untouched.
+       The neck is deliberately NOT shared: neckTex.offset.x,
+       neck.material.emissiveIntensity and neckSheenMat.uniforms.uShift
+       are rewritten per bird per frame in animate(), so sharing them
+       would make birds fight over one instance and break the
+       iridescence. neckMat / neckSheenMat / neckTex stay per bird.
+       Body / breast / head / wing / tail were previously mutated per
+       bird only by setCloseLOD (map swap). With shared instances that
+       mutation would leak to every bird of the morph, so setCloseLOD
+       now swaps mesh.material between the Lo and Hi shared variants
+       instead of mutating a shared material. The rendered result —
+       same colours, same textures, same LOD thresholds — is unchanged. */
+    const SHARED_BEAK_MAT=new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:0.55});
+    const SHARED_CERE_MAT=new THREE.MeshStandardMaterial({color:0xe9e2d2, roughness:0.7});
+    const SHARED_TWIG_MAT=new THREE.MeshStandardMaterial({color:0x6a5136, roughness:1});
+    const SHARED_EYE_MAT=new THREE.MeshBasicMaterial({color:0xd8541e});
+    const SHARED_PUPIL_MAT=new THREE.MeshBasicMaterial({color:0x14100c});
+    const SHARED_RING_MAT=new THREE.MeshBasicMaterial({color:0xd8cfc0});
+    const SHARED_BAR_MAT=new THREE.MeshStandardMaterial({color:0x101116, roughness:0.9});
+    const SHARED_LEG_MAT=new THREE.MeshBasicMaterial({color:0xea0d0d});
+    const SHARED_BEAK_HI_MAT=new THREE.MeshStandardMaterial({color:0x776c5c, roughness:0.45});
+    const SHARED_CERE_HI_MAT=new THREE.MeshStandardMaterial({color:0xefe7d6, roughness:0.65});
+    const SHARED_IRIS_MAT=new THREE.MeshStandardMaterial({color:0xe05a1a, roughness:0.25});
+    const SHARED_PUPIL_HI_MAT=new THREE.MeshStandardMaterial({color:0x0d0a08, roughness:0.2});
+    const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
+    const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
+    const SHARED_CLAW_MAT=new THREE.MeshStandardMaterial({color:0x3a3430, roughness:0.4});
+    const _morphMatCache=new Array(MORPHS.length).fill(null);
+    function morphMatsFor(morph){
+      const idx=MORPHS.indexOf(morph);
+      if(_morphMatCache[idx]) return _morphMatCache[idx];
+      const bc=morph.body;
+      const entry={
+        bodyLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.92, metalness:0.02}),
+        bodyHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, roughness:0.92, metalness:0.02}),
+        breastLo:new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.85}),
+        breastHi:new THREE.MeshStandardMaterial({color:bc, map:bodyTexHi, roughness:0.85}),
+        headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTex, roughness:0.9}),
+        headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTexHi, roughness:0.9}),
+        wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFor(morph), roughness:0.95, side:THREE.DoubleSide}),
+        wingHi:null, // lazy: wingTextureHiFor() builds a 2048px texture, as before only on first close LOD
+        tailLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, roughness:0.95, side:THREE.DoubleSide}),
+        tailHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide}),
+        rump:new THREE.MeshStandardMaterial({color:morph.bars?0xbfc2bd:bc, roughness:0.9}),
+        fan:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide})
+      };
+      _morphMatCache[idx]=entry;
+      return entry;
+    }
+    function morphWingHiMat(morph){
+      const entry=morphMatsFor(morph);
+      if(!entry.wingHi){
+        const bc=morph.body;
+        entry.wingHi=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureHiFor(morph), roughness:0.95, side:THREE.DoubleSide});
+      }
+      return entry.wingHi;
+    }
+
     function makePigeonMesh(pi){
       const g=new THREE.Group();
       g.userData.pigeonIdx=pi; // tap-to-select raycast target
       const bodyG=new THREE.Group(); g.add(bodyG);
       const morph=MORPHS[pi%MORPHS.length];
       const bc=morph.body;
-      const mat=new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.92, metalness:0.02});
+      const mm=morphMatsFor(morph);
+      const mat=mm.bodyLo;
       const body=new THREE.Mesh(bodyGeo, mat); body.scale.set(1,0.86,1.38); body.castShadow=true; bodyG.add(body);
-      const breast=new THREE.Mesh(bodyGeo, new THREE.MeshStandardMaterial({color:bc, map:bodyTex, roughness:0.85}));
+      const breast=new THREE.Mesh(bodyGeo, mm.breastLo);
       breast.scale.set(0.82,0.78,0.8); breast.position.set(0,-0.012,0.075); bodyG.add(breast);
       // rump patch (pale on wild type) just before the tail
-      const rump=new THREE.Mesh(new THREE.SphereGeometry(0.105,12,9),
-        new THREE.MeshStandardMaterial({color:morph.bars?0xbfc2bd:bc, roughness:0.9}));
+      const rump=new THREE.Mesh(new THREE.SphereGeometry(0.105,12,9), mm.rump);
       rump.scale.set(0.92,0.72,0.9); rump.position.set(0,0.018,-0.115); bodyG.add(rump);
       /* neck + breast: gradient iridescent texture (per-bird instance so
          the azimuth offset can rotate independently) under a fresnel
@@ -1760,19 +1824,18 @@
       const breastSheen=new THREE.Mesh(new THREE.SphereGeometry(0.1165,18,12), neckSheenMat);
       breastPatch.add(breastSheen);
       const headG=new THREE.Group(); headG.position.set(0,0.085,0.155); bodyG.add(headG);
-      const headMat=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:bodyTex, roughness:0.9});
+      const headMat=mm.headLo;
       const head=new THREE.Mesh(headGeo, headMat); head.castShadow=true; headG.add(head);
-      const beak=new THREE.Mesh(beakGeo, new THREE.MeshStandardMaterial({color:0x8a7f70, roughness:0.55}));
+      const beak=new THREE.Mesh(beakGeo, SHARED_BEAK_MAT);
       beak.rotation.x=Math.PI/2; beak.position.set(0,-0.004,0.08); headG.add(beak);
-      const cere=new THREE.Mesh(new THREE.SphereGeometry(0.013,8,6), new THREE.MeshStandardMaterial({color:0xe9e2d2, roughness:0.7}));
+      const cere=new THREE.Mesh(new THREE.SphereGeometry(0.013,8,6), SHARED_CERE_MAT);
       cere.scale.set(1.15,0.6,1); cere.position.set(0,0.008,0.052); headG.add(cere); // fleshy cere at beak base
       // nest material (twig) carried in the beak during the breeding season
-      const twig=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.009,0.17,5),
-        new THREE.MeshStandardMaterial({color:0x6a5136, roughness:1}));
+      const twig=new THREE.Mesh(new THREE.CylinderGeometry(0.006,0.009,0.17,5), SHARED_TWIG_MAT);
       twig.rotation.x=Math.PI/2.3; twig.position.set(0,-0.014,0.13); twig.visible=false; headG.add(twig);
-      const eyeMat=new THREE.MeshBasicMaterial({color:0xd8541e});
-      const pupilMat=new THREE.MeshBasicMaterial({color:0x14100c});
-      const ringMat=new THREE.MeshBasicMaterial({color:0xd8cfc0});
+      const eyeMat=SHARED_EYE_MAT;
+      const pupilMat=SHARED_PUPIL_MAT;
+      const ringMat=SHARED_RING_MAT;
       const basicHeadParts=[beak, cere];
       for(const s of [-1,1]){
         const ring=new THREE.Mesh(new THREE.SphereGeometry(0.018,8,6), ringMat);
@@ -1783,7 +1846,7 @@
         pupil.position.set(0.0555*s,0.014,0.02); headG.add(pupil);
         basicHeadParts.push(ring, eye, pupil);
       }
-      const wingMat=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78), map:wingTextureFor(morph), roughness:0.95, side:THREE.DoubleSide});
+      const wingMat=mm.wingLo;
       const wingLP=new THREE.Group(); wingLP.position.set(0.05,0.045,0.015); bodyG.add(wingLP);
       const wingL=new THREE.Mesh(wingGeo, wingMat); wingL.castShadow=true; wingLP.add(wingL);
       const wingRP=new THREE.Group(); wingRP.position.set(-0.05,0.045,0.015); bodyG.add(wingRP);
@@ -1797,14 +1860,14 @@
       foldR.position.set(-0.028,0.108,0.045); foldR.rotation.y=-1.32; foldR.scale.set(-0.92,0.92,0.92);
       bodyG.add(foldR);
       const tailG=new THREE.Group(); tailG.position.set(0,0.008,-0.15); bodyG.add(tailG);
-      const tailMat=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTex, roughness:0.95, side:THREE.DoubleSide});
+      const tailMat=mm.tailLo;
       const tail=new THREE.Mesh(tailGeo, tailMat);
       tailG.add(tail);
       /* twin wing bars as thin raised geometry over the texture bars, so
          the bars read by silhouette/shading as well as by print (both the
          flying wing and the folded back panels carry them) */
       if(morph.bars){
-        const barMat=new THREE.MeshStandardMaterial({color:0x101116, roughness:0.9});
+        const barMat=SHARED_BAR_MAT;
         const barGeos=[new THREE.BoxGeometry(0.036,0.0035,0.175), new THREE.BoxGeometry(0.031,0.0035,0.175)];
         for(const host of [wingL, wingR, foldL, foldR]){
           const b1=new THREE.Mesh(barGeos[0], barMat); b1.position.set(0.184,0.0035,0); host.add(b1);
@@ -1817,7 +1880,7 @@
          so the two legs separate visually from the side. Leg centre
          y −0.155 / ankle −0.245 are matched by the per-frame leg
          animation; feet land on the ground at BODY_Y = 0.42. */
-      const legMat=new THREE.MeshBasicMaterial({color:0xea0d0d});
+      const legMat=SHARED_LEG_MAT;
       const legs=[];
       for(const s of [-1,1]){
         const leg=new THREE.Mesh(legGeo, legMat); leg.position.set(0.042*s,-0.155,0.005); bodyG.add(leg); legs.push(leg);
@@ -1833,20 +1896,20 @@
          (3 forward + 1 back), and a tail of 12 separate rectrices. */
       const closeHead=new THREE.Group(); closeHead.visible=false; headG.add(closeHead);
       {
-        const beakMatHi=new THREE.MeshStandardMaterial({color:0x776c5c, roughness:0.45});
+        const beakMatHi=SHARED_BEAK_HI_MAT;
         const upper=new THREE.Mesh(new THREE.ConeGeometry(0.017,0.07,12), beakMatHi);
         upper.rotation.x=Math.PI/2-0.1; upper.position.set(0,-0.002,0.082); closeHead.add(upper);
         const lower=new THREE.Mesh(new THREE.ConeGeometry(0.011,0.05,10), beakMatHi);
         lower.rotation.x=Math.PI/2+0.06; lower.position.set(0,-0.013,0.07); closeHead.add(lower);
-        const cereHi=new THREE.Mesh(new THREE.SphereGeometry(0.0145,12,9), new THREE.MeshStandardMaterial({color:0xefe7d6, roughness:0.65}));
+        const cereHi=new THREE.Mesh(new THREE.SphereGeometry(0.0145,12,9), SHARED_CERE_HI_MAT);
         cereHi.scale.set(1.25,0.62,1.05); cereHi.position.set(0,0.009,0.053); closeHead.add(cereHi);
         for(const s of [-1,1]){ // nostril bumps on the cere
           const nos=new THREE.Mesh(new THREE.SphereGeometry(0.0045,8,6), cereHi.material);
           nos.position.set(0.007*s,0.013,0.058); closeHead.add(nos);
         }
-        const irisMat=new THREE.MeshStandardMaterial({color:0xe05a1a, roughness:0.25});
-        const pupilMatHi=new THREE.MeshStandardMaterial({color:0x0d0a08, roughness:0.2});
-        const ringMatHi=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
+        const irisMat=SHARED_IRIS_MAT;
+        const pupilMatHi=SHARED_PUPIL_HI_MAT;
+        const ringMatHi=SHARED_RING_HI_MAT;
         for(const s of [-1,1]){
           const ball=new THREE.Mesh(new THREE.SphereGeometry(0.0155,20,14), irisMat);
           ball.position.set(0.0495*s,0.014,0.018); closeHead.add(ball);
@@ -1863,8 +1926,8 @@
            so the close-LOD foot (the one actually seen at 2–3 m) is as
            legible as the basic one; foot groups are kept in closeFeet
            so the per-frame step animation can move them too */
-        const toeMat=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
-        const clawMat=new THREE.MeshStandardMaterial({color:0x3a3430, roughness:0.4});
+        const toeMat=SHARED_TOE_MAT;
+        const clawMat=SHARED_CLAW_MAT;
         const segGeo=new THREE.CylinderGeometry(0.0075,0.0062,0.042,7); segGeo.rotateX(Math.PI/2); segGeo.translate(0,0,0.021);
         const seg2Geo=new THREE.CylinderGeometry(0.0062,0.0046,0.032,7); seg2Geo.rotateX(Math.PI/2-0.35); seg2Geo.translate(0,-0.0045,0.015);
         const clawGeo=new THREE.ConeGeometry(0.0042,0.019,6); clawGeo.rotateX(Math.PI/2+0.5); clawGeo.translate(0,-0.005,0.009);
@@ -1883,7 +1946,7 @@
       }
       const tailFan=new THREE.Group(); tailFan.visible=false; tailG.add(tailFan);
       {
-        const fanMat=new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.92), map:tailTexHi, roughness:0.95, side:THREE.DoubleSide});
+        const fanMat=mm.fan;
         const fGeo=new THREE.PlaneGeometry(0.021,0.2); fGeo.translate(0,0.1,0); fGeo.rotateX(-Math.PI/2);
         for(let k=0;k<12;k++){
           const pivot=new THREE.Group();
@@ -1898,6 +1961,7 @@
       scene.add(g);
       return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, wingL, wingR, body, twig,
         basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
+        breastMesh:breast, headMesh:head,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat};
     }
     /* toggle the close-range LOD for one bird: geometry detail + hi-res
@@ -1910,12 +1974,27 @@
       m.tail.visible=!on;
       for(const part of m.basicHeadParts) part.visible=!on;
       // basic feet yield to the jointed toes (per-frame leg logic honours p.closeLOD)
-      m.bodyMat.map=on?bodyTexHi:bodyTex; m.bodyMat.needsUpdate=true;
-      m.breastMat.map=on?bodyTexHi:bodyTex; m.breastMat.needsUpdate=true;
-      m.headMat.map=on?bodyTexHi:bodyTex; m.headMat.needsUpdate=true;
+      // B3: materials are shared per morph, so do not mutate .map on the
+      // shared instance (that would flip every bird of the morph). Swap
+      // each mesh to the shared Lo/Hi variant for this bird's morph —
+      // same maps (bodyTex/bodyTexHi, wing lo/hi, tailTex/tailTexHi)
+      // and same colours as the old per-bird mutation produced.
       const morph=MORPHS[p.i%MORPHS.length];
-      m.wingMat.map=on?wingTextureHiFor(morph):wingTextureFor(morph); m.wingMat.needsUpdate=true;
-      m.tailMat.map=on?tailTexHi:tailTex; m.tailMat.needsUpdate=true;
+      const mm=morphMatsFor(morph);
+      const bodyMat=on?mm.bodyHi:mm.bodyLo;
+      const breastMat=on?mm.breastHi:mm.breastLo;
+      const headMat=on?mm.headHi:mm.headLo;
+      const wingMat=on?morphWingHiMat(morph):mm.wingLo;
+      const tailMat=on?mm.tailHi:mm.tailLo;
+      if(m.body) m.body.material=bodyMat;
+      if(m.breastMesh) m.breastMesh.material=breastMat;
+      if(m.headMesh) m.headMesh.material=headMat;
+      if(m.wingL) m.wingL.material=wingMat;
+      if(m.wingR) m.wingR.material=wingMat;
+      if(m.foldL) m.foldL.material=wingMat;
+      if(m.foldR) m.foldR.material=wingMat;
+      if(m.tail) m.tail.material=tailMat;
+      m.bodyMat=bodyMat; m.breastMat=breastMat; m.headMat=headMat; m.wingMat=wingMat; m.tailMat=tailMat;
     }
     /* per-bird LOD check with ±10% hysteresis so the switch never flickers:
        enter at dist < 3.0 m or frame-height occupancy > 25%, leave at
