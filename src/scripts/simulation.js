@@ -1784,7 +1784,14 @@
           sky:{dome:!!skyDome, environment:!!scene.environment, envRegens:envRegenCount,
             lastEnvKey:lastEnvKey,
             turbidity:skyDome?+skyDome.material.uniforms.turbidity.value.toFixed(2):0,
-            rayleigh:skyDome?+skyDome.material.uniforms.rayleigh.value.toFixed(2):0},
+            rayleigh:skyDome?+skyDome.material.uniforms.rayleigh.value.toFixed(2):0,
+            /* R3-2 (Issue #77): live stock-fog distances from scene.fog
+               (THREE.Fog has no heightFactor property — the height
+               weight is the baked R32 constant below, not a fog field).
+               near/far already carry updateDaylight's weather linkage
+               (cloud/rain/snow far shortening). */
+            fog:{near:+scene.fog.near.toFixed(1), far:+scene.fog.far.toFixed(1),
+              heightFactor:R32_HAZE_TOP_W, heightTopM:R32_HAZE_TOP_M}},
           precip:{rainVisible:rainFx.pts.visible, rainOpacity:+rainFx.mat.opacity.toFixed(2),
             snowVisible:snowFx.pts.visible, snowOpacity:+snowFx.mat.opacity.toFixed(2)},
           occlusion:{mode:occlMode, buildings:[...occl.set], opacity:+occl.opacity.toFixed(2)},

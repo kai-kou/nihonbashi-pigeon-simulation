@@ -79,6 +79,22 @@
        the fade groups on every city geometry. x1State is read by
        __QA__ / the measurement panel. */
     const X1_CELL=240, X1_FADE_RADIUS=60;
+    /* R3-2 (Issue #77): height-weighted haze for the building facades.
+       The stock linear Fog (scene.fog; colour/near/far driven by
+       updateDaylight's weather linkage in simulation.js) has no height
+       dependence, so distant skylines read flat. The facade shader
+       (facadeShaderMod below) scales the stock fog factor by a
+       world-height weight: 1.0 at ground level, falling to
+       R32_HAZE_TOP_W at and above R32_HAZE_TOP_M, so low storeys stay
+       dense and rooftops clear. The constants are interpolated into
+       the shader string when facadeShaderMod runs (the built
+       index.html carries the template literal; the compiled shader
+       contains the numeric literals) — no new uniform is added — and the same
+       constants are reported by __QA__.snapshot().sky.fog, so the
+       measurement panel and the shader can never disagree. X1 chunk
+       fade (geometry groups / ghost-material opacity) is a separate
+       mechanism and is untouched. */
+    const R32_HAZE_TOP_M=60, R32_HAZE_TOP_W=0.35;
     const x1State={chunks:0, fadeBuildings:0, chunkedBuildings:0, fadeVerts:0, chunkVerts:0};
     let cityFadeRecs=[];
     let waterTex=null, rippleTex=null;
@@ -589,7 +605,26 @@
                colour array is not modified). */
             diffuseColor.rgb *= mix(0.72, 1.0, smoothstep(0.0, 4.5, vC7BaseY));`)
           .replace('#include <emissivemap_fragment>', `#include <emissivemap_fragment>
-            totalEmissiveRadiance *= (0.45 + 1.10 * fract(vBSeed * 29.3));`);
+            totalEmissiveRadiance *= (0.45 + 1.10 * fract(vBSeed * 29.3));`)
+          .replace('#include <fog_fragment>', `#ifdef USE_FOG
+/* R3-2 (Issue #77): the stock fog factor, scaled by a world-height
+   haze weight. vC7BaseY is position.y, i.e. world height in metres
+   (ground = 0, as for the C7 base gradient above). The weight is 1.0
+   at the ground and R32_HAZE_TOP_W at/above R32_HAZE_TOP_M, interpolated
+   from those constants when this function runs — no new uniform. Fog colour/near/far stay the stock
+   scene.fog values, so updateDaylight's weather linkage (cloud/rain/
+   snow far shortening) is preserved, and the weight can only lighten
+   fog, never double-crush rain/snow. Both facade materials share this
+   function and the 'facade-c1' cache key, so no new program is added.
+   The two branches below are the stock r128 fog_fragment branches. */
+#ifdef FOG_EXP2
+  float r32FogFactor = 1.0 - exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
+#else
+  float r32FogFactor = smoothstep(fogNear, fogFar, vFogDepth);
+#endif
+  float r32HazeW = mix(1.0, ${R32_HAZE_TOP_W.toFixed(2)}, smoothstep(0.0, ${R32_HAZE_TOP_M.toFixed(1)}, vC7BaseY));
+  gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, r32FogFactor * r32HazeW);
+#endif`);
       };
       const facadeParams={vertexColors:true, map:facadeTex,
         normalMap:facadeNormalTex, normalScale:new THREE.Vector2(0.85,0.85),
