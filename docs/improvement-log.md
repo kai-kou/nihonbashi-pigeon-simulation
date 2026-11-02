@@ -148,3 +148,20 @@
 - 静的計測（変更前 → 変更後、grep ベースのコンストラクタ出現数、src/ 配下を同一方法で計測）: CanvasTexture 29→29、MeshStandardMaterial 40→40、MeshBasicMaterial 20→20、ShaderMaterial 9→9、MeshLambertMaterial 24→24、MeshPhongMaterial 2→2、LineBasicMaterial 1→1、Geometry（`new THREE.*Geometry`）94→94、Mesh（`new THREE.Mesh(`）84→84。すべて差分 +0。コンストラクタ出現数は新規テクスチャが既存ヘルパー（featherTexture／hiPlaceholderTex）経由で作られるため変わらない。実行時テクスチャインスタンスは pied Lo＋Hi の +2 のみで、基準の最大 73 に対し 75 見込み（+4 以内・上限 88 内）。新規プログラム・新規ジオメトリ・新規メッシュはなし。形状変更なしのため avgTriangles は実施前と同値の見込み。
 - 受入への対応見込み: 計測可能な静的受入（テクスチャ増 +2・上限 88 内、形状変更なし、ビルド再現性、inline script の構文チェック、D1 遵守）は満たす。視覚受入（路面約 10m で checker 個体の翼にチェック斑・pied 個体の胴に白斑が blue bar 個体と並んだ状態で判別できること、至近 2〜5m で斑の縁が滲みではなく模様として読めること）と、計測パネル値（textures・avgTriangles 等）のランタイム確定計測は、本スプリントでは実ブラウザ計測ができないため「未確認」とし、検証バッチ（R4-1、Issue #80）へ送る。
 - 視覚受入: 未確認。実ブラウザ目視は検証バッチ（R4-1）へ送る。
+
+## R1-6 眼の角膜光沢（Issue #84）
+
+- 目的: 至近（1.9〜3.4 m）で視点を左右に振った際に両眼のハイライト位置が移動して読め、目が描いただけの平坦なものに見えないようにする。P6 の要素（目・嘴・眼環）の判別が退行しないこと。
+- 前提差異（現行 main の実読による Issue 前提の訂正）: Issue 本文の「ハイライトがなく描いた目になる」は監査時点の見立てであり、現行 main には P6（Issue #21）で既に透明な角膜キャップ（SHARED_CORNEA_MAT、MeshPhysicalMaterial、clearcoat 1.0、opacity 0.25、envMapIntensity 0.3、眼球より一回り大きい球）が close-LOD の眼球上に存在する。したがって本単位はキャップの新設ではなく、下記のパラメータ変更のみでハイライトの読みを強める。キャップ自体には触れていない。
+- 変更内容: `src/scripts/pigeons.js` のみ、3 か所。色・テクスチャ・ジオメトリ・メッシュ数は一切変えていない。
+  1. 虹彩 roughness 0.25 → 0.08（SHARED_IRIS_MAT、close-LOD の眼球のみ）。色 0xffffff・irisTex マップは不変。新規マテリアルなし。
+  2. close-LOD 瞳孔の扁平化（pup.scale.set(0.55,1,1)）。x は外側方向で、球（半径 0.0078）を外側方向に薄くし、眼球表面上の円盤として読ませる。ジオメトリ・位置・色・マテリアルは不変。
+  3. close-LOD 眼環 roughness 0.6 → 0.85（SHARED_RING_HI_MAT）。色 0xd9d0bf・ジオメトリは不変。0.85 は近傍の質感値と整合させた値で、close-LOD の cere（0.85）と同値、基本の cere（0.9）に近い粉質の帯にある。
+- 含めないもの（スコープ外と理由）: 基本 LOD の瞳孔（SHARED_PUPIL_MAT、MeshBasic の小球）は受入距離（至近 1.9〜3.4 m）の主対象が close-LOD のため変更しない。基本 LOD の眼環（SHARED_RING_MAT）は MeshBasic のため roughness パラメータ自体がなく対象外。基本 LOD の眼（SHARED_EYE_MAT、MeshBasic）も同様に変更しない。角膜キャップの新設・パラメータ変更は、機構が既存のため行わない。
+- キャップ越しの見え方についての判断: 移動するハイライトの主因はキャップ側（clearcoat＋環境マップ、opacity 0.25 の透明シェル）で、視点移動に伴いハイライト位置が動く構造は既にある。虹彩 roughness を 0.08 へ下げると、キャップの下の虹彩自身のスペキュラがより鋭く・強くなる。キャップの opacity は 0.25 と薄いため虹彩は覆い隠されず、虹彩のグラデーション模様は読めたまま、鋭い二次的な光沢が重なってハイライトの移動が判別しやすくなる設計である。瞳孔の扁平化は出っ張った玉感を抑え、眼球表面に収まる見え方にする。眼環をよりマットにすることで、光沢のある眼球と粉質の眼環のコントラストがつき、P6 の目・嘴・眼環の判別が保たれる設計である。
+- 白飛びリスクについての所見: リスクは低いと判断する。理由は (a) キャップは opacity 0.25・envMapIntensity 0.3 と P6 で控えめに設計されており、本単位はキャップ側を強めていない、(b) 虹彩は無地の白ではなくグラデーションの irisTex マップ付きで、拡散輝度は上がらない（roughness 低下はスペキュラの鋭さ・強さのみに効く）、(c) 拡散光の増加や emissive の追加は一切ない、(d) 瞳孔はほぼ黒（0x0d0a08）のままで眼の中心の暗さが残り、眼環はよりマットになるため、眼全体が白く抜ける方向には働かない。ただし強い直射光の角度では眼球上に小さな鋭いスペキュラ点が出る可能性があり、個体ごとの白飛びの有無は実ブラウザ目視で確認する（下記「視覚受入」参照）。
+- D1 厳守: 歩行の足運び・タイミング・stepping 関連コードには一切触れていない。差分は上記 3 か所のみで、stepping ブロックの差分はない。D4（r128 のまま）、D5（単一 HTML）、D6（手続き生成のみ、新規テクスチャなし）も維持。
+- ビルド: `tools/build.py` で再生成。4,922,371 bytes（変更前 4,921,296 bytes、+1,075 bytes＝コメント・コードの追加分がそのまま inlined されたもの）、git blob `0e5c97ba49ea5afca976278a78e585751c3556a9`、SHA-256 `d396ab9d06ea0b355e2e5e5038abbd8ff9c5b18eb701a7d535f31ad4b774c11f`、決定論的再ビルド一致（`tools/build.py verify` 合格、ディスク一致）、inline script 6 本（webfont／citygeo／build-city／pigeons／simulation／perf-panel、生成 index.html から抽出）の `node --check` 合格。
+- 静的計測（変更前 → 変更後、grep ベースのコンストラクタ出現数、src/ 配下を同一方法で計測）: CanvasTexture 29→29、MeshStandardMaterial 40→40、MeshBasicMaterial 20→20、ShaderMaterial 9→9、MeshLambertMaterial 24→24、MeshPhongMaterial 2→2、LineBasicMaterial 1→1、Geometry（`new THREE.*Geometry`）94→94、Mesh（`new THREE.Mesh(`）84→84。すべて差分 +0。数え方はテキスト上のコンストラクタ出現数であり、ループによる実行時インスタンス数ではないため、絶対値ではなく差分を主とする。マテリアル種の組み合わせ・テクスチャ・ジオメトリ・メッシュの新規追加はなく、瞳孔の扁平化は既存メッシュの scale 変更のみのため、programs の新規追加も静的にはない見込みである。
+- 受入への対応見込み: 計測可能な静的受入（新規要素 +0、ビルド再現性、inline script の構文チェック、D1 遵守）は満たす。計測パネル値（totalNodes／programs／geometries／textures）のランタイム確定値が実施前と同値（±0）であることは、本スプリントでは実ブラウザ計測ができないため未確認とし、検証バッチで計測パネルを読み照合すること。視覚受入（至近で視点を左右に振った際の両眼ハイライト位置の移動の判別、P6 要素の判別の退行なし、白飛びする個体なし）も同様に未確認とし、検証バッチ（R4-1、Issue #80）へ送る。
+- 視覚受入: 未確認。実ブラウザ目視は検証バッチ（R4-1）へ送る。

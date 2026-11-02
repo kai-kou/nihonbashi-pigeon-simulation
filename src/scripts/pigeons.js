@@ -950,18 +950,27 @@
        0.65 → 0.85, colour unchanged. The iris drops its flat 0xe05a1a
        tint for the procedural irisTex gradient map (colour white,
        roughness unchanged) — close-LOD eyeball only, the basic eye
-       (SHARED_EYE_MAT) is untouched. The cornea cap material is new:
+       (SHARED_EYE_MAT) is untouched. R1-6 (Issue #84) lowers that
+       iris roughness 0.25 → 0.08 below, so the iris reads glossier
+       under the cornea cap instead of flat. The cornea cap material is new:
        a transparent Physical shell whose highlight comes only from
        the environment map + clearcoat, kept subtle (opacity 0.25). */
     const SHARED_BEAK_HI_MAT=new THREE.MeshStandardMaterial({color:0x2f2e33, roughness:0.45});
     const SHARED_CERE_HI_MAT=new THREE.MeshStandardMaterial({color:0xefe7d6, roughness:0.85});
-    const SHARED_IRIS_MAT=new THREE.MeshStandardMaterial({color:0xffffff, map:irisTex, roughness:0.25});
+    /* R1-6 (Issue #84): iris roughness 0.25 → 0.08, close-LOD only.
+       Colour, map and geometry are unchanged; no new material. */
+    const SHARED_IRIS_MAT=new THREE.MeshStandardMaterial({color:0xffffff, map:irisTex, roughness:0.08});
     const SHARED_CORNEA_MAT=new THREE.MeshPhysicalMaterial({color:0xffffff, transparent:true, opacity:0.25, roughness:0.06, metalness:0, clearcoat:1.0, clearcoatRoughness:0.1, envMapIntensity:0.3, depthWrite:false, side:THREE.FrontSide});
     /* P6 (Issue #21): one shared cornea-cap sphere, slightly larger
        than the 0.0155 eyeball, same 20x14 segmentation. */
     const corneaGeo=new THREE.SphereGeometry(0.0168,20,14);
     const SHARED_PUPIL_HI_MAT=new THREE.MeshStandardMaterial({color:0x0d0a08, roughness:0.2});
-    const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
+    /* R1-6 (Issue #84): close-LOD eye-ring roughness 0.6 → 0.85,
+       matching the close-LOD cere (0.85) powdery finish; colour and
+       geometry are unchanged. The basic eye ring (SHARED_RING_MAT)
+       is MeshBasic and has no roughness parameter, so it is out of
+       scope for this change. */
+    const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.85});
     /* R1-2 (Issue #68): close-LOD toe emissiveIntensity 0.85 → 0.35.
        Colour and emissive colour are unchanged; only the glow level
        drops so the toes stop reading as self-lit at close range. */
@@ -1360,6 +1369,14 @@
           const cap=new THREE.Mesh(corneaGeo, SHARED_CORNEA_MAT);
           cap.position.copy(ball.position); closeHead.add(cap);
           const pup=new THREE.Mesh(new THREE.SphereGeometry(0.0078,12,9), pupilMatHi);
+          /* R1-6 (Issue #84): flatten the close-LOD pupil along the
+             outward x axis (scale.x 0.55), so it reads as a disc on
+             the eyeball surface rather than a protruding bead.
+             Geometry, position and material are unchanged. The basic
+             pupil (SHARED_PUPIL_MAT, MeshBasic small sphere) is the
+             far-LOD part and is not the acceptance-distance target,
+             so it is left unchanged. */
+          pup.scale.set(0.55,1,1);
           pup.position.set(0.0585*s,0.014,0.021); closeHead.add(pup);
           const ringHi=new THREE.Mesh(new THREE.TorusGeometry(0.0165,0.0038,8,20), ringMatHi);
           ringHi.rotation.y=Math.PI/2; ringHi.position.set(0.0495*s,0.014,0.018); closeHead.add(ringHi);
