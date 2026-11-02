@@ -2053,7 +2053,11 @@
     /* ================= per-pigeon update ================= */
     /* head-bobbing parameters: hold is the primary parameter (Frost 1978;
        Davies & Green 1988) — hold/thrust phases are derived from the
-       stride cycle, and the stabilisation breaks down above ~0.81 m/s */
+       stride cycle, and the stabilisation breaks down above ~0.81 m/s.
+       R2-1 (Issue #71): holdRatio 0.63 (hold 63% / thrust 37% of the
+       stride cycle), stride 0.115 and breakSpeed 0.81 are all unchanged;
+       only the thrust waveform is reshaped from linear to cubic
+       smoothstep (see the walking head block below). */
     const HEADBOB={holdRatio:0.63, stride:0.115, breakSpeed:0.81};
     /* cruise speed is a function of the distance still to fly: short hops
        (<100 m) peak at 8–10 m/s, longer legs build toward the 16 m/s cap */
@@ -2384,11 +2388,34 @@
         // primary parameter (Frost 1978; Davies & Green 1988). Walking
         // only — never in flight — and the stabilisation breaks down
         // (amplitude collapses) above HEADBOB.breakSpeed (0.81 m/s).
+        // R2-1 (Issue #71): the time split is unchanged (hold 63% /
+        // thrust 37% of the stride cycle); only the thrust waveform
+        // changed. Hold stays linear — the head's world-space speed is
+        // held constant at about 0.45x body speed while the body
+        // advances (world displacement +0.03245 m per hold vs body
+        // +0.07245 m, so the head is not stationary in world space),
+        // so its body-relative drift is constant-speed. Thrust was linear too (a constant-speed
+        // return), which read as a mechanical to-and-fro. It is now a
+        // cubic smoothstep s(t)=t*t*(3-2*t) over the thrust interval:
+        // zero velocity at both ends, peak velocity 1.5x the linear
+        // mean at mid-thrust, so the head lingers at the back, whips
+        // forward, and settles at the front — the "hold, then snap
+        // forward" rhythm. Endpoints are continuous: hold ends at -A
+        // and thrust starts at -A, thrust ends at +A where the next
+        // cycle's hold starts. The stride drive (bobPhase from stride
+        // distance) and everything outside this head block are untouched
+        // (D1); the vertical dip hy is unchanged.
         const hr=HEADBOB.holdRatio;
         const stable=(p._walkSpeed||0.4)<=HEADBOB.breakSpeed;
         const A=0.02*(stable?1:0.22);
         const ph=((p.bobPhase%1)+1)%1;
-        hz = ph<hr ? A*(1-2*ph/hr) : -A + 2*A*(ph-hr)/(1-hr);
+        if(ph<hr){
+          hz = A*(1-2*ph/hr);
+        } else {
+          const t=(ph-hr)/(1-hr);
+          const s=t*t*(3-2*t);
+          hz = -A + 2*A*s;
+        }
         hy = -Math.abs(Math.sin(ph*Math.PI))*0.004;
         p._bobHz=hz;
       }
