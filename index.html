@@ -7561,6 +7561,8 @@
           +row('shadow.updates', fmt(sh.updates))
           +row('shadow.autoUpdate', fmt(sh.autoUpdate))
           +row('shadow.framesRendered', fmt(sh.framesRendered))
+          +row('shadow.extentM', fmt(sh.extentM, ' m'))
+          +row('shadow.normalBias', fmt(sh.normalBias, ' m'))
           +'</dl>';
         var rt=snap.rooftop||{}, rbt=rt.byTexture||[], rac=rt.addedByClass||{},
           rcb=rt.classBuildings||{}, rai=rt.addedItems||{}, rph=rt.parapetHeight||{};
