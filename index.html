@@ -4192,6 +4192,18 @@
         // takeoff crouch window for flapFreqFor and the body offset.
         this.takeoffCrouch=0.23; this.takeoffJumped=false; this.takeoffEnvBeats=0; this.settleT=0; this._flare=0; this._crouching=false;
         this.slot=V3(rand(-1,1),rand(-0.3,0.5),rand(-1,1)).multiplyScalar(rand(3,13));
+        // R2-4 (Issue #74): flock breathing/wave phase scalars only — no
+        // new textures, programs, geometries or meshes. flockPhase is
+        // deterministic per bird from the existing hash() helper
+        // (build-city.js), NOT Math.random: the slot itself is random at
+        // construction, but the breathing phase must stay fixed for the
+        // bird's lifetime so the offset is a smooth periodic function,
+        // never per-frame noise. slotHeading is the bird's own lagged
+        // copy of the anchor heading for the turning wave; it is
+        // initialised lazily to the live anchor heading on the first
+        // fly frame (the anchor does not exist yet when the
+        // constructor runs), so the first frame never jumps.
+        this.flockPhase=hash(i)*TAU; this.slotHeading=null;
         this.target=null; this.checkPoint=null; this.finalPoint=null; this.finalKind=null;
         this.site=null; this.wanderT=0; this.courtT=0; this.alertT=0; this.escapeT=0; this.splitSign=0;
         this.landDelay=0; this.checkT=0; this.drinkT=0; this.preT=0; this.restT=0;
@@ -4330,6 +4342,13 @@
     /* ================= flock anchor & flight control ================= */
     const anchor={ pos:V3(0,36,-255), heading:0, path:[], speed:13, mode:'idle', landSite:null, landPerches:null, circuitLeft:0 };
     let flockFlying=false;
+    // R2-4 (Issue #74): flock breathing clock in real-animation seconds.
+    // Advanced once per frame at the top of anchorUpdate (before its
+    // flockFlying early return) so it runs even while the anchor is
+    // idle; dt here is the unscaled frame dt from animate(), like the
+    // R2-3 crouch/settle windows, so at ×10/×60 the breathing offset
+    // still varies smoothly instead of shivering at the timeScale rate.
+    let flockClock=0;
     function startFlockFlight(opts){
       opts=opts||{};
       let flyers=pigeons.filter(p=>!p.player && p.state!=='fly');
@@ -4359,6 +4378,7 @@
       toast('群れが飛び立った');
     }
     function anchorUpdate(dt){
+      flockClock+=dt; // R2-4: once per frame, before the idle early return
       if(!flockFlying) return;
       const tgt=anchor.path[0];
       if(!tgt){ // arrive → landing phase
@@ -4763,12 +4783,63 @@
         else if(playerControl.active && p!==playerPigeon){
           ax=playerPigeon.pos.x; ay=playerPigeon.pos.y; az=playerPigeon.pos.z; ah=playerPigeon.heading;
         } else { ax=anchor.pos.x; ay=anchor.pos.y; az=anchor.pos.z; ah=anchor.heading; }
-        const cs=Math.cos(ah), sn=Math.sin(ah);
+        // R2-4 (Issue #74): flock breathing + turning wave. Both apply
+        // only to flock slots (non-player birds in fly state); the
+        // player bird keeps slot 0 and its own control, and both are
+        // disabled while escaping (same condition as the flee offset
+        // below) so escape steering stays immediate. No new textures,
+        // programs, geometries or meshes — two smooth scalar offsets
+        // and one lagged heading scalar.
+        const escaping=(p.escapeT>0 && falcon.active);
+        let slotAh=ah;
+        if(!p.player && !escaping){
+          // Turning wave: this bird rotates its slot by its own lagged
+          // copy of the anchor heading instead of the live heading.
+          // Lag rate falls with horizontal slot radius r (after
+          // cohesion scaling):
+          //   rate = 0.9 / (1 + r/12)   [per real-animation second]
+          // so an inner bird (r≈0) tracks at 0.9/s (time constant
+          // ≈1.1 s, the same rate the anchor itself turns) while an
+          // outer bird (r≈20 m) tracks at ≈0.34/s (time constant
+          // ≈3.0 s) — in a turn the outer slot's rotation visibly
+          // trails the inner slot's. The lag angle is clamped to
+          // ±0.35 rad (≈20°): the lag is a pure rotation, so it never
+          // pulls a slot toward the anchor (no radial contraction,
+          // hence no inward collapse), and the clamp bounds each
+          // slot-target displacement to 2·r·sin(0.35/2) ≈ 0.347·r even
+          // for a sudden anchor-heading step (waypoint switch). The
+          // clamp also bounds the first frame after a fly re-entry,
+          // when slotHeading may be stale. The unchanged separation
+          // loop below remains the collision safety valve for any
+          // transient proximity the wave creates.
+          if(p.slotHeading===null || p.slotHeading===undefined) p.slotHeading=ah;
+          const slotR=Math.hypot(p.slot.x*ENV.cohesion, p.slot.z*ENV.cohesion);
+          p.slotHeading=angLerp(p.slotHeading, ah, clamp(dt*0.9/(1+slotR/12),0,1));
+          let lag=p.slotHeading-ah;
+          lag=((lag+Math.PI)%TAU+TAU)%TAU-Math.PI; // wrap to [-π, π]
+          slotAh=ah+clamp(lag,-0.35,0.35);
+        }
+        const cs=Math.cos(slotAh), sn=Math.sin(slotAh);
         const slotX=p.player?0:p.slot.x, slotZ=p.player?0:p.slot.z;
         let ox=slotX*cs + slotZ*sn, oz=-slotX*sn + slotZ*cs;
         ox*=ENV.cohesion; oz*=ENV.cohesion; // winter flocks bunch tighter; summer spreads out
         if(p.splitSign!==0){ ox+=p.splitSign*16; oz-=8; if(p.stateT%7<0.01) {} }
-        _v1.set(ax+ox, ay+p.slot.y, az+oz);
+        let breathY=0;
+        if(!p.player && !escaping){
+          // Breathing: vertical ±0.4 m (period 6 s) and lateral ±0.6 m
+          // (period 7.3 s, +1.9 rad quadrature so the two axes do not
+          // move in lockstep). flockClock advances by real-animation
+          // dt, phase is the fixed per-bird flockPhase — a smooth
+          // periodic function of time + phase, never per-frame random.
+          // Lateral axis = the slot local-x axis (cos slotAh,
+          // -sin slotAh), the same basis the slot rotation above uses,
+          // so "lateral" stays perpendicular to the flock heading as
+          // the flock turns.
+          breathY=0.4*Math.sin(flockClock*TAU/6 + p.flockPhase);
+          const breathLat=0.6*Math.sin(flockClock*TAU/7.3 + p.flockPhase + 1.9);
+          ox+=breathLat*cs; oz+=breathLat*(-sn);
+        }
+        _v1.set(ax+ox, ay+p.slot.y+breathY, az+oz);
         // escape: flee the falcon's heading (HoPE), distance-independent
         if(p.escapeT>0 && falcon.active){
           p.escapeT-=dt;
