@@ -89,6 +89,17 @@
           +row('fog.heightFactor', fmt(skf.heightFactor))
           +row('fog.heightTopM', fmt(skf.heightTopM, ' m'))
           +'</dl>';
+        var fc=snap.facade||{}, fvc=fc.variantCounts||{};
+        html+='<h3>ファサード（R3-4）</h3><dl class="tgrid">'
+          +row('facade.atlasTiles', fmt(fc.atlasTiles))
+          +row('facade.atlasSize', fmt(fc.atlasW)+'x'+fmt(fc.atlasH))
+          +row('facade.byTile office / officeV', fmt(fvc.office)+' / '+fmt(fvc.officeV))
+          +row('facade.byTile commercial / commercialV', fmt(fvc.commercial)+' / '+fmt(fvc.commercialV))
+          +row('facade.byTile residential / residentialV', fmt(fvc.residential)+' / '+fmt(fvc.residentialV))
+          +row('facade.byTile shop / shopV', fmt(fvc.shop)+' / '+fmt(fvc.shopV))
+          +row('facade.baseTotal / variantTotal', fmt(fc.baseTotal)+' / '+fmt(fc.variantTotal))
+          +row('facade.normalMap / roughnessMap / emissiveMap', fmt(fc.normalMap)+' / '+fmt(fc.roughnessMap)+' / '+fmt(fc.emissiveMap))
+          +'</dl>';
         var rt=snap.rooftop||{}, rbt=rt.byTexture||[], rac=rt.addedByClass||{},
           rcb=rt.classBuildings||{}, rai=rt.addedItems||{}, rph=rt.parapetHeight||{};
         html+='<h3>屋上レイヤー（C5）</h3><dl class="tgrid">'

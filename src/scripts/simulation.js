@@ -1776,7 +1776,15 @@
           facade:{normalMap:!!(cityMeshMat&&cityMeshMat.normalMap),
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
-            emissiveIntensity:cityMeshMat?+cityMeshMat.emissiveIntensity.toFixed(3):0},
+            emissiveIntensity:cityMeshMat?+cityMeshMat.emissiveIntensity.toFixed(3):0,
+            /* R3-4 (Issue #79): 8-tile atlas (2048x1024) + per-tile
+               building counts from build-city.js. The panel renders
+               these as the facade section; baseTotal / variantTotal
+               are the sums over base / variant tiles. */
+            atlasTiles:FACADE_ATLAS_TILES, atlasW:FACADE_ATLAS_W, atlasH:FACADE_ATLAS_H,
+            variantCounts:facadeVariantCounts,
+            baseTotal:facadeVariantCounts.office+facadeVariantCounts.commercial+facadeVariantCounts.residential+facadeVariantCounts.shop,
+            variantTotal:facadeVariantCounts.officeV+facadeVariantCounts.commercialV+facadeVariantCounts.residentialV+facadeVariantCounts.shopV},
           /* P6 (Issue #21): close-range eye/beak values, read live
              from the shared materials. */
           eye:{beakColorLo:'#'+SHARED_BEAK_MAT.color.getHexString(), beakColorHi:'#'+SHARED_BEAK_HI_MAT.color.getHexString(),
