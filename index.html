@@ -3268,9 +3268,11 @@
        flat tone in any single view. Two fixes, both spatial:
        1. A wrap-around canvas texture whose hue cycles emerald→violet
           twice around the neck, so any side view already spans green
-          and violet across the visible face; per frame the texture
-          offset rotates with the viewing azimuth, so the bands sweep
-          as the camera (or the bird) turns.
+          and violet across the visible face; R1-7 (Issue #85): the
+          texture offset is now fixed (one shared texture for all
+          birds) and the azimuth sweep is carried by the sheen
+          shell's uShift instead (see the R1-7 note at
+          makeNeckSheenMat).
        2. An additive sheen shell whose fragment colour mixes emerald⇄
           violet by the view-space normal across the surface plus a
           fresnel rim — a gloss that varies *within* one frame, not
@@ -3281,8 +3283,10 @@
        chartreuse -> violet, closer to a real feral pigeon's neck.
        Every pre-existing stop (position and colour) is unchanged,
        so the item-6 main transition and the fresnel sheen shell are
-       untouched; the stops live in the texture, so the per-frame
-       offset rotation and the P7 neckPhase ride on them as before. */
+       untouched; the stops live in the shared texture. R1-7
+       (Issue #85): the per-frame offset rotation is removed (shared
+       texture, fixed offset) and the P7 neckPhase now rides on the
+       sheen as uPhase (see makeNeckSheenMat). */
     const P8_NECK_STOPS=[[0.00,'#00d95e'],[0.16,'#00c2a0'],[0.205,'#d9a514'],[0.25,'#9fc53a'],[0.30,'#7b2ff2'],[0.44,'#b04dff'],[0.52,'#00d95e'],[0.66,'#00c2a0'],[0.705,'#d9a514'],[0.75,'#9fc53a'],[0.80,'#7b2ff2'],[0.94,'#b04dff'],[1.00,'#00d95e']];
     const neckCanvas=(()=>{
       const cv=document.createElement('canvas'); cv.width=512; cv.height=256;
@@ -3300,6 +3304,24 @@
       }
       return cv;
     })();
+    /* R1-7 (Issue #85, 外観監査 A5): ONE shared neck texture for all
+       24 birds. Before, makePigeonMesh created a new CanvasTexture
+       from this same canvas per bird (24 texture objects, one GL
+       upload each, for identical pixels) — the largest single
+       consumer of the textures budget. The shared instance below
+       is used as map + bumpMap + emissiveMap by every bird's neck
+       material, so the runtime texture count drops by 23 (24 → 1)
+       with no pixel change. Its offset is a fixed 0 for all birds:
+       nothing per frame ever writes it (a write here would move
+       every bird's neck at once). The per-bird variation that the
+       offset used to carry now lives on the sheen shell (uPhase,
+       set once per bird at creation) and the per-bird neck material
+       (tint, emissiveIntensity), which both stay per bird. */
+    const SHARED_NECK_TEX=(()=>{
+      const t=new THREE.CanvasTexture(neckCanvas);
+      t.wrapS=THREE.RepeatWrapping; t.encoding=THREE.sRGBEncoding; t.anisotropy=8;
+      return t;
+    })();
     /* R1-1 (Issue #67, 外観監査 A1): the sheen hue mix also follows the
        sun direction, not only the viewing azimuth. uSunDir is the
        world-space direction TO the sun, written by simulation.js
@@ -3307,15 +3329,42 @@
        solar computation); the shader turns it into view space with
        the built-in viewMatrix and modulates the hue mix by the
        half-vector NdotH. The modulation is gentle: (ndh-0.5)*0.35
-       spans only ±0.175 of t, against the ±0.525 uShift swing and
+       spans only ±0.175 of t, against the ±0.725 uShift swing and
        the ±0.79 sweep span (max |0.78*N.x+0.28*N.y| is 0.83), so the
        verified emerald⇄violet gradient
-       and the texture rotation are untouched — the sun term only
+       is untouched — the sun term only
        lets the centre colour drift green⇄violet as the bird turns
-       relative to the sun with the camera fixed. */
+       relative to the sun with the camera fixed. R1-7 (Issue #85)
+       raises the uShift swing below from ±0.525 to ±0.725, so the
+       sun term (±0.175) is unchanged but is now measured against
+       the ±0.725 uShift swing and the ±0.79 sweep span. */
+    /* R1-7 (Issue #85): sheen-side compensation for the shared neck
+       texture. The old per-frame texture rotation (offset.x =
+       vf × 0.5 + neckPhase) cannot be reproduced exactly with one
+       shared texture object — any offset write would move all
+       birds together — so the two things it carried move here:
+       (a) the viewpoint sweep: the uShift coefficient grows 1.05 →
+       1.45, so the sheen alone now swings the full emerald⇄violet
+       mix across the azimuth range that the texture rotation used
+       to help carry; (b) the per-bird phase: uPhase, a static
+       per-bird uniform set once at creation from the same P7
+       hash, offsets t by (neckPhase − 0.5) × 0.5 (±0.25, i.e. half
+       the mix range), so birds still differ from each other at one
+       viewpoint without a per-bird texture. This is compensation,
+       not an exact reproduction of the texture band rotation: the
+       texture carrier's band sweep is gone, and whether criterion
+       6 (neck) still reads as verified is a runtime visual
+       judgment for the verification batch (R4-1, Issue #80), not
+       something this static change can claim. No 3-variant
+       fallback was needed: one shared texture already meets the
+       −20 textures condition (−23), and variants would only add
+       back static phases the sheen now carries. uSunDir handling
+       is untouched: simulation.js updateSkyEnv() still copies the
+       sun direction into each bird's own sheen material every
+       frame, and the sheen material itself stays per bird. */
     function makeNeckSheenMat(){
       return new THREE.ShaderMaterial({
-        uniforms:{ uShift:{value:0}, uSunDir:{value:new THREE.Vector3(0,1,0)},
+        uniforms:{ uShift:{value:0}, uPhase:{value:0}, uSunDir:{value:new THREE.Vector3(0,1,0)},
           uA:{value:new THREE.Color(0x00e065)}, uB:{value:new THREE.Color(0xa020ff)},
           uHi:{value:new THREE.Color(0xc8ffe9)} },
         vertexShader:[
@@ -3327,7 +3376,7 @@
           ' gl_Position=projectionMatrix*mv; }'
         ].join('\n'),
         fragmentShader:[
-          'uniform float uShift; uniform vec3 uA; uniform vec3 uB; uniform vec3 uHi;',
+          'uniform float uShift; uniform float uPhase; uniform vec3 uA; uniform vec3 uB; uniform vec3 uHi;',
           'varying vec3 vN; varying vec3 vV; varying vec3 vL;',
           'void main(){',
           ' vec3 N=normalize(vN); vec3 V=normalize(vV); vec3 L=normalize(vL);',
@@ -3336,7 +3385,7 @@
           ' vec3 H=normalize(L+V);',
           ' float ndh=clamp(dot(N,H),0.0,1.0);',
           ' float sweep=N.x*0.78+N.y*0.28;',           // varies across the visible face
-          ' float t=clamp(0.5+sweep*0.95+(uShift-0.5)*1.05+(ndh-0.5)*0.35,0.0,1.0);',
+          ' float t=clamp(0.5+sweep*0.95+(uShift-0.5)*1.45+(ndh-0.5)*0.35+uPhase,0.0,1.0);',
           ' vec3 col=mix(uA,uB,t);',
           ' col+=uHi*pow(fres,2.0)*0.55;',               // bright rim where the gloss grazes
           ' float alpha=0.16+fres*0.62+pow(ndv,3.0)*0.22;',
@@ -3452,11 +3501,17 @@
        fixed by the morph are cached per morph (at most MORPHS.length
        entries, plus a Lo/Hi pair for the textures the close LOD swaps).
        Textures were already shared and are untouched.
-       The neck is deliberately NOT shared: neckTex.offset.x,
-       neck.material.emissiveIntensity and neckSheenMat.uniforms.uShift
-       are rewritten per bird per frame in animate(), so sharing them
-       would make birds fight over one instance and break the
-       iridescence. neckMat / neckSheenMat / neckTex stay per bird.
+       The neck TEXTURE is shared since R1-7 (Issue #85): one
+       SHARED_NECK_TEX for all birds, fixed offset 0 — nothing
+       per frame writes it. What stays per bird, and why: neckMat
+       (per-class tint, and emissiveIntensity rewritten per bird
+       per frame in animate()) and neckSheenMat (uShift rewritten
+       per bird per frame, uSunDir copied per bird by updateSkyEnv,
+       uPhase and the class-scaled uA/uB/uHi set per bird at
+       creation). Sharing either material would make birds fight
+       over one instance and break the iridescence; sharing the
+       texture does not, because its only per-bird use was the
+       offset, which R1-7 moved to the sheen.
        Body / breast / head / wing / tail were previously mutated per
        bird only by setCloseLOD (map swap). With shared instances that
        mutation would leak to every bird of the morph, so setCloseLOD
@@ -3692,32 +3747,38 @@
       // rump patch (pale on wild type) just before the tail
       const rump=new THREE.Mesh(new THREE.SphereGeometry(0.105,12,9), mm.rump);
       rump.scale.set(0.92,0.72,0.9); rump.position.set(0,0.018,-0.115); bodyG.add(rump);
-      /* neck + breast: gradient iridescent texture (per-bird instance so
-         the azimuth offset can rotate independently) under a fresnel
+      /* neck + breast: gradient iridescent texture (R1-7: the one
+         shared SHARED_NECK_TEX, fixed offset) under a fresnel
          sheen shell. The patch is enlarged (neck r 0.088 → 0.105,
          breast r 0.095 → 0.112) so the structural colour covers the
          whole throat-to-breast sweep and reads at 2–3 m, not only in
          close-up. */
-      const neckTex=new THREE.CanvasTexture(neckCanvas);
-      neckTex.wrapS=THREE.RepeatWrapping; neckTex.encoding=THREE.sRGBEncoding; neckTex.anisotropy=8;
+      const neckTex=SHARED_NECK_TEX;
       /* P5 (Issue #12): neckTex doubles as its own bumpMap (same
-         instance). neckTex.offset.x is rewritten per bird per frame,
-         but the bundled three.js r128 shares a single vUv driven by
-         the map slot's transform across all texture slots, so the
-         bump follows the iridescence shift automatically. No
-         roughnessMap here: the 0.24 / 0.38 gloss stays as-is. */
+         instance). R1-7: the instance is now shared by all birds
+         and its offset is never rewritten, but the bundled
+         three.js r128 still shares a single vUv driven by the map
+         slot's transform across all texture slots, so map, bump
+         and emissive stay in register. No roughnessMap here: the
+         0.24 / 0.38 gloss stays as-is. */
       /* P6 (Issue #21): neckMat is promoted to MeshPhysicalMaterial
          with parameters identical to before (no sheen / clearcoat
          values added — defaults). The Physical upgrade is scoped to
          the eye (cornea cap above) and neck only; body / wing / tail
-         / head feather materials stay Standard. neckTex and the
-         fresnel sheen shell are unchanged, and the per-frame
-         emissiveIntensity / uShift writes work as before. */
+         / head feather materials stay Standard. R1-7: the shared
+         neckTex and the fresnel sheen shell are unchanged in
+         pixels, and the per-frame emissiveIntensity / uShift
+         writes work as before (both live on per-bird objects). */
       const neckMat=new THREE.MeshPhysicalMaterial({map:neckTex, bumpMap:neckTex, bumpScale:0.03, roughness:0.24, metalness:0.38,
           emissive:0xffffff, emissiveMap:neckTex, emissiveIntensity:0.5});
       const neckSheenMat=makeNeckSheenMat();
       /* P7 (Issue #22): neck iridescence class for this bird. */
       const ncls=NECK_CLASSES[BIRD_NECK_CLASS[pi%BIRD_NECK_CLASS.length]];
+      /* R1-7 (Issue #85): the P7 phase hash, formerly the per-frame
+         texture offset, is now the sheen's static uPhase (see
+         makeNeckSheenMat). Same hash, same bird, no new texture. */
+      const neckPhase=hash(pi*57+13);
+      neckSheenMat.uniforms.uPhase.value=(neckPhase-0.5)*0.5;
       if(ncls.sheen!==1){ neckSheenMat.uniforms.uA.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uB.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uHi.value.multiplyScalar(ncls.sheen); }
       if(ncls.tint) neckMat.color.setHex(ncls.tint);
       const neck=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14), neckMat);
@@ -3983,11 +4044,11 @@
       g.scale.setScalar(DISPLAY_SCALE);
       scene.add(g);
       return {g, bodyG, headG, neck, wingLP, wingRP, tailG, legs, exclaim, foldL, foldR, covertTintL, covertTintR, fringe, wingL, wingR, underL, underR, body, twig,
-        basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckTex, neckSheenMat, breastPatch,
+        basicHeadParts, closeHead, closeBody, tailFan, tail, closeFeet, neckSheenMat, breastPatch,
         wingOLP, wingORP, wingOL, wingOR, wingFullL, wingFullR, primL, primR,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat,
-        variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase:hash(pi*57+13), // P7 (Issue #22)
+        variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase, // P7 (Issue #22), R1-7: now the sheen uPhase, not a texture offset
         r14Size, r14Chest};
     }
     /* toggle the close-range LOD for one bird: geometry detail + hi-res
@@ -4884,19 +4945,23 @@
       m.headG.position.set(0, 0.085+hy, 0.155+hz);
       m.headG.rotation.set(hpitch, p.headYaw*0.8, 0);
       // iridescent neck feathers: hue swings green <-> violet with the
-      // viewing angle, as structural colour does. The azimuth factor vf
-      // (saturated extremes at the two flanks) now drives two spatial
-      // carriers instead of one flat material colour: the gradient
-      // texture rotates around the neck (offset.x = vf × 0.5, i.e. a
-      // full emerald⇄violet band swap across the azimuth swing) and
-      // the sheen shell's uShift sweeps its within-frame gradient.
-      // Together the colour varies across the neck in a single view
-      // *and* swings hard as the viewpoint changes — visible at the
-      // normal 2–3 m observation distance, not only in close-up.
+      // viewing angle, as structural colour does. R1-7 (Issue #85):
+      // the azimuth factor vf (saturated extremes at the two
+      // flanks) now drives the sheen shell alone — the shared neck
+      // texture's offset is fixed at 0 and is never rewritten here
+      // (a write would move all 24 birds' necks at once). The
+      // sheen's uShift sweep carries the viewpoint swing with its
+      // coefficient raised 1.05 → 1.45, and each bird's static
+      // uPhase (from the P7 hash) keeps birds distinct at one
+      // viewpoint. The colour still varies across the neck in a
+      // single view *and* swings as the viewpoint changes — visible
+      // at the normal 2–3 m observation distance, not only in
+      // close-up; whether that still reads as verified criterion 6
+      // is for the verification batch (R4-1) to judge, not this
+      // static change.
       _v4.copy(camera.position).sub(p.pos).normalize();
       const relAz=Math.atan2(_v4.x,_v4.z)-p.heading;
       const vf=clamp(0.5+0.75*Math.sin(relAz)-0.3*Math.cos(relAz), 0, 1);
-      if(m.neckTex) m.neckTex.offset.x=vf*0.5+(m.neckPhase||0); // P7 (Issue #22): per-bird phase
       if(m.neckSheenMat) m.neckSheenMat.uniforms.uShift.value=vf;
       m.neck.material.emissiveIntensity=(0.45+0.25*Math.abs(vf-0.5)*2)*(m.neckGain||1); // P7 (Issue #22): neck class gain
       // legs dangle on takeoff and landing approach, tucked only in cruise.
