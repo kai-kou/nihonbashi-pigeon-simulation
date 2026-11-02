@@ -573,26 +573,43 @@
       }
       return cv;
     })();
+    /* R1-1 (Issue #67, 外観監査 A1): the sheen hue mix also follows the
+       sun direction, not only the viewing azimuth. uSunDir is the
+       world-space direction TO the sun, written by simulation.js
+       updateSkyEnv() from the same _sunDir the Sky dome uses (no new
+       solar computation); the shader turns it into view space with
+       the built-in viewMatrix and modulates the hue mix by the
+       half-vector NdotH. The modulation is gentle: (ndh-0.5)*0.35
+       spans only ±0.175 of t, against the ±0.525 uShift swing and
+       the ±0.79 sweep span (max |0.78*N.x+0.28*N.y| is 0.83), so the
+       verified emerald⇄violet gradient
+       and the texture rotation are untouched — the sun term only
+       lets the centre colour drift green⇄violet as the bird turns
+       relative to the sun with the camera fixed. */
     function makeNeckSheenMat(){
       return new THREE.ShaderMaterial({
-        uniforms:{ uShift:{value:0},
+        uniforms:{ uShift:{value:0}, uSunDir:{value:new THREE.Vector3(0,1,0)},
           uA:{value:new THREE.Color(0x00e065)}, uB:{value:new THREE.Color(0xa020ff)},
           uHi:{value:new THREE.Color(0xc8ffe9)} },
         vertexShader:[
-          'varying vec3 vN; varying vec3 vV;',
+          'uniform vec3 uSunDir;',
+          'varying vec3 vN; varying vec3 vV; varying vec3 vL;',
           'void main(){ vec4 mv=modelViewMatrix*vec4(position,1.0);',
           ' vN=normalize(normalMatrix*normal); vV=normalize(-mv.xyz);',
+          ' vL=normalize((viewMatrix*vec4(uSunDir,0.0)).xyz);',
           ' gl_Position=projectionMatrix*mv; }'
         ].join('\n'),
         fragmentShader:[
           'uniform float uShift; uniform vec3 uA; uniform vec3 uB; uniform vec3 uHi;',
-          'varying vec3 vN; varying vec3 vV;',
+          'varying vec3 vN; varying vec3 vV; varying vec3 vL;',
           'void main(){',
-          ' vec3 N=normalize(vN); vec3 V=normalize(vV);',
+          ' vec3 N=normalize(vN); vec3 V=normalize(vV); vec3 L=normalize(vL);',
           ' float ndv=clamp(dot(N,V),0.0,1.0);',
           ' float fres=pow(1.0-ndv,1.5);',
+          ' vec3 H=normalize(L+V);',
+          ' float ndh=clamp(dot(N,H),0.0,1.0);',
           ' float sweep=N.x*0.78+N.y*0.28;',           // varies across the visible face
-          ' float t=clamp(0.5+sweep*0.95+(uShift-0.5)*1.05,0.0,1.0);',
+          ' float t=clamp(0.5+sweep*0.95+(uShift-0.5)*1.05+(ndh-0.5)*0.35,0.0,1.0);',
           ' vec3 col=mix(uA,uB,t);',
           ' col+=uHi*pow(fres,2.0)*0.55;',               // bright rim where the gloss grazes
           ' float alpha=0.16+fres*0.62+pow(ndv,3.0)*0.22;',
