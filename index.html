@@ -4186,7 +4186,8 @@
         // nodes, geometries, textures or programs — phase scalars only.
         // takeoffCrouch is re-rolled per takeoff in setState(); the
         // constructor value (0.23) is only a fallback. settleT counts
-        // down the 0.4 sim-s post-landing settle; _flare holds the
+        // down the 0.4 real-animation-second post-landing settle
+        // (unscaled dt, independent of the timeScale setting); _flare holds the
         // current landing-flare coefficient; _crouching marks the
         // takeoff crouch window for flapFreqFor and the body offset.
         this.takeoffCrouch=0.23; this.takeoffJumped=false; this.takeoffEnvBeats=0; this.settleT=0; this._flare=0; this._crouching=false;
@@ -4202,7 +4203,7 @@
       setState(s){
         this.state=s; this.stateT=0;
         // R2-3 (Issue #73): every takeoff entry re-rolls its crouch
-        // duration (0.18–0.28 sim-s), clears the jump flag and the
+        // duration (0.18–0.28 real-animation seconds, unscaled dt), clears the jump flag and the
         // first-3-beats envelope counter, so the envelope restarts on
         // every takeoff (not only on the collective one, which used
         // to reset takeoffBeats alone). Transition conditions and
@@ -4638,6 +4639,20 @@
         // beats only. The frequency ramp (takeoffBeats) is likewise
         // frozen during the crouch, so it also starts at the jump.
         if(p._crouching) return 0;
+        // R2-3 fix (review 6579367633 item 1): the staggered wait
+        // (stateT<0) is NOT a crouch — updatePigeon forces
+        // _crouching=false there, so the gate above lets the wait
+        // through and both counters used to run at ~8.9-7.7 Hz,
+        // consuming the 3 beats before the jump for idx>=3. Freeze
+        // only the counters here: return the frequency without
+        // advancing takeoffBeats/takeoffEnvBeats, so the wings keep
+        // their fold-attenuated micro-motion (unlike returning 0,
+        // which would stop flapPhase outright) while the first 3
+        // beats still start at the jump for every bird, including
+        // high-idx flock members. With both counters at their
+        // setState('takeoff') reset value 0, this returns 8.9 Hz
+        // throughout the wait.
+        if(p.stateT<0) return lerp(8.9, 7.7, clamp(p.takeoffBeats/4,0,1));
         p.takeoffBeats+=p.flapFreq*dt; p.takeoffEnvBeats=(p.takeoffEnvBeats||0)+p.flapFreq*dt;
         return lerp(8.9, 7.7, clamp(p.takeoffBeats/4,0,1));
       }
@@ -4708,7 +4723,7 @@
         else{
           if(p.takeoffCrouch===undefined){ p.takeoffCrouch=rand(0.18,0.28); p.takeoffJumped=false; }
           if(p.stateT<p.takeoffCrouch){
-            /* R2-3 crouch phase (0.18–0.28 sim-s, per bird): body dips
+            /* R2-3 crouch phase (0.18–0.28 real-animation seconds, per bird): body dips
                ~0.02 via the shared body-offset composition below, wings
                stay folded (fold held at 1), no steering, no velocity —
                the jump below is the first motion. */
@@ -4893,7 +4908,8 @@
         // R2-3 takeoff envelope: the first 3 flight beats only ride
         // ~1.15x amplitude, decaying linearly to 1.0 at beat 3
         // (takeoffEnvBeats counts flight beats; the crouch phase
-        // counts none, see flapFreqFor). The -0.08 offset is not scaled.
+        // and the staggered wait count none, see flapFreqFor).
+        // The -0.08 offset is not scaled.
         else if(p.state==='takeoff' && (p.takeoffEnvBeats||0)<3){ const env=1+0.15*(1-(p.takeoffEnvBeats||0)/3); wingA=Math.sin(p.flapPhase)*1.02*env - 0.08; }
         else wingA=Math.sin(p.flapPhase)*1.02 - 0.08;
       } else wingA=-0.1;
@@ -4992,9 +5008,11 @@
       //     disjoint by state, so at most one is live at a time.
       //   body height: rest dip (forage+restT, existing) +
       //     crouch dip (takeoff crouch window only, -0.02) +
-      //     settle dip (0.4 sim-s after a landing, -0.025 decaying
-      //     linearly to 0) — likewise disjoint by state, summed so
-      //     the order is explicit. All dips move bodyG as a whole
+      //     settle dip (0.4 real-animation seconds after a landing,
+      //     -0.025 decaying linearly to 0) — NOT state-disjoint:
+      //     settle decays across the state change, so it can sum
+      //     with the rest dip (max -0.057) or a crouch dip
+      //     (max -0.045); summed so the order is explicit. All dips move bodyG as a whole
       //     (the whole-body group), exactly like the existing rest dip;
       //     they read as the body sinking, not as feet penetrating.
       if(p.settleT>0) p.settleT-=dt;
