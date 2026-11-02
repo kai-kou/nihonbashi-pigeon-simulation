@@ -1705,6 +1705,13 @@
       updateEnvironment(dt);
       if(waterTex){ waterTex.offset.x+=dt*0.030; waterTex.offset.y+=dt*0.011; }
       if(rippleTex){ rippleTex.offset.x-=dt*0.017; rippleTex.offset.y+=dt*0.026; }
+      /* R3-3 (Issue #78): the normal layer scrolls at its own rate
+         and direction (-0.024/+0.008 per sim-second, x reversed
+         against the diffuse +0.030/+0.011 and distinct from the
+         ripple -0.017/+0.026), via the water material's shader
+         uniform (see buildRoadsWater); r128's single vUv means a
+         texture.offset scroll on the normal map alone would not move. */
+      waterNormalOff.x-=dt*0.024; waterNormalOff.y+=dt*0.008;
       director(dt);
       updateFeedFX(dt);
       updatePlayer(dt);
@@ -1781,6 +1788,16 @@
             roughnessFactor:roadSurface.roughnessFactor,
             envMapIntensity:roadSurface.envMapIntensity,
             wet:+ENV.wet.toFixed(2), curbSegments:roadSurface.curbSegments},
+          /* R3-3 (Issue #78): river normal/roughness state. normalOffset
+             is the shader uniform's live value (the normal layer's
+             own scroll); diffuseOffset is the diffuse texture's live
+             offset. Both are sim-time scrolls, so they grow unbounded
+             and wrap only through the texture repeat. */
+          water:{normalMap:!!(waterMatRef&&waterMatRef.normalMap),
+            roughnessMap:!!(waterMatRef&&waterMatRef.roughnessMap),
+            normalScale:waterMatRef?+waterMatRef.normalScale.x.toFixed(2):0,
+            diffuseOffset:waterTex?{x:+waterTex.offset.x.toFixed(4), y:+waterTex.offset.y.toFixed(4)}:null,
+            normalOffset:{x:+waterNormalOff.x.toFixed(4), y:+waterNormalOff.y.toFixed(4)}},
           sky:{dome:!!skyDome, environment:!!scene.environment, envRegens:envRegenCount,
             lastEnvKey:lastEnvKey,
             turbidity:skyDome?+skyDome.material.uniforms.turbidity.value.toFixed(2):0,

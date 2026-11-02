@@ -702,7 +702,13 @@
     const R32_HAZE_TOP_M=60, R32_HAZE_TOP_W=0.35;
     const x1State={chunks:0, fadeBuildings:0, chunkedBuildings:0, fadeVerts:0, chunkVerts:0};
     let cityFadeRecs=[];
-    let waterTex=null, rippleTex=null;
+    let waterTex=null, rippleTex=null, waterNormalTex=null, waterRoughTex=null;
+    /* R3-3 (Issue #78): live scroll offset of the water normal layer,
+       shared with the water material's shader uniform (see
+       buildRoadsWater) and read by __QA__.snapshot().water.
+       WATER_TEX_REPEAT is the diffuse/normal/roughness tiling. */
+    const waterNormalOff=new THREE.Vector2(0,0);
+    const WATER_TEX_REPEAT=0.085;
     const streetPropCounts={poles:0, wires:0, vending:0, manholes:0, stripes:0, sleeveSigns:0};
     /* C3 (Issue #17) near-distance layer: placements recorded by
        buildStreetProps() so the dedicated close-range layer can attach
@@ -1546,17 +1552,92 @@
         wg2.fillStyle='rgba(8,32,44,'+(0.14+Math.random()*0.22)+')';
         wg2.fillRect(Math.random()*512, Math.random()*512, 36+Math.random()*110, 2+Math.random()*2.4);
       }
-      for(let i=0;i<210;i++){ // white sun glints (short dashes)
-        wg2.fillStyle='rgba(255,255,255,'+(0.35+Math.random()*0.45)+')';
+      for(let i=0;i<210;i++){ // white sun glints (short dashes, weakened for R3-3: was 0.35-0.80)
+        wg2.fillStyle='rgba(255,255,255,'+(0.20+Math.random()*0.25)+')';
         wg2.fillRect(Math.random()*512, Math.random()*512, 5+Math.random()*16, 1.6);
       }
       waterTex=new THREE.CanvasTexture(wcv);
       waterTex.wrapS=waterTex.wrapT=THREE.RepeatWrapping;
-      waterTex.repeat.set(0.085,0.085); waterTex.encoding=THREE.sRGBEncoding;
+      waterTex.repeat.set(WATER_TEX_REPEAT,WATER_TEX_REPEAT); waterTex.encoding=THREE.sRGBEncoding;
       waterTex.anisotropy=8;
+      /* R3-3 (Issue #78): derive a normal map and a roughness map
+         from the water diffuse canvas by Sobel over its luminance
+         (same formula and sign convention as C4's makeRoadTextures:
+         dx=(tr+2*mr+br)-(tl+2*ml+bl),
+         dy=(bl+2*bc+br)-(tl+2*tc+tr), nx=-dx*2.0, ny=dy*2.0),
+         with wrap-around so the tile repeats seamlessly. The
+         roughness map keeps the base at 255 (so the material's
+         roughness factor, still driven by updateEnvironment's rain
+         term, is preserved) and lowers only the bright glint band
+         (luminance above 0.55) down to 110 at full white, so the
+         glints shimmer through lighting instead of sitting as flat
+         baked dashes. */
+      const wImg=wg2.getImageData(0,0,512,512).data;
+      const wLum=new Float32Array(512*512);
+      for(let i=0;i<512*512;i++){ const o=i*4; wLum[i]=(0.2126*wImg[o]+0.7152*wImg[o+1]+0.0722*wImg[o+2])/255; }
+      const nCv=document.createElement('canvas'); nCv.width=nCv.height=512;
+      const ng=nCv.getContext('2d'), nImg=ng.createImageData(512,512), nd=nImg.data;
+      for(let y=0;y<512;y++){
+        const ym=((y+511)%512)*512, y0=y*512, yp=((y+1)%512)*512;
+        for(let x=0;x<512;x++){
+          const xm=(x+511)%512, xp=(x+1)%512;
+          const tl=wLum[ym+xm], tc=wLum[ym+x], tr=wLum[ym+xp];
+          const ml=wLum[y0+xm], mr=wLum[y0+xp];
+          const bl=wLum[yp+xm], bc=wLum[yp+x], br=wLum[yp+xp];
+          const dx=(tr+2*mr+br)-(tl+2*ml+bl);
+          const dy=(bl+2*bc+br)-(tl+2*tc+tr);
+          let nx=-dx*2.0, ny=dy*2.0, nz=1;
+          const il=1/Math.sqrt(nx*nx+ny*ny+nz*nz);
+          const o=(y0+x)*4;
+          nd[o]=(nx*il*0.5+0.5)*255; nd[o+1]=(ny*il*0.5+0.5)*255;
+          nd[o+2]=(nz*il*0.5+0.5)*255; nd[o+3]=255;
+        }
+      }
+      ng.putImageData(nImg,0,0);
+      const rCv=document.createElement('canvas'); rCv.width=rCv.height=512;
+      const rg=rCv.getContext('2d'), rImg=rg.createImageData(512,512), rd=rImg.data;
+      for(let i=0;i<512*512;i++){
+        const lum=wLum[i];
+        const v=lum>0.55?Math.round(Math.max(110, 255-(lum-0.55)/0.45*145)):255;
+        const o=i*4; rd[o]=rd[o+1]=rd[o+2]=v; rd[o+3]=255;
+      }
+      rg.putImageData(rImg,0,0);
+      waterNormalTex=new THREE.CanvasTexture(nCv); // linear data: no sRGB
+      waterNormalTex.wrapS=waterNormalTex.wrapT=THREE.RepeatWrapping;
+      waterNormalTex.repeat.set(WATER_TEX_REPEAT,WATER_TEX_REPEAT); waterNormalTex.anisotropy=8;
+      waterRoughTex=new THREE.CanvasTexture(rCv); // linear data: no sRGB
+      waterRoughTex.wrapS=waterRoughTex.wrapT=THREE.RepeatWrapping;
+      waterRoughTex.repeat.set(WATER_TEX_REPEAT,WATER_TEX_REPEAT); waterRoughTex.anisotropy=8;
       // C2: Standard so the river receives scene.environment (sky
       // reflection); roughness below replaces the Phong shininess.
-      const wmat=new THREE.MeshStandardMaterial({map:waterTex, roughness:0.34, metalness:0.0, envMapIntensity:1.0});
+      const wmat=new THREE.MeshStandardMaterial({map:waterTex,
+        normalMap:waterNormalTex, normalScale:new THREE.Vector2(0.55,0.55),
+        roughnessMap:waterRoughTex, roughness:0.34, metalness:0.0, envMapIntensity:1.0});
+      /* R3-3: independent scroll for the normal layer. r128 has a
+         single vUv per material, and the renderer copies the uv
+         transform from the material's map (the diffuse) only, so
+         scrolling waterNormalTex.offset would be a no-op: the
+         normal map would sample at the diffuse uv. Instead this
+         material carries its own varying, vWaterNormalUv =
+         uv * WATER_TEX_REPEAT + waterNormalOff, updated per frame
+         in animate() at a different rate and direction from the
+         diffuse scroll (and from the ripple overlay's scroll, which
+         stays a separate mesh at y=0.44). The replacement below is
+         the stock r128 normal_fragment_maps chunk verbatim except
+         that the two normalMap samples read vWaterNormalUv; the
+         bumpmap branch is untouched. The derivative basis in
+         perturbNormal2Arb stays valid: vWaterNormalUv differs from
+         vUv only by a spatially constant offset at the same scale,
+         so its screen-space derivatives equal vUv's. The C6
+         reflection overlay (y=0.40, its own ShaderMaterial) is a
+         different layer and is untouched. */
+      wmat.onBeforeCompile=function(shader){
+        shader.uniforms.uWaterNormalOff={value:waterNormalOff};
+        shader.vertexShader=('uniform vec2 uWaterNormalOff;\nvarying vec2 vWaterNormalUv;\n'+shader.vertexShader).replace('#include <uv_vertex>', '#include <uv_vertex>\n  vWaterNormalUv = uv * '+WATER_TEX_REPEAT.toFixed(3)+' + uWaterNormalOff;');
+        shader.fragmentShader=('varying vec2 vWaterNormalUv;\n'+shader.fragmentShader).replace('#include <normal_fragment_maps>',
+          '#ifdef OBJECTSPACE_NORMALMAP\n\tnormal = texture2D( normalMap, vWaterNormalUv ).xyz * 2.0 - 1.0;\n\t#ifdef FLIP_SIDED\n\t\tnormal = - normal;\n\t#endif\n\t#ifdef DOUBLE_SIDED\n\t\tnormal = normal * faceDirection;\n\t#endif\n\tnormal = normalize( normalMatrix * normal );\n#elif defined( TANGENTSPACE_NORMALMAP )\n\tvec3 mapN = texture2D( normalMap, vWaterNormalUv ).xyz * 2.0 - 1.0;\n\tmapN.xy *= normalScale;\n\t#ifdef USE_TANGENT\n\t\tnormal = normalize( vTBN * mapN );\n\t#else\n\t\tnormal = perturbNormal2Arb( -vViewPosition, normal, mapN, faceDirection );\n\t#endif\n#elif defined( USE_BUMPMAP )\n\tnormal = perturbNormalArb( -vViewPosition, normal, dHdxy_fwd(), faceDirection );\n#endif');
+      };
+      wmat.customProgramCacheKey=function(){ return 'r33-water-normal-uv'; };
       waterMatRef=wmat;
       // ripple overlay: wavy light lines on a transparent canvas
       const rcv=document.createElement('canvas'); rcv.width=rcv.height=512;
@@ -7318,6 +7399,13 @@
       updateEnvironment(dt);
       if(waterTex){ waterTex.offset.x+=dt*0.030; waterTex.offset.y+=dt*0.011; }
       if(rippleTex){ rippleTex.offset.x-=dt*0.017; rippleTex.offset.y+=dt*0.026; }
+      /* R3-3 (Issue #78): the normal layer scrolls at its own rate
+         and direction (-0.024/+0.008 per sim-second, x reversed
+         against the diffuse +0.030/+0.011 and distinct from the
+         ripple -0.017/+0.026), via the water material's shader
+         uniform (see buildRoadsWater); r128's single vUv means a
+         texture.offset scroll on the normal map alone would not move. */
+      waterNormalOff.x-=dt*0.024; waterNormalOff.y+=dt*0.008;
       director(dt);
       updateFeedFX(dt);
       updatePlayer(dt);
@@ -7394,6 +7482,16 @@
             roughnessFactor:roadSurface.roughnessFactor,
             envMapIntensity:roadSurface.envMapIntensity,
             wet:+ENV.wet.toFixed(2), curbSegments:roadSurface.curbSegments},
+          /* R3-3 (Issue #78): river normal/roughness state. normalOffset
+             is the shader uniform's live value (the normal layer's
+             own scroll); diffuseOffset is the diffuse texture's live
+             offset. Both are sim-time scrolls, so they grow unbounded
+             and wrap only through the texture repeat. */
+          water:{normalMap:!!(waterMatRef&&waterMatRef.normalMap),
+            roughnessMap:!!(waterMatRef&&waterMatRef.roughnessMap),
+            normalScale:waterMatRef?+waterMatRef.normalScale.x.toFixed(2):0,
+            diffuseOffset:waterTex?{x:+waterTex.offset.x.toFixed(4), y:+waterTex.offset.y.toFixed(4)}:null,
+            normalOffset:{x:+waterNormalOff.x.toFixed(4), y:+waterNormalOff.y.toFixed(4)}},
           sky:{dome:!!skyDome, environment:!!scene.environment, envRegens:envRegenCount,
             lastEnvKey:lastEnvKey,
             turbidity:skyDome?+skyDome.material.uniforms.turbidity.value.toFixed(2):0,
@@ -7693,6 +7791,14 @@
           +row('c6.overlays', fmt(c6v.overlays))
           +row('c6.tagged', fmt(c6v.tagged))
           +row('c6.renders', fmt(c6v.renders))
+          +'</dl>';
+        var wv=snap.water||{}, wdo=wv.diffuseOffset||{}, wno=wv.normalOffset||{};
+        html+='<h3>川面（R3-3）</h3><dl class="tgrid">'
+          +row('water.normalMap', fmt(wv.normalMap))
+          +row('water.roughnessMap', fmt(wv.roughnessMap))
+          +row('water.normalScale', fmt(wv.normalScale))
+          +row('water.diffuseOffset', fmt(wdo.x)+' / '+fmt(wdo.y))
+          +row('water.normalOffset', fmt(wno.x)+' / '+fmt(wno.y))
           +'</dl>';
         var c7v=snap.c7||{};
         html+='<h3>ポストプロセス（C7）</h3><dl class="tgrid">'

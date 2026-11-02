@@ -164,6 +164,14 @@
           +row('c6.tagged', fmt(c6v.tagged))
           +row('c6.renders', fmt(c6v.renders))
           +'</dl>';
+        var wv=snap.water||{}, wdo=wv.diffuseOffset||{}, wno=wv.normalOffset||{};
+        html+='<h3>川面（R3-3）</h3><dl class="tgrid">'
+          +row('water.normalMap', fmt(wv.normalMap))
+          +row('water.roughnessMap', fmt(wv.roughnessMap))
+          +row('water.normalScale', fmt(wv.normalScale))
+          +row('water.diffuseOffset', fmt(wdo.x)+' / '+fmt(wdo.y))
+          +row('water.normalOffset', fmt(wno.x)+' / '+fmt(wno.y))
+          +'</dl>';
         var c7v=snap.c7||{};
         html+='<h3>ポストプロセス（C7）</h3><dl class="tgrid">'
           +row('c7.enabled', fmt(c7v.enabled))
