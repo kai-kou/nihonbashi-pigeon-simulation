@@ -4182,6 +4182,14 @@
         // amplitudes. peckHit keeps the fire-time hit judgement and
         // peckShake runs the single post-hit swallow shake.
         this.peckRate=rand(0.85,1.30); this.peckHold=rand(0.06,0.12); this.peckDepth=rand(0.85,1.15); this.peckHit=false; this.peckShake=0;
+        // R2-3 (Issue #73): takeoff/landing transition state. No new
+        // nodes, geometries, textures or programs — phase scalars only.
+        // takeoffCrouch is re-rolled per takeoff in setState(); the
+        // constructor value (0.23) is only a fallback. settleT counts
+        // down the 0.4 sim-s post-landing settle; _flare holds the
+        // current landing-flare coefficient; _crouching marks the
+        // takeoff crouch window for flapFreqFor and the body offset.
+        this.takeoffCrouch=0.23; this.takeoffJumped=false; this.takeoffEnvBeats=0; this.settleT=0; this._flare=0; this._crouching=false;
         this.slot=V3(rand(-1,1),rand(-0.3,0.5),rand(-1,1)).multiplyScalar(rand(3,13));
         this.target=null; this.checkPoint=null; this.finalPoint=null; this.finalKind=null;
         this.site=null; this.wanderT=0; this.courtT=0; this.alertT=0; this.escapeT=0; this.splitSign=0;
@@ -4191,7 +4199,17 @@
         this.exclaimT=0; this.feedRush=false;
       }
       get speed(){ return this.vel.length(); }
-      setState(s){ this.state=s; this.stateT=0; }
+      setState(s){
+        this.state=s; this.stateT=0;
+        // R2-3 (Issue #73): every takeoff entry re-rolls its crouch
+        // duration (0.18–0.28 sim-s), clears the jump flag and the
+        // first-3-beats envelope counter, so the envelope restarts on
+        // every takeoff (not only on the collective one, which used
+        // to reset takeoffBeats alone). Transition conditions and
+        // the staggered wait (stateT<0, set by the caller after this
+        // call) are untouched.
+        if(s==='takeoff'){ this.takeoffCrouch=rand(0.18,0.28); this.takeoffJumped=false; this.takeoffEnvBeats=0; this._crouching=false; }
+      }
       headWorld(out){ return this.mesh.headG.getWorldPosition(out||V3()); }
     }
 
@@ -4614,7 +4632,15 @@
       // Berg & Biewener 2010 / Dial & Biewener 1993 (report §B) — a
       // continuous function of speed, climb and flight phase, never a
       // fixed value; intermittent glides drop it to 0
-      if(p.state==='takeoff'){ p.takeoffBeats+=p.flapFreq*dt; return lerp(8.9, 7.7, clamp(p.takeoffBeats/4,0,1)); }
+      if(p.state==='takeoff'){
+        // R2-3: during the crouch phase the wings stay folded and no
+        // beat is counted — the first-3-beats envelope counts flight
+        // beats only. The frequency ramp (takeoffBeats) is likewise
+        // frozen during the crouch, so it also starts at the jump.
+        if(p._crouching) return 0;
+        p.takeoffBeats+=p.flapFreq*dt; p.takeoffEnvBeats=(p.takeoffEnvBeats||0)+p.flapFreq*dt;
+        return lerp(8.9, 7.7, clamp(p.takeoffBeats/4,0,1));
+      }
       if(p.state==='descend') return lerp(7.8, 6.8, clamp(p.stateT/2.2,0,1));
       if(p.state==='fly'){
         if(p.glide) return 0;
@@ -4678,16 +4704,31 @@
       const m=p.mesh;
       /* ---- flight states ---- */
       if(p.state==='takeoff'){
-        if(p.stateT<0){ /* staggered wait */ }
+        if(p.stateT<0){ /* staggered wait — R2-3 leaves the per-bird delay untouched */ p._crouching=false; }
         else{
-          p.fold=lerp(p.fold,0,dt*6);
-          const dir=_v1.set(Math.sin(p.heading),0,Math.cos(p.heading));
-          const want=_v2.copy(dir).multiplyScalar(7).add(_v3.set(0,3.2,0));
-          steer(p, want, 12, 14, dt);
-          avoidBuildings(p, dt);
-          if(p.stateT>1.15){
-            if(p.soloDescent){ p.setState('descend'); }
-            else p.setState('fly');
+          if(p.takeoffCrouch===undefined){ p.takeoffCrouch=rand(0.18,0.28); p.takeoffJumped=false; }
+          if(p.stateT<p.takeoffCrouch){
+            /* R2-3 crouch phase (0.18–0.28 sim-s, per bird): body dips
+               ~0.02 via the shared body-offset composition below, wings
+               stay folded (fold held at 1), no steering, no velocity —
+               the jump below is the first motion. */
+            p._crouching=true; p.vel.set(0,0,0); p.fold=lerp(p.fold,1,dt*6);
+          } else {
+            p._crouching=false;
+            // R2-3 jump: strengthen the vertical component of the
+            // initial velocity at the first active frame. The steering
+            // target (7 m/s forward + 3.2 m/s up, 12 m/s cap) is
+            // unchanged; the impulse decays back toward it via steer().
+            if(!p.takeoffJumped){ p.takeoffJumped=true; p.vel.y=4.5; }
+            p.fold=lerp(p.fold,0,dt*6);
+            const dir=_v1.set(Math.sin(p.heading),0,Math.cos(p.heading));
+            const want=_v2.copy(dir).multiplyScalar(7).add(_v3.set(0,3.2,0));
+            steer(p, want, 12, 14, dt);
+            avoidBuildings(p, dt);
+            if(p.stateT>1.15){
+              if(p.soloDescent){ p.setState('descend'); }
+              else p.setState('fly');
+            }
           }
         }
       }
@@ -4744,6 +4785,7 @@
           _v1.copy(anchor.pos).add(_v2.set(Math.sin(p.stateT*0.9+p.i)*14, 2, Math.cos(p.stateT*0.9+p.i)*14));
           _v2.copy(_v1).sub(p.pos).normalize().multiplyScalar(11);
           steer(p, _v2, 13, 9, dt);
+          p._flare=0; // R2-3: circling, not final approach — no flare
         } else {
           const groundTarget=(p.finalKind==='ground' && (!p.checkPoint||p.checked));
           let tgt, approach=false;
@@ -4756,6 +4798,13 @@
             else tgt=_v1.set(p.finalPoint.x, gy, p.finalPoint.z);
           }
           const d=tgt.distanceTo(p.pos);
+          // R2-3 flare coefficient: ramps 0→1 over the final ~4 m of
+          // 3-D distance to the current landing target (final point
+          // or checkpoint). The high approach leg is excluded
+          // (approach=true), so the bird does not flare while still
+          // repositioning above the target. Path, target and the
+          // d<1.6 arrival condition are unchanged.
+          p._flare=approach?0:clamp(1-d/4,0,1);
           const sp=clamp(d*0.9, 2.2, 11);
           _v2.copy(tgt).sub(p.pos).normalize().multiplyScalar(sp);
           steer(p, _v2, 12, 10, dt);
@@ -4768,17 +4817,18 @@
               } else if(p.finalPoint && p.finalKind==='perch' && perchOccupied(p.finalPoint, p) && p.checkFails<3){
                 // final perch got taken: abort this landing entirely
                 p.checkFails++; p.checked=false; p.checkPoint=pickCheckPoint(p.finalPoint); p.landDelay=1.4;
-              } else { p.checked=true; p.pos.copy(tgt); p.vel.set(0,0,0); p.setState('perchcheck'); p.checkT=rand(1.5,4); }
+              } else { p.checked=true; p.pos.copy(tgt); p.vel.set(0,0,0); p.setState('perchcheck'); p.checkT=rand(1.5,4); p.settleT=0.4; /* R2-3 settle after touchdown on the checkpoint perch */ }
             }
             else {
               p.pos.copy(tgt); p.vel.set(0,0,0); p.soloDescent=false; p.checked=false;
               if(p.finalKind==='ground'){ p.setState('forage'); }
               else p.setState('perch');
+              p.settleT=0.4; /* R2-3 settle after touchdown */
             }
           }
           if(p.stateT>14){ // failsafe
             p.pos.copy(p.finalPoint); p.pos.y+=BODY_Y; p.vel.set(0,0,0);
-            p.setState(p.finalKind==='ground'?'forage':'perch'); p.soloDescent=false; p.checked=false;
+            p.setState(p.finalKind==='ground'?'forage':'perch'); p.soloDescent=false; p.checked=false; p.settleT=0.4; /* R2-3 settle after failsafe touchdown */
           }
         }
       }
@@ -4840,6 +4890,11 @@
       let wingA;
       if(flying){
         if(p.glide && p.state==='fly'){ wingA=0.32; } // shallow dihedral glide
+        // R2-3 takeoff envelope: the first 3 flight beats only ride
+        // ~1.15x amplitude, decaying linearly to 1.0 at beat 3
+        // (takeoffEnvBeats counts flight beats; the crouch phase
+        // counts none, see flapFreqFor). The -0.08 offset is not scaled.
+        else if(p.state==='takeoff' && (p.takeoffEnvBeats||0)<3){ const env=1+0.15*(1-(p.takeoffEnvBeats||0)/3); wingA=Math.sin(p.flapPhase)*1.02*env - 0.08; }
         else wingA=Math.sin(p.flapPhase)*1.02 - 0.08;
       } else wingA=-0.1;
       const foldA=p.fold*1.85;
@@ -4906,12 +4961,21 @@
       m.underL.visible=m.underR.visible=(flying && !foldedNow);
       // body pitch/roll from velocity
       let pitch=0, roll=0;
+      // R2-3 flare coefficient (descend final approach only; 0 in
+      // every other state, including circling and the approach leg).
+      const flare=(p.state==='descend')?(p._flare||0):0;
       if(flying){
         pitch=clamp(-p.vel.y*0.045 + (p.speed<9?0.12:0), -0.5, 0.6);
+        // R2-3 flare nose-up: the model faces +Z, so positive
+        // rotation.x is nose-down (right-hand rule about +X); the
+        // flare therefore subtracts up to 0.35 rad (~20 deg).
+        pitch-=flare*0.35;
         const turnRate=_angDiff(p.heading, p._lastHeading||p.heading)/Math.max(dt,0.001);
         roll=clamp(-turnRate*p.speed*0.028, -0.9, 0.9);
         m.tailG.rotation.x=(p.state==='descend')?0.5:0.12;
-        m.tailG.scale.x=(p.state==='descend')?1.5:1; // tail fanned wide as an air brake on landing
+        // R2-3: tail fan grades 1→1.5 with the flare instead of the
+        // old binary descend?1.5:1 switch.
+        m.tailG.scale.x=1+0.5*flare;
       } else {
         m.tailG.rotation.x=(p.state==='court')?0.55:0.05;
         if(p.state==='court'){
@@ -4921,7 +4985,22 @@
         } else { m.neck.scale.set(1.0,1.18,1.0); m.tailG.scale.x=1; }
       }
       p._lastHeading=p.heading;
-      m.bodyG.position.y=lerp(m.bodyG.position.y||0, (p.state==='forage'&&p.restT>0)?-0.032:0, 0.2);
+      // R2-3 posture synthesis (shared pitch / body-height order,
+      // decided before implementation — see PR body):
+      //   pitch: velocity pitch, then flare nose-up (descend only),
+      //     then court bow (grounded only) — the additive terms are
+      //     disjoint by state, so at most one is live at a time.
+      //   body height: rest dip (forage+restT, existing) +
+      //     crouch dip (takeoff crouch window only, -0.02) +
+      //     settle dip (0.4 sim-s after a landing, -0.025 decaying
+      //     linearly to 0) — likewise disjoint by state, summed so
+      //     the order is explicit. All dips move bodyG as a whole
+      //     (the whole-body group), exactly like the existing rest dip;
+      //     they read as the body sinking, not as feet penetrating.
+      if(p.settleT>0) p.settleT-=dt;
+      const crouchDip=(p.state==='takeoff'&&p._crouching)?-0.02:0;
+      const settleDip=(p.settleT>0)?-0.025*(p.settleT/0.4):0;
+      m.bodyG.position.y=lerp(m.bodyG.position.y||0, ((p.state==='forage'&&p.restT>0)?-0.032:0)+crouchDip+settleDip, 0.2);
       m.bodyG.rotation.x=lerp(m.bodyG.rotation.x, pitch, 0.2);
       m.bodyG.rotation.z=lerp(m.bodyG.rotation.z, roll, 0.15);
 
@@ -5055,12 +5134,17 @@
           m.closeFeet[1].position.z=0.005-sw; m.closeFeet[1].position.y=FOOT_Y+liftR;
         }
       } else {
-        m.legs[0].position.z=m.legs[1].position.z=m.legs[3].position.z=m.legs[4].position.z=0.005;
+        // R2-3: forward offset with the flare on final approach
+        // (+0.06 at full flare); every other non-walking state keeps
+        // the exact old reset values. The walking branch above is
+        // untouched (D1).
+        const legFwd=(p.state==='descend')?flare*0.06:0;
+        m.legs[0].position.z=m.legs[1].position.z=m.legs[3].position.z=m.legs[4].position.z=0.005+legFwd;
         m.legs[0].position.y=m.legs[1].position.y=m.legs[3].position.y=m.legs[4].position.y=LEG_Y;
-        m.legs[2].position.z=m.legs[5].position.z=0.005;
+        m.legs[2].position.z=m.legs[5].position.z=0.005+legFwd;
         m.legs[2].position.y=m.legs[5].position.y=ANK_Y;
         if(m.closeFeet){
-          m.closeFeet[0].position.z=m.closeFeet[1].position.z=0.005;
+          m.closeFeet[0].position.z=m.closeFeet[1].position.z=0.005+legFwd;
           m.closeFeet[0].position.y=m.closeFeet[1].position.y=FOOT_Y;
         }
       }
