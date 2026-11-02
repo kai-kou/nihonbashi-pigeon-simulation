@@ -2626,8 +2626,32 @@
       }
       return seq;
     }
-    const P7_VARIANTS=[{jitter:0.96, uOff:0.00},{jitter:1.00, uOff:0.34},{jitter:1.04, uOff:0.67}];
-    const BIRD_VARIANT=spreadIndicesP7([1,1,1], NAMES.length);
+    /* R1-4 (Issue #70): third-layer individual variation, reusing the
+       P7 spread mechanism (deterministic, no randomness, stable
+       across rebuilds and reloads). (a) Pattern seed: the variant
+       table grows from 3 to 5 phases at uOff steps of 0.20 of a
+       texture repeat, jitter kept inside the P7 0.96–1.04 band, so
+       index-adjacent birds always differ in pattern phase (the
+       spread sequence is 0,1,2,3,4 repeating; counts 5,5,5,5,4 over
+       24 birds). Bird slots are assigned randomly and birds wander,
+       so index order is not spatial adjacency: spatially adjacent
+       birds are NOT guaranteed to differ. No new texture, material combination or program:
+       offset variants share the one 'p7uv' program via
+       customProgramCacheKey in p7ShiftUV, and each bird still uses
+       exactly one shared morph x variant entry, so distinct entries
+       stay bounded by the 24 birds. (b) Body size: 4 plan steps,
+       0.94–1.06 (±6%, mean 1.00), spread with period 4 against the
+       variant period 5, so the (variant, size) pairs cycle through
+       20 combinations. (c) Posture: 3 chest-forward steps, 0–0.008
+       m, spread with period 3. Combined, all 24 birds get a
+       distinct (variant, size, chest) triple (verified by running
+       the spread function over 24 birds). */
+    const P7_VARIANTS=[{jitter:0.96, uOff:0.00},{jitter:0.98, uOff:0.20},{jitter:1.00, uOff:0.40},{jitter:1.02, uOff:0.60},{jitter:1.04, uOff:0.80}];
+    const BIRD_VARIANT=spreadIndicesP7([1,1,1,1,1], NAMES.length);
+    const R14_BODY_SIZE=[0.94,0.98,1.02,1.06];
+    const BIRD_BODY_SIZE=spreadIndicesP7([1,1,1,1], NAMES.length);
+    const R14_CHEST=[0,0.004,0.008];
+    const BIRD_CHEST=spreadIndicesP7([1,1,1], NAMES.length);
     const NECK_CLASSES=[{name:'strong', emissive:1.30, sheen:1.25, tint:null},{name:'weak', emissive:1.00, sheen:1.00, tint:null},{name:'juvenile', emissive:0.45, sheen:0.40, tint:0xb9b2a4}];
     const BIRD_NECK_CLASS=spreadIndicesP7([33,50,17], NAMES.length);
     const NECK_COLORS=[0x2e8f6e,0x2e8f6e,0x7a5fb0,0x3a9a7c,0x2e8f6e,0x6a55a8];
@@ -3519,6 +3543,17 @@
       const g=new THREE.Group();
       g.userData.pigeonIdx=pi; // tap-to-select raycast target
       const bodyG=new THREE.Group(); g.add(bodyG);
+      /* R1-4 (Issue #70): per-bird body-size spread, plan axes only.
+         bodyG.scale y stays 1, so leg/foot y positions are unscaled
+         and every foot still lands exactly at BODY_Y with no
+         leg-length or offset compensation (D1: leg code untouched).
+         A uniform scale would float/sink feet by (s-1)*BODY_Y (up to
+         ~25 mm at ±6%), visible at close range; bulk (width/length)
+         varies instead, height intentionally not varied. animate()
+         never writes bodyG.scale, so this survives per-frame. */
+      const r14Size=R14_BODY_SIZE[BIRD_BODY_SIZE[pi%BIRD_BODY_SIZE.length]];
+      const r14Chest=R14_CHEST[BIRD_CHEST[pi%BIRD_CHEST.length]];
+      bodyG.scale.set(r14Size, 1, r14Size);
       const morph=MORPH_OF_BIRD[pi%MORPH_OF_BIRD.length];
       const bc=morph.body;
       const mm=morphMatsFor(morph, BIRD_VARIANT[pi%BIRD_VARIANT.length]);
@@ -3558,11 +3593,17 @@
       if(ncls.sheen!==1){ neckSheenMat.uniforms.uA.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uB.value.multiplyScalar(ncls.sheen); neckSheenMat.uniforms.uHi.value.multiplyScalar(ncls.sheen); }
       if(ncls.tint) neckMat.color.setHex(ncls.tint);
       const neck=new THREE.Mesh(new THREE.SphereGeometry(0.105,18,14), neckMat);
-      neck.scale.set(1.0,1.18,1.0); neck.position.set(0,0.04,0.12); bodyG.add(neck);
+      /* R1-4 (Issue #70): chest-forward posture quirk — neck and
+         breast patch shift forward together by r14Chest (0–0.008 m,
+         0–12.8 mm at display scale). animate() rewrites neck.scale
+         and headG but never neck/breastPatch position, so the quirk
+         survives per-frame; the far-LOD neck keeps its fixed position
+         (far birds do not carry the quirk). */
+      neck.scale.set(1.0,1.18,1.0); neck.position.set(0,0.04,0.12+r14Chest); bodyG.add(neck);
       const neckSheen=new THREE.Mesh(new THREE.SphereGeometry(0.1095,20,14), neckSheenMat);
       neck.add(neckSheen);
       const breastPatch=new THREE.Mesh(new THREE.SphereGeometry(0.112,16,12), neckMat);
-      breastPatch.scale.set(0.94,1.14,0.84); breastPatch.position.set(0,-0.034,0.13); bodyG.add(breastPatch);
+      breastPatch.scale.set(0.94,1.14,0.84); breastPatch.position.set(0,-0.034,0.13+r14Chest); bodyG.add(breastPatch);
       const breastSheen=new THREE.Mesh(new THREE.SphereGeometry(0.1165,18,12), neckSheenMat);
       breastPatch.add(breastSheen);
       const headG=new THREE.Group(); headG.position.set(0,0.085,0.155); bodyG.add(headG);
@@ -3804,7 +3845,8 @@
         wingOLP, wingORP, wingOL, wingOR, wingFullL, wingFullR, primL, primR,
         breastMesh:breast, headMesh:head, rump, barMeshes, farTrunk, farNeck, farHead,
         bodyMat:mat, breastMat:breast.material, headMat, wingMat, tailMat,
-        variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase:hash(pi*57+13)}; // P7 (Issue #22)
+        variant:BIRD_VARIANT[pi%BIRD_VARIANT.length], neckClass:ncls.name, neckGain:ncls.emissive, neckPhase:hash(pi*57+13), // P7 (Issue #22)
+        r14Size, r14Chest};
     }
     /* toggle the close-range LOD for one bird: geometry detail + hi-res
        textures in, basic parts out. Display scale never changes. */
