@@ -4179,6 +4179,17 @@
         this.state='perch'; this.stateT=0; this.idleT=rand(1,5);
         this.flapPhase=rand(0,TAU); this.flapFreq=0; this.fold=1; this.glide=false; this.glideT=rand(1,3);
         this.bobPhase=rand(0,1); this.peckT=0; this.peckAnim=0; this.headYaw=0; this.headYawT=0;
+        // R2-6 (Issue #88): head-saccade state scalars only — no new
+        // textures, programs, geometries or meshes. headHoldT counts
+        // down the current fixation hold in real-animation seconds
+        // (the same unscaled dt base as alertT/checkT: animate() passes
+        // the raw clock dt, capped at 0.05 s, and pigeons.js scales
+        // nothing except flightSecToday). 0 means "roll a new scan
+        // target on the next scan frame". The saccade itself is a
+        // constant-angular-speed move (SAC_SPEED in the head block),
+        // never a per-frame lerp factor, so its duration in dt-time
+        // does not depend on the frame rate.
+        this.headHoldT=0;
         // R2-2 (Issue #72): per-bird peck parameters. peckRate scales
         // the down/lift phases, peckHold is the bottom-hold seconds
         // (60–120 ms), peckDepth scales the pitch/forward/drop
@@ -4245,6 +4256,12 @@
         // flick never carries across a transition (e.g. into
         // flight, where the tail channel belongs to the flare).
         this.stillT=0; this.tailFlickT=0; this.nextFlickAt=rand(5,15);
+        // R2-6 (Issue #88): entering alert or perchcheck starts a
+        // fresh fixation (hold 0, so the saccade engine rolls a new
+        // target on the next scan frame with that state's hold
+        // range). State durations themselves (alertT, checkT) are
+        // untouched — only the scan scheduling restarts.
+        if(s==='alert'||s==='perchcheck') this.headHoldT=0;
       }
       headWorld(out){ return this.mesh.headG.getWorldPosition(out||V3()); }
     }
@@ -4948,7 +4965,11 @@
       else if(p.state==='perchcheck'){ // two-stage landing: safety check (Osaka Pref. observation)
         p.fold=lerp(p.fold,1,dt*5);
         p.checkT-=dt;
-        if(Math.random()<dt*1.4) p.headYawT=rand(-1,1);
+        // R2-6 (Issue #88): no probabilistic retarget here any more;
+        // the head-block saccade engine owns perchcheck scanning with
+        // a 0.5-1.0 s hold, so a 1.5-4 s check window holds several
+        // fixations. checkT and the cancel/continue conditions below
+        // are untouched.
         if(p.finalPoint && p.finalKind==='perch' && perchOccupied(p.finalPoint, p)){
           // the target was taken while checking: cancel the landing
           p.checked=false; p.checkFails++; p.checkPoint=pickCheckPoint(p.finalPoint); p.landDelay=1.2;
@@ -4966,7 +4987,10 @@
           const r=Math.random();
           if(!sleeping && r<0.30) p.preT=rand(0.8,1.6);              // preen
           else if(!sleeping && r<0.30+0.12*ENV.court && p.sex==='♂') { p.setState('court'); p.courtT=rand(4,6.5); } // bow-coo rate follows the breeding season
-          else p.headYawT=rand(-1.1,1.1);                            // fovea scan (head saccade)
+          // R2-6 (Issue #88): no scan retarget here any more; the
+          // idleT roll still drives preen/court, but the head-block
+          // saccade engine owns perch/roost scanning (range ±1.1,
+          // unchanged; hold perch 0.9-2.2 s, roost 1.5-3.0 s).
         }
         if(p.preT>0) p.preT-=dt;
         /* R2-5 (Issue #75): tail-flick schedule — still time only.
@@ -5265,10 +5289,69 @@
       if(p.state==='bathe'){ hpitch=0.5+Math.sin(p.stateT*19)*0.28; hz+=Math.sin(p.stateT*13)*0.02; } // dipping + shaking
       if(p.preT>0){ hpitch=0.5; p.headYawT=1.15; }
       if(p.state==='roost'){ hpitch=0.25; hy=-0.012; }
-      p.headYaw=lerp(p.headYaw, p.headYawT, 0.35);
-      // R2-2: while a peck (or its swallow shake) runs, the head keeps
-      // the grain aim set at fire time instead of rescanning.
-      if(Math.random()<dt*0.7 && !walking && p.state!=='court' && p.peckAnim<=0 && p.peckShake<=0) p.headYawT=rand(-1,1);
+      // R2-6 (Issue #88): alert-only raised-head posture — a small
+      // pitch-up and lift applied while alert and nowhere else.
+      // alertT and the alert entry/exit conditions are untouched, so
+      // the telemetry alert duration is unchanged.
+      if(p.state==='alert'){ hpitch-=0.12; hy+=0.006; }
+      /* R2-6 (Issue #88): time-based head saccade + fixation hold,
+         replacing the old per-frame lerp (0.35/frame, whose real-time
+         speed depended on the frame rate) and the probabilistic
+         retargets (perchcheck, perch/roost idleT, the generic
+         dt*0.7 scan, forage rest). The engine owns scan retargets;
+         the only other headYawT writers left are the preen force
+         above (1.15) and the R2-2 peck grain aim at fire time.
+         SAC_SPEED is in headYaw-target space (displayed yaw is
+         headYaw*0.8, so 20 rad/s here is 16 rad/s on screen):
+         the largest possible scan step (2.2 rad, ±1.1 range) takes
+         0.11 real-animation seconds and a typical step (~0.7 rad)
+         ~0.04 s — far shorter than every hold below, so the head
+         reads as "snap, then still". All durations are in the same
+         unscaled dt base as alertT/checkT (animate() passes the raw
+         clock dt capped at 0.05 s); no frame counts are used, so the
+         saccade/hold ratio is identical at ~2 fps and at 60 fps.
+         Amplitude ranges are unchanged from the old code
+         (perch/roost ±1.1, everything else ±1.0; preen 1.15 and the
+         peck aim clamp ±1.0 are untouched).
+         What moves is headG only: headG is a bodyG child holding the
+         head mesh, beak, cere, eyes and the close/far head variants,
+         while the neck mesh (and its sheen shell) is a bodyG child,
+         so headG yaw never moves the neck — the R1-1 scope note. */
+      const SAC_SPEED=20; // rad/s in headYaw-target space
+      if(p.peckAnim>0 || p.peckShake>0 || p.preT>0){
+        // Functional head poses own the yaw: move at saccade speed
+        // toward the aim/pose with no hold gate, so the R2-2 grain
+        // aim and the preen pose track immediately and are never
+        // overwritten by a scan retarget mid-peck/mid-preen.
+        const sacD=p.headYawT-p.headYaw, sacStep=SAC_SPEED*dt;
+        p.headYaw+=clamp(sacD,-sacStep,sacStep);
+        p.headHoldT=0; // scan resumes with a fresh target once the pose ends
+      } else if(!walking && p.state!=='court'){
+        // Scan mode: hold at the reached target, then roll a new one.
+        if(Math.abs(p.headYawT-p.headYaw)<=1e-4){
+          p.headHoldT=(p.headHoldT||0)-dt;
+          if(p.headHoldT<=0){
+            if(p.state==='perch'||p.state==='roost') p.headYawT=rand(-1.1,1.1);
+            else p.headYawT=rand(-1,1);
+          }
+        }
+        const sacD=p.headYawT-p.headYaw, sacStep=SAC_SPEED*dt;
+        p.headYaw+=clamp(sacD,-sacStep,sacStep);
+        if(Math.abs(p.headYawT-p.headYaw)<=1e-4 && (p.headHoldT||0)<=0){
+          // Arrived: roll the next hold (state-dependent, dt seconds).
+          // alert 0.4-0.9 s is the Issue's verbatim range; perchcheck
+          // 0.5-1.0 s fits several fixations into its 1.5-4 s window.
+          if(p.state==='alert') p.headHoldT=rand(0.4,0.9);
+          else if(p.state==='perchcheck') p.headHoldT=rand(0.5,1.0);
+          else if(p.state==='perch') p.headHoldT=rand(0.9,2.2);
+          else if(p.state==='roost') p.headHoldT=rand(1.5,3.0);
+          else if(p.state==='forage') p.headHoldT=rand(0.7,1.8);
+          else p.headHoldT=rand(0.8,1.8);
+        }
+      }
+      // Walking (R2-1 bob owns hz/hy) and court: yaw is frozen — no
+      // retarget and no drift toward a stale target. The bob waveform,
+      // stride drive and stepping code are untouched (D1).
       m.headG.position.set(0, 0.085+hy, 0.155+hz);
       m.headG.rotation.set(hpitch, p.headYaw*0.8+shakeYaw, 0);
       // iridescent neck feathers: hue swings green <-> violet with the
@@ -5378,7 +5461,9 @@
       // of a city pigeon's day (Rose et al. 2006) — body lowered, head scans
       if(p.restT>0){
         p.restT-=dt; p._walking=false;
-        if(Math.random()<dt*0.5) p.headYawT=rand(-1,1);
+        // R2-6 (Issue #88): no probabilistic retarget here any more;
+        // the head-block saccade engine owns forage-rest scanning
+        // (range ±1.0, hold 0.7-1.8 s).
         p.pos.y=BODY_Y; return;
       }
       // rain: foraging is suppressed — birds mostly stand still and wait it out
