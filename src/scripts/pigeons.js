@@ -146,16 +146,21 @@
        effective roughness level essentially unchanged — only the
        modulation shows, in raking light. (R1-3, Issue #69: the base
        moved 230 → 226 so that the widened ±29 stripe swing stays
-       symmetric inside 0–255; the mean shift is −4 values, ≈−0.016
-       absolute roughness, negligible against the 0.85–0.95 scalars.)
+       symmetric inside 0–255; the total mean shift is ≈−7.8 values
+       (−4 from the base move plus −3.8 from the coarse bands below,
+       ≈−0.026 to −0.029 effective roughness after the 0.85–0.95
+       scalars, negligible against those scalars.)
        The modulation follows the barb flow of wingTexBase (same
        slope: moveTo(x,256) → lineTo(x+58,0)) as ~6px-period stripes
        swinging the value ±29 (255 / 197), plus a second, coarser
        modulation along the same flow: ~24px-wide diagonal bands
        alternating light/dark every 24px (a full light–dark cycle
-       of ~48px, about 8 stripe periods) shifting the value ±10
-       via 0.039-alpha white/black strokes, so raking light reads a
-       slow sheen variation on top of the fine barb grain, plus a
+       of ~48px, about 8 stripe periods) with a ~9.9 peak-to-peak
+       slow variation via 0.039-alpha white/black strokes (at the
+       226 stripe mean: white +1.1, black −8.8, i.e. near-original
+       bands alternating with ~9 darker bands), so raking light
+       reads a slow sheen variation on top of the fine barb grain,
+       plus a
        gentle ±8 global gradient perpendicular to that flow.
        Fully deterministic (no Math.random). No sRGB encoding: this is
        a data texture and must stay linear. All values stay inside
@@ -173,8 +178,9 @@
       }
       // R1-3 (Issue #69): coarse sheen bands along the barb flow —
       // 24px-wide diagonal strokes at 24px pitch, alternating
-      // ±10 (≈0.039 alpha) so the sheen varies slowly over several
-      // stripe periods instead of reading as uniform fine grain.
+      // near-original / ~9-darker bands (≈0.039 alpha, peak-to-peak
+      // ≈9.9) so the sheen varies slowly over several stripe
+      // periods instead of reading as uniform fine grain.
       g.lineWidth=24;
       for(let x=-58,i=0;x<256+58+24;x+=24,i++){
         g.strokeStyle=(i%2===0)?'rgba(255,255,255,0.039)':'rgba(0,0,0,0.039)';
