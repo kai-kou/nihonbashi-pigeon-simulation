@@ -194,6 +194,14 @@
           +row('c7.aoBaseM', fmt(c7v.aoBaseM))
           +row('c7.aoVia', fmt(c7v.aoVia))
           +'</dl>';
+        var sl=snap.streetLights||{};
+        html+='<h3>街灯（R3-5）</h3><dl class="tgrid">'
+          +row('streetLights.heads', fmt(sl.heads))
+          +row('streetLights.headColor', fmt(sl.headColor))
+          +row('streetLights.pools', fmt(sl.pools))
+          +row('streetLights.opacity', fmt(sl.opacity))
+          +row('streetLights.visible', fmt(sl.visible))
+          +'</dl>';
         var ff=snap.flightFlash||{};
         html+='<h3>飛行フラッシュ（P4）</h3><dl class="tgrid">'
           +row('flightFlash.underwingVisible', fmt(ff.underwingVisible))
