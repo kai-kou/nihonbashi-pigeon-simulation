@@ -57,6 +57,10 @@
     /* window lights: warm emissive panes scattered over real building
        facades, fading in as the sun drops (the dusk-window leftover) */
     const winLightMat=new THREE.MeshBasicMaterial({color:0xffc978, transparent:true, opacity:0, depthWrite:false});
+    /* R3-5 (Issue #86): street-lamp head colour endpoints. The head
+       material itself lives in build-city.js (streetLampHeadMat);
+       this script only lerps between these two colours by darkF. */
+    const lampDayC=new THREE.Color(0x8a8d90), lampNightC=new THREE.Color(0xffe9b8);
     const winLightMesh=(()=>{
       let items=[];
       for(let bi=0; bi<buildingsAABB.length; bi++){
@@ -653,6 +657,15 @@
       const darkF=clamp((0.08-sinEl)/0.22,0,1);
       winLightMat.opacity=darkF*0.95;
       winLightMesh.visible=darkF>0.03;
+      /* R3-5 (Issue #86): street lights follow the same darkF, with
+         the same 0.03 visibility gate as the window lights. Heads
+         lerp day grey -> night warm; pool opacity IS darkF exactly
+         (no scale factor), so the panel value reads as darkF itself
+         at dusk/night and 0 by day. No dynamic light is added, and
+         window-light behaviour above is unchanged. */
+      if(streetLampHeadMat) streetLampHeadMat.color.copy(lampDayC).lerp(lampNightC, darkF);
+      if(streetLightPoolMat) streetLightPoolMat.opacity=darkF;
+      if(streetLightPoolMesh) streetLightPoolMesh.visible=darkF>0.03;
       // C1: facade emissive windows have their own, slightly earlier
       // ramp, independent of the winLight instanced planes above
       const glowF=clamp((0.12-sinEl)/0.24,0,1);
@@ -1773,6 +1786,15 @@
           feed:crumbCluster?{place:crumbCluster.site.name, noticed:crumbCluster.noticed,
             remainingMs:Math.max(0, Math.round(crumbCluster.until-performance.now()))}:null,
           windowLights:{opacity:+winLightMat.opacity.toFixed(3), visible:winLightMesh.visible},
+          /* R3-5 (Issue #86): heads/pools are instance counts of the
+             two street-light InstancedMeshes; opacity is the pool
+             material's live opacity, which updateDaylight() sets to
+             darkF exactly (0 by day, darkF at dusk/night). */
+          streetLights:{heads:streetLampHeadMesh?streetLampHeadMesh.count:0,
+            headColor:streetLampHeadMat?'#'+streetLampHeadMat.color.getHexString():null,
+            pools:streetLightPoolMesh?streetLightPoolMesh.count:0,
+            opacity:streetLightPoolMat?+streetLightPoolMat.opacity.toFixed(3):0,
+            visible:streetLightPoolMesh?streetLightPoolMesh.visible:false},
           facade:{normalMap:!!(cityMeshMat&&cityMeshMat.normalMap),
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),

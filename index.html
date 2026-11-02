@@ -729,6 +729,12 @@
         offsets:WIRE_OFFS.map(o=>[o[0],o[1]])}};
     /* handles the season/weather system (later script) drives */
     let cityMeshMat=null, roadsMat=null, groundMat=null, waterMatRef=null, canopyMesh=null;
+    /* R3-5 (Issue #86): street-light handles driven by updateDaylight()
+       in simulation.js (the later script shares this script's top-level
+       lexical scope). Head material colour, pool material opacity and
+       pool visibility all follow darkF there; nothing here animates. */
+    let streetLampHeadMat=null, streetLampHeadMesh=null,
+      streetLightPoolMat=null, streetLightPoolMesh=null;
     /* C4 (Issue #18): public wet-state of the road surface, written by
        updateEnvironment() alongside roadsMat and read by __QA__. */
     const roadSurface={roughnessFactor:1.0, envMapIntensity:0.25, curbSegments:0};
@@ -1804,6 +1810,7 @@
           if(colored) im.setColorAt(i, cc.set(it.c));
         });
         im.castShadow=false; im.receiveShadow=true; scene.add(im);
+        return im;
       }
       // street lamps along Sakaisuji (x≈30) and Sennichimae-dori (z≈26)
       const lampPoles=[], lampHeads=[];
@@ -1813,7 +1820,46 @@
       }
       for(let x=-440; x<=400; x+=52){ lampPoles.push({x,y:3,z:16}); lampHeads.push({x,y:6.05,z:16}); }
       inst(new THREE.CylinderGeometry(0.09,0.12,6,6), new THREE.MeshLambertMaterial({color:0x3f4448}), lampPoles);
-      inst(new THREE.SphereGeometry(0.17,8,6), new THREE.MeshBasicMaterial({color:0xffe9b8}), lampHeads);
+      /* R3-5 (Issue #86): the head material is kept by name so
+         updateDaylight() can drive its colour from darkF (day: off
+         grey, night: warm glowing). Head count and positions are
+         unchanged; the day-start colour is the off grey, and the
+         first updateDaylight() frame re-derives it from darkF. */
+      streetLampHeadMat=new THREE.MeshBasicMaterial({color:0x8a8d90});
+      streetLampHeadMesh=inst(new THREE.SphereGeometry(0.17,8,6), streetLampHeadMat, lampHeads);
+      /* R3-5 (Issue #86): one additive light pool per lamp head, at
+         the head's own x,z on the road surface (y=0.20, above the
+         0.06/0.09 road ribbons and the 0.13 zebra stripes, so no
+         z-fighting with them). A single InstancedMesh shares one
+         radial-gradient canvas texture whose alpha falls smoothly
+         from the centre to a zero edge, so pool rims never read hard.
+         No dynamic light is added; this layer is independent of C7
+         (Ultra bloom) and stands even if C7 is not adopted.
+         depthWrite:false (no depth fighting with the road) with
+         depthTest left on (pools never show through buildings);
+         the mesh is hidden outright while darkF<=0.03, so daytime
+         draws nothing for this layer. */
+      const poolCv=document.createElement('canvas'); poolCv.width=poolCv.height=256;
+      const pg=poolCv.getContext('2d');
+      const poolGrad=pg.createRadialGradient(128,128,0,128,128,128);
+      poolGrad.addColorStop(0,'rgba(255,205,130,0.90)');
+      poolGrad.addColorStop(0.25,'rgba(255,195,110,0.72)');
+      poolGrad.addColorStop(0.5,'rgba(255,185,95,0.44)');
+      poolGrad.addColorStop(0.75,'rgba(255,175,85,0.17)');
+      poolGrad.addColorStop(1,'rgba(255,170,80,0)');
+      pg.fillStyle=poolGrad; pg.fillRect(0,0,256,256);
+      const poolTex=new THREE.CanvasTexture(poolCv);
+      poolTex.encoding=THREE.sRGBEncoding; // as the ripple texture: gradient stops read as display colours
+      streetLightPoolMat=new THREE.MeshBasicMaterial({map:poolTex, transparent:true,
+        opacity:0, depthWrite:false, blending:THREE.AdditiveBlending});
+      const poolGeo=new THREE.PlaneGeometry(7,7); poolGeo.rotateX(-Math.PI/2);
+      streetLightPoolMesh=new THREE.InstancedMesh(poolGeo, streetLightPoolMat, lampHeads.length);
+      { const pm=new THREE.Matrix4(), pv2=new THREE.Vector3();
+        lampHeads.forEach((it,i)=>{ pv2.set(it.x, 0.20, it.z); pm.makeTranslation(pv2.x, pv2.y, pv2.z);
+          streetLightPoolMesh.setMatrixAt(i, pm); }); }
+      streetLightPoolMesh.castShadow=false; streetLightPoolMesh.receiveShadow=false;
+      streetLightPoolMesh.renderOrder=3; streetLightPoolMesh.visible=false;
+      scene.add(streetLightPoolMesh);
       /* ---- utility poles + overhead wires ----
          Thicker 11 m poles on the main sidewalks as well as the back
          streets, two crossarm levels, transformer cans on some poles,
@@ -5825,6 +5871,10 @@
     /* window lights: warm emissive panes scattered over real building
        facades, fading in as the sun drops (the dusk-window leftover) */
     const winLightMat=new THREE.MeshBasicMaterial({color:0xffc978, transparent:true, opacity:0, depthWrite:false});
+    /* R3-5 (Issue #86): street-lamp head colour endpoints. The head
+       material itself lives in build-city.js (streetLampHeadMat);
+       this script only lerps between these two colours by darkF. */
+    const lampDayC=new THREE.Color(0x8a8d90), lampNightC=new THREE.Color(0xffe9b8);
     const winLightMesh=(()=>{
       let items=[];
       for(let bi=0; bi<buildingsAABB.length; bi++){
@@ -6421,6 +6471,15 @@
       const darkF=clamp((0.08-sinEl)/0.22,0,1);
       winLightMat.opacity=darkF*0.95;
       winLightMesh.visible=darkF>0.03;
+      /* R3-5 (Issue #86): street lights follow the same darkF, with
+         the same 0.03 visibility gate as the window lights. Heads
+         lerp day grey -> night warm; pool opacity IS darkF exactly
+         (no scale factor), so the panel value reads as darkF itself
+         at dusk/night and 0 by day. No dynamic light is added, and
+         window-light behaviour above is unchanged. */
+      if(streetLampHeadMat) streetLampHeadMat.color.copy(lampDayC).lerp(lampNightC, darkF);
+      if(streetLightPoolMat) streetLightPoolMat.opacity=darkF;
+      if(streetLightPoolMesh) streetLightPoolMesh.visible=darkF>0.03;
       // C1: facade emissive windows have their own, slightly earlier
       // ramp, independent of the winLight instanced planes above
       const glowF=clamp((0.12-sinEl)/0.24,0,1);
@@ -7541,6 +7600,15 @@
           feed:crumbCluster?{place:crumbCluster.site.name, noticed:crumbCluster.noticed,
             remainingMs:Math.max(0, Math.round(crumbCluster.until-performance.now()))}:null,
           windowLights:{opacity:+winLightMat.opacity.toFixed(3), visible:winLightMesh.visible},
+          /* R3-5 (Issue #86): heads/pools are instance counts of the
+             two street-light InstancedMeshes; opacity is the pool
+             material's live opacity, which updateDaylight() sets to
+             darkF exactly (0 by day, darkF at dusk/night). */
+          streetLights:{heads:streetLampHeadMesh?streetLampHeadMesh.count:0,
+            headColor:streetLampHeadMat?'#'+streetLampHeadMat.color.getHexString():null,
+            pools:streetLightPoolMesh?streetLightPoolMesh.count:0,
+            opacity:streetLightPoolMat?+streetLightPoolMat.opacity.toFixed(3):0,
+            visible:streetLightPoolMesh?streetLightPoolMesh.visible:false},
           facade:{normalMap:!!(cityMeshMat&&cityMeshMat.normalMap),
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
@@ -7903,6 +7971,14 @@
           +row('c7.renders', fmt(c7v.renders))
           +row('c7.aoBaseM', fmt(c7v.aoBaseM))
           +row('c7.aoVia', fmt(c7v.aoVia))
+          +'</dl>';
+        var sl=snap.streetLights||{};
+        html+='<h3>街灯（R3-5）</h3><dl class="tgrid">'
+          +row('streetLights.heads', fmt(sl.heads))
+          +row('streetLights.headColor', fmt(sl.headColor))
+          +row('streetLights.pools', fmt(sl.pools))
+          +row('streetLights.opacity', fmt(sl.opacity))
+          +row('streetLights.visible', fmt(sl.visible))
           +'</dl>';
         var ff=snap.flightFlash||{};
         html+='<h3>飛行フラッシュ（P4）</h3><dl class="tgrid">'

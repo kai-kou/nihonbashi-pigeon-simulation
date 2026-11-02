@@ -124,6 +124,12 @@
         offsets:WIRE_OFFS.map(o=>[o[0],o[1]])}};
     /* handles the season/weather system (later script) drives */
     let cityMeshMat=null, roadsMat=null, groundMat=null, waterMatRef=null, canopyMesh=null;
+    /* R3-5 (Issue #86): street-light handles driven by updateDaylight()
+       in simulation.js (the later script shares this script's top-level
+       lexical scope). Head material colour, pool material opacity and
+       pool visibility all follow darkF there; nothing here animates. */
+    let streetLampHeadMat=null, streetLampHeadMesh=null,
+      streetLightPoolMat=null, streetLightPoolMesh=null;
     /* C4 (Issue #18): public wet-state of the road surface, written by
        updateEnvironment() alongside roadsMat and read by __QA__. */
     const roadSurface={roughnessFactor:1.0, envMapIntensity:0.25, curbSegments:0};
@@ -1199,6 +1205,7 @@
           if(colored) im.setColorAt(i, cc.set(it.c));
         });
         im.castShadow=false; im.receiveShadow=true; scene.add(im);
+        return im;
       }
       // street lamps along Sakaisuji (x≈30) and Sennichimae-dori (z≈26)
       const lampPoles=[], lampHeads=[];
@@ -1208,7 +1215,46 @@
       }
       for(let x=-440; x<=400; x+=52){ lampPoles.push({x,y:3,z:16}); lampHeads.push({x,y:6.05,z:16}); }
       inst(new THREE.CylinderGeometry(0.09,0.12,6,6), new THREE.MeshLambertMaterial({color:0x3f4448}), lampPoles);
-      inst(new THREE.SphereGeometry(0.17,8,6), new THREE.MeshBasicMaterial({color:0xffe9b8}), lampHeads);
+      /* R3-5 (Issue #86): the head material is kept by name so
+         updateDaylight() can drive its colour from darkF (day: off
+         grey, night: warm glowing). Head count and positions are
+         unchanged; the day-start colour is the off grey, and the
+         first updateDaylight() frame re-derives it from darkF. */
+      streetLampHeadMat=new THREE.MeshBasicMaterial({color:0x8a8d90});
+      streetLampHeadMesh=inst(new THREE.SphereGeometry(0.17,8,6), streetLampHeadMat, lampHeads);
+      /* R3-5 (Issue #86): one additive light pool per lamp head, at
+         the head's own x,z on the road surface (y=0.20, above the
+         0.06/0.09 road ribbons and the 0.13 zebra stripes, so no
+         z-fighting with them). A single InstancedMesh shares one
+         radial-gradient canvas texture whose alpha falls smoothly
+         from the centre to a zero edge, so pool rims never read hard.
+         No dynamic light is added; this layer is independent of C7
+         (Ultra bloom) and stands even if C7 is not adopted.
+         depthWrite:false (no depth fighting with the road) with
+         depthTest left on (pools never show through buildings);
+         the mesh is hidden outright while darkF<=0.03, so daytime
+         draws nothing for this layer. */
+      const poolCv=document.createElement('canvas'); poolCv.width=poolCv.height=256;
+      const pg=poolCv.getContext('2d');
+      const poolGrad=pg.createRadialGradient(128,128,0,128,128,128);
+      poolGrad.addColorStop(0,'rgba(255,205,130,0.90)');
+      poolGrad.addColorStop(0.25,'rgba(255,195,110,0.72)');
+      poolGrad.addColorStop(0.5,'rgba(255,185,95,0.44)');
+      poolGrad.addColorStop(0.75,'rgba(255,175,85,0.17)');
+      poolGrad.addColorStop(1,'rgba(255,170,80,0)');
+      pg.fillStyle=poolGrad; pg.fillRect(0,0,256,256);
+      const poolTex=new THREE.CanvasTexture(poolCv);
+      poolTex.encoding=THREE.sRGBEncoding; // as the ripple texture: gradient stops read as display colours
+      streetLightPoolMat=new THREE.MeshBasicMaterial({map:poolTex, transparent:true,
+        opacity:0, depthWrite:false, blending:THREE.AdditiveBlending});
+      const poolGeo=new THREE.PlaneGeometry(7,7); poolGeo.rotateX(-Math.PI/2);
+      streetLightPoolMesh=new THREE.InstancedMesh(poolGeo, streetLightPoolMat, lampHeads.length);
+      { const pm=new THREE.Matrix4(), pv2=new THREE.Vector3();
+        lampHeads.forEach((it,i)=>{ pv2.set(it.x, 0.20, it.z); pm.makeTranslation(pv2.x, pv2.y, pv2.z);
+          streetLightPoolMesh.setMatrixAt(i, pm); }); }
+      streetLightPoolMesh.castShadow=false; streetLightPoolMesh.receiveShadow=false;
+      streetLightPoolMesh.renderOrder=3; streetLightPoolMesh.visible=false;
+      scene.add(streetLightPoolMesh);
       /* ---- utility poles + overhead wires ----
          Thicker 11 m poles on the main sidewalks as well as the back
          streets, two crossarm levels, transformer cans on some poles,
