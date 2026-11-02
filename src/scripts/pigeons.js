@@ -1193,8 +1193,11 @@
          leg-length or offset compensation (D1: leg code untouched).
          A uniform scale would float/sink feet by (s-1)*BODY_Y (up to
          ~25 mm at ±6%), visible at close range; bulk (width/length)
-         varies instead, height intentionally not varied. animate()
-         never writes bodyG.scale, so this survives per-frame. */
+         varies instead, height intentionally not varied. R2-5
+         (Issue #75) amends the last point: animate() now writes
+         bodyG.scale every frame, but only as r14Size*(1+breathK)
+         on the plan axes, so the R1-4 spread is composed, never
+         overwritten, and y stays 1 (see the posture section). */
       const r14Size=R14_BODY_SIZE[BIRD_BODY_SIZE[pi%BIRD_BODY_SIZE.length]];
       const r14Chest=R14_CHEST[BIRD_CHEST[pi%BIRD_CHEST.length]];
       bodyG.scale.set(r14Size, 1, r14Size);
@@ -1665,6 +1668,20 @@
         // fly frame (the anchor does not exist yet when the
         // constructor runs), so the first frame never jumps.
         this.flockPhase=hash(i)*TAU; this.slotHeading=null;
+        // R2-5 (Issue #75): idle micro-motion scalars only — no new
+        // textures, programs, geometries or meshes. breathFreq is the
+        // per-bird resting breathing rate (0.25–0.40 Hz, fixed for
+        // life); breathPhase decorrelates birds (hash(i+50), NOT
+        // flockPhase, so the idle phase is independent of the R2-4
+        // flight-breathing phase). stillT/nextFlickAt schedule the
+        // rare tail flick; tailFlickT is the live 0.3 s pulse
+        // countdown. roostHideSide fixes which leg hides in the
+        // roost one-leg pose (0 = the legs[0..2]/closeFeet[0] side,
+        // 1 = the legs[3..5]/closeFeet[1] side) so the pose never
+        // flaps sides mid-roost.
+        this.breathFreq=rand(0.25,0.40); this.breathPhase=hash(i+50)*TAU;
+        this.stillT=0; this.tailFlickT=0; this.nextFlickAt=rand(5,15);
+        this.roostHideSide=(i%2===0)?0:1;
         this.target=null; this.checkPoint=null; this.finalPoint=null; this.finalKind=null;
         this.site=null; this.wanderT=0; this.courtT=0; this.alertT=0; this.escapeT=0; this.splitSign=0;
         this.landDelay=0; this.checkT=0; this.drinkT=0; this.preT=0; this.restT=0;
@@ -1683,6 +1700,11 @@
         // the staggered wait (stateT<0, set by the caller after this
         // call) are untouched.
         if(s==='takeoff'){ this.takeoffCrouch=rand(0.18,0.28); this.takeoffJumped=false; this.takeoffEnvBeats=0; this._crouching=false; }
+        // R2-5 (Issue #75): every state change restarts the
+        // still-time clock and cancels a live tail pulse, so a
+        // flick never carries across a transition (e.g. into
+        // flight, where the tail channel belongs to the flare).
+        this.stillT=0; this.tailFlickT=0; this.nextFlickAt=rand(5,15);
       }
       headWorld(out){ return this.mesh.headG.getWorldPosition(out||V3()); }
     }
@@ -1810,6 +1832,9 @@
     // R2-3 crouch/settle windows, so at ×10/×60 the breathing offset
     // still varies smoothly instead of shivering at the timeScale rate.
     let flockClock=0;
+    // R2-5 (Issue #75): idle-breathing clock, same advance rule as
+    // flockClock (once per frame at the top of anchorUpdate).
+    let idleClock=0;
     function startFlockFlight(opts){
       opts=opts||{};
       let flyers=pigeons.filter(p=>!p.player && p.state!=='fly');
@@ -1840,6 +1865,7 @@
     }
     function anchorUpdate(dt){
       flockClock+=dt; // R2-4: once per frame, before the idle early return
+      idleClock+=dt; // R2-5: same clock for idle breathing (real-animation seconds, unscaled dt)
       if(!flockFlying) return;
       const tgt=anchor.path[0];
       if(!tgt){ // arrive → landing phase
@@ -2403,6 +2429,19 @@
           else p.headYawT=rand(-1.1,1.1);                            // fovea scan (head saccade)
         }
         if(p.preT>0) p.preT-=dt;
+        /* R2-5 (Issue #75): tail-flick schedule — still time only.
+           stillT counts perch/roost time (preen included: the bird
+           is still; the flick itself is a tail-channel pulse, so it
+           never conflicts with the head-channel preen). When the
+           still time passes the re-rolled interval (5–15 s, so the
+           first flick after any landing or state change lands well
+           inside the 30 s acceptance window), fire one 0.3 s pulse
+           and restart the clock. The pulse countdown decays here,
+           once per frame, and setState() clears it on any
+           transition, so a flick can never leak into flight. */
+        p.stillT=(p.stillT||0)+dt;
+        if(p.tailFlickT>0) p.tailFlickT-=dt;
+        if(p.tailFlickT<=0 && p.stillT>=(p.nextFlickAt||8)){ p.tailFlickT=0.3; p.stillT=0; p.nextFlickAt=rand(5,15); }
       }
       else if(p.state==='court'){
         // bow-coo: bow + crop inflate + tail fan + slow strut turn (Goodwin ethogram)
@@ -2525,7 +2564,16 @@
         // old binary descend?1.5:1 switch.
         m.tailG.scale.x=1+0.5*flare;
       } else {
-        m.tailG.rotation.x=(p.state==='court')?0.55:0.05;
+        /* R2-5 (Issue #75): tail-flick pulse rides on the grounded
+           base rotation (0.05) only — court keeps its own bow
+           rotation (0.55), and the flying branch above never reads
+           tailFlickT, so the flick can never compete with the
+           R2-3 flare fan or the court bow fan. The pulse is a
+           sine hump over the 0.3 s countdown (0 at both ends, peak
+           +0.18 rad ≈ 10° at mid-pulse), so it starts and ends
+           continuous with the base rotation. */
+        const flickK=(p.state==='court'||!(p.tailFlickT>0))?0:Math.sin(Math.PI*(1-p.tailFlickT/0.3));
+        m.tailG.rotation.x=(p.state==='court')?0.55:0.05+flickK*0.18;
         if(p.state==='court'){
           const bow=Math.max(0, Math.sin(p.stateT*TAU*0.55));
           pitch=bow*0.38; m.neck.scale.set(1.0+bow*0.3, 1.18+bow*0.35, 1.0+bow*0.3);
@@ -2550,7 +2598,41 @@
       if(p.settleT>0) p.settleT-=dt;
       const crouchDip=(p.state==='takeoff'&&p._crouching)?-0.02:0;
       const settleDip=(p.settleT>0)?-0.025*(p.settleT/0.4):0;
-      m.bodyG.position.y=lerp(m.bodyG.position.y||0, ((p.state==='forage'&&p.restT>0)?-0.032:0)+crouchDip+settleDip, 0.2);
+      /* R2-5 (Issue #75): idle micro-motion posture, composed —
+         never overwriting — with the R1-4 plan scale and the R2-3
+         dips. roostOneLeg is true only in 'roost' after 1.0
+         real-animation second in state (stateT, unscaled dt), so
+         the pose eases in with the body's 0.2 lerp instead of
+         popping on entry, and it is false in every other state so
+         the leg-visibility restore below is automatic. The roost
+         dip (-0.015) uses the same whole-bodyG mechanism as the
+         existing rest dip, so it reads as the body sinking, not as
+         feet penetrating; it is smaller than the rest dip (-0.032)
+         and can sum with a decaying settle dip (max -0.040,
+         one-off). Priority: the roost dip is a posture term only —
+         it never runs in flight, and it never touches the stepping
+         block (D1). */
+      const roostOneLeg=(p.state==='roost' && p.stateT>1.0);
+      const roostDip=roostOneLeg?-0.015:0;
+      m.bodyG.position.y=lerp(m.bodyG.position.y||0, ((p.state==='forage'&&p.restT>0)?-0.032:0)+crouchDip+settleDip+roostDip, 0.2);
+      /* R2-5 breathing: trunk-scale swell on bodyG's plan axes only
+         (y stays 1, so feet stay grounded — the R1-4 invariant).
+         Composed multiplicatively with the stored r14Size, never
+         assigned over it. Amplitude 0.015 peak (±1.5% of trunk
+         width, ≈ ±8 mm display): the cap against doll-like
+         pumping — if the verification batch reads it as doll-like,
+         lower to 0.010, do not raise it. Frequency is the bird's
+         fixed breathFreq (0.25–0.40 Hz) on idleClock
+         (real-animation seconds, same dt as flockClock), phase is
+         the bird's fixed breathPhase — independent of the R2-4
+         flockPhase, so idle and flight breathing never share a
+         phase. Gated to grounded non-walking birds: suppressed in
+         flight (where R2-4 already breathes via slot offsets — no
+         double application) and while walking (where the stride
+         owns the body rhythm). */
+      const idleStill=!flying && !(p.state==='forage' && p._walking);
+      const breathK=idleStill?0.015*Math.sin(idleClock*TAU*p.breathFreq + p.breathPhase):0;
+      m.bodyG.scale.set(m.r14Size*(1+breathK), 1, m.r14Size*(1+breathK));
       m.bodyG.rotation.x=lerp(m.bodyG.rotation.x, pitch, 0.2);
       m.bodyG.rotation.z=lerp(m.bodyG.rotation.z, roll, 0.15);
 
@@ -2659,7 +2741,20 @@
       // legs[] layout: [legL, footL, ankleL, legR, footR, ankleR]; in close
       // LOD the flat basic feet (1, 4) yield to the jointed toes.
       const legShow=p.state!=='fly';
-      m.legs.forEach((l,li)=>{ l.visible=legShow && !((li===1||li===4) && p.closeLOD); });
+      /* R2-5 (Issue #75): roost one-leg pose — visibility only, no
+         leg-position or stepping logic is touched (D1). The hidden
+         side is the bird's fixed roostHideSide (0 = legs[0..2] +
+         closeFeet[0], 1 = legs[3..5] + closeFeet[1]), so the pose
+         never flaps sides mid-roost. roostOneLeg is defined in the
+         posture section above; it is false outside 'roost', so
+         leaving roost restores both legs automatically, including
+         the close-LOD jointed toes (closeFeet visibility is written
+         nowhere else, so this per-frame write is the only owner).
+         The existing close-LOD rule (flat basic feet 1, 4 yield to
+         the jointed toes) is preserved and applied after the hide. */
+      const hideBase=roostOneLeg?(p.roostHideSide*3):-1;
+      m.legs.forEach((l,li)=>{ l.visible=legShow && li!==hideBase && li!==hideBase+1 && li!==hideBase+2 && !((li===1||li===4) && p.closeLOD); });
+      if(m.closeFeet){ m.closeFeet.forEach((f,fi)=>{ f.visible=!(roostOneLeg && fi===p.roostHideSide); }); }
       /* stepping: while a ground bird walks, the scarlet legs swing in
          alternation with the stride (same phase as the head-bob), so
          the feet visibly work instead of sliding under the body.
