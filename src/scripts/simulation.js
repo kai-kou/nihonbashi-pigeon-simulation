@@ -1787,7 +1787,8 @@
             rayleigh:skyDome?+skyDome.material.uniforms.rayleigh.value.toFixed(2):0,
             /* R3-2 (Issue #77): live stock-fog distances from scene.fog
                (THREE.Fog has no heightFactor property — the height
-               weight is the baked R32 constant below, not a fog field).
+               weight is the R32_HAZE_TOP_W constant in build-city.js,
+               not a fog field).
                near/far already carry updateDaylight's weather linkage
                (cloud/rain/snow far shortening). */
             fog:{near:+scene.fog.near.toFixed(1), far:+scene.fog.far.toFixed(1),
