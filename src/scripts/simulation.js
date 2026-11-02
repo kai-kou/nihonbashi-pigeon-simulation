@@ -601,6 +601,14 @@
       _sunDir.set(Math.sin(sa.az)*ce, sinEl, -Math.cos(sa.az)*ce).normalize();
       const u=skyDome.material.uniforms, cl=ENV.cloud;
       u.sunPosition.value.copy(_sunDir);
+      /* R1-1 (Issue #67): neck sheen sun direction — the same _sunDir
+         the Sky dome uses above, copied into each bird's existing
+         neck sheen material (the breast shell shares that material).
+         Updated here, at the existing sun-direction update, so the
+         frequency is exactly updateDaylight's (every frame, before
+         updatePigeon runs). No new solar computation, no new
+         material / node / texture. */
+      for(const p of pigeons){ const sm=p.mesh&&p.mesh.neckSheenMat; if(sm&&sm.uniforms.uSunDir) sm.uniforms.uSunDir.value.copy(_sunDir); }
       u.turbidity.value=lerp(4, 16, cl);       // overcast: haze up
       u.rayleigh.value=lerp(2.0, 0.7, cl);     // overcast: blue down
       u.mieCoefficient.value=lerp(0.006, 0.014, cl);
