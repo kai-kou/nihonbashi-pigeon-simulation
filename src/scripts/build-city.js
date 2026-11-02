@@ -210,12 +210,27 @@
     /* procedural facade texture: 1 tile = 10 m. Mostly light wall so it
        multiplies with the per-building vertex colour; corners stay plain
        so roofs can sample a single flat texel (uv 0.03,0.03). */
-    /* Facade atlas: 2x2 tiles (512px each), one per building type —
-       office glass curtain wall / commercial with sign band / residential
-       with balconies / low shop with shutter + awning. 1 tile = 10 m.
-       Every tile keeps its corners plain wall so roofs can sample a flat
-       texel (uv 0.03,0.03 within the building's own tile). */
-    const FACADE_TILES={office:[0,0], commercial:[1,0], residential:[0,1], shop:[1,1]};
+    /* R3-4 (Issue #79): facade atlas, 4x2 tiles (512px each, 2048x1024,
+       8 tiles) — each building type has a base tile and one variant
+       tile with a different window rhythm and sign-band position, so
+       neighbouring buildings of the same type no longer repeat
+       identically. Layout is column pairs per type: office [0,0] /
+       officeV [1,0], commercial [2,0] / commercialV [3,0],
+       residential [0,1] / residentialV [1,1], shop [2,1] /
+       shopV [3,1]. 1 tile = 10 m. Every tile keeps the sampled roof
+       texel (tile-local uv 0.03,0.03) plain wall. The diffuse atlas
+       and its C1 derivatives (mask -> normal / roughness, emissive)
+       all share this 2048x1024 tile coordinate system, so no new
+       texture or program is added: the change is CPU-side uv (0.25
+       per tile column) plus the wider canvases. */
+    const FACADE_ATLAS_W=2048, FACADE_ATLAS_H=1024, FACADE_ATLAS_TILES=8;
+    const FACADE_TILES={office:[0,0], officeV:[1,0], commercial:[2,0], commercialV:[3,0],
+      residential:[0,1], residentialV:[1,1], shop:[2,1], shopV:[3,1]};
+    /* R3-4: per-tile building counts, filled by buildCity() and read
+       by __QA__.snapshot().facade / the measurement panel. Keys are
+       the 8 FACADE_TILES entries. */
+    const facadeVariantCounts={office:0, officeV:0, commercial:0, commercialV:0,
+      residential:0, residentialV:0, shop:0, shopV:0};
     /* C1 (phase 2): alongside the diffuse atlas, makeFacadeAtlas fills
        two auxiliary canvases in the same tile coordinate system — a
        glass mask (white = glass) and a lit-window (emissive) canvas —
@@ -223,12 +238,12 @@
        The three derived textures are published here for buildCity(). */
     let facadeNormalTex=null, facadeRoughTex=null, facadeEmissiveTex=null;
     function makeFacadeAtlas(){
-      const S=512, cv=document.createElement('canvas'); cv.width=cv.height=1024;
+      const S=512, cv=document.createElement('canvas'); cv.width=FACADE_ATLAS_W; cv.height=FACADE_ATLAS_H;
       const g=cv.getContext('2d');
-      const maskCv=document.createElement('canvas'); maskCv.width=maskCv.height=1024;
-      const gm=maskCv.getContext('2d'); gm.fillStyle='#000'; gm.fillRect(0,0,1024,1024);
-      const emisCv=document.createElement('canvas'); emisCv.width=emisCv.height=1024;
-      const ge=emisCv.getContext('2d'); ge.fillStyle='#000'; ge.fillRect(0,0,1024,1024);
+      const maskCv=document.createElement('canvas'); maskCv.width=FACADE_ATLAS_W; maskCv.height=FACADE_ATLAS_H;
+      const gm=maskCv.getContext('2d'); gm.fillStyle='#000'; gm.fillRect(0,0,FACADE_ATLAS_W,FACADE_ATLAS_H);
+      const emisCv=document.createElement('canvas'); emisCv.width=FACADE_ATLAS_W; emisCv.height=FACADE_ATLAS_H;
+      const ge=emisCv.getContext('2d'); ge.fillStyle='#000'; ge.fillRect(0,0,FACADE_ATLAS_W,FACADE_ATLAS_H);
       let curOX=0, curOY=0; // origin of the tile currently being drawn
       // MR: record a glass rect in the mask. ER: record a lit-window rect
       // in the emissive canvas at deterministic intensity v (0.55..1.0).
@@ -274,6 +289,18 @@
         for(let c=0;c<=5;c++) R(28+c*92,16,3,480,'rgba(80,84,86,.5)'); // mullions
         for(let r=0;r<=5;r++) R(24,22+r*96,464,3,'rgba(80,84,86,.45)');
       });
+      tile('officeV', R=>{ // R3-4 variant: 4 cols x 6 rows, 118px pitch (base: 5 x 5, 92px)
+        R(0,0,512,512,'#ccd1d2');
+        for(let r=0;r<6;r++) for(let c=0;c<4;c++){
+          const x=40+c*118, yb=20+r*80, seed=r*11+c*17+101, sh=0.75+hash(seed)*0.6;
+          R(x,yb,92,64,'rgb('+Math.round(88*sh)+','+Math.round(112*sh)+','+Math.round(128*sh)+')');
+          MR(x,yb,92,64); // curtain-wall glass
+          R(x,yb+38,92,26,'rgba(255,255,255,.26)'); // reflected sky gradient
+          if(hash(seed*3)>0.86) ER(x,yb,92,64, 0.55+hash(seed*3.7)*0.45); // lit office floor (emissive only)
+        }
+        for(let c=0;c<=4;c++) R(34+c*118,16,3,480,'rgba(80,84,86,.5)'); // mullions
+        for(let r=0;r<=6;r++) R(28,18+r*80,456,3,'rgba(80,84,86,.45)');
+      });
       tile('commercial', R=>{
         R(0,0,512,512,'#d9d2c6');
         for(let r=0;r<3;r++) for(let c=0;c<3;c++) pane(R, 44+c*150, 306+r*64, 104, 42, r*17+c*29+11);
@@ -287,6 +314,19 @@
           R(44+c*150,56,118,10,'rgba(20,20,20,.35)');
         }
       });
+      tile('commercialV', R=>{ // R3-4 variant: 4 x 4 narrow panes, sign band at 196 (base: 240), two wide bays
+        R(0,0,512,512,'#d9d2c6');
+        for(let r=0;r<4;r++) for(let c=0;c<4;c++) pane(R, 36+c*118, 300+r*48, 84, 34, r*23+c*31+211);
+        R(30,196,452,40,'#8f2f24'); // sign band, lower than the base tile's 240 band
+        R(48,205,110,22,'rgba(255,240,210,.85)'); R(196,205,120,22,'rgba(255,240,210,.6)'); R(340,205,110,22,'rgba(255,240,210,.75)');
+        R(30,188,452,8,'rgba(60,55,48,.4)');
+        for(let c=0;c<2;c++){ // two wide storefront bays instead of three
+          R(44+c*220,56,190,128,'rgb(52,66,74)');
+          MR(44+c*220,56,190,128);
+          R(44+c*220,148,190,36,'rgba(255,255,255,.3)');
+          R(44+c*220,56,190,10,'rgba(20,20,20,.35)');
+        }
+      });
       tile('residential', R=>{
         R(0,0,512,512,'#ded7cb');
         for(let r=0;r<4;r++) for(let c=0;c<3;c++){
@@ -296,6 +336,17 @@
           R(x-9, yb+10, 102, 3, 'rgba(70,70,74,.55)'); // railing
           for(let k=0;k<6;k++) R(x-5+k*17, yb+2, 2, 9, 'rgba(70,70,74,.4)');
           if(hash(r*41+c*3)>0.7) R(x+8, yb+30, 26, 20, '#c8c2b4'); // AC unit on some balconies
+        }
+      });
+      tile('residentialV', R=>{ // R3-4 variant: 4 cols x 3 rows (base: 3 x 4), different slab pitch
+        R(0,0,512,512,'#ded7cb');
+        for(let r=0;r<3;r++) for(let c=0;c<4;c++){
+          const x=36+c*118, yb=44+r*150;
+          pane(R, x, yb+26, 76, 58, r*29+c*17+311);
+          R(x-8, yb, 92, 10, '#b3aa9c');             // balcony slab
+          R(x-8, yb+10, 92, 3, 'rgba(70,70,74,.55)'); // railing
+          for(let k=0;k<6;k++) R(x-4+k*16, yb+2, 2, 9, 'rgba(70,70,74,.4)');
+          if(hash(r*37+c*5)>0.65) R(x+6, yb+32, 24, 20, '#c8c2b4'); // AC unit, different pattern
         }
       });
       tile('shop', R=>{
@@ -311,22 +362,37 @@
         R(272,206,200,38,'rgba(255,255,255,.3)');
         R(258,44,10,238,'#8a8378'); R(36,282,440,8,'#8a8378');
       });
+      tile('shopV', R=>{ // R3-4 variant: bays mirrored, awning at 280 (base: 320), two wide upper panes
+        R(0,0,512,512,'#d6d0c2');
+        for(let c=0;c<2;c++) pane(R, 48+c*200, 398, 150, 62, c*37+411);
+        R(28,280,456,42,'#2e6e5e'); // awning, lower than the base tile's 320 band
+        for(let k=0;k<12;k++) R(28+k*38, 268, 34, 12, '#2e6e5e'); // scalloped edge
+        R(28,260,456,6,'rgba(40,40,40,.25)');
+        R(40,44,200,238,'rgb(54,68,76)'); // open glass bay, mirrored to the left (base: right)
+        MR(40,44,200,238);
+        R(40,206,200,38,'rgba(255,255,255,.3)');
+        R(272,44,200,238,'#a9a49a'); // shutter storefront, mirrored to the right (base: left)
+        for(let yb=54; yb<276; yb+=9) R(272,yb,200,2,'rgba(60,58,54,.45)');
+        R(258,44,10,238,'#8a8378');
+      });
       /* C1: derive the auxiliary maps from the finished atlas.
          normalMap — Sobel over diffuse luminance, so window frames,
          sashes, shutter slats and balconies gain relief. Strength is
          moderate so normalScale 0.85 stays well-behaved.
          roughnessMap — from the glass mask: glass is smooth (70),
          everything else is rough wall (235). */
-      const W=1024;
-      const srcPx=g.getImageData(0,0,W,W).data;
-      const lum=new Float32Array(W*W);
-      for(let i=0;i<W*W;i++){ const o=i*4;
+      /* R3-4: the atlas is 2048x1024, so the derivation is W x H
+         (not square): Sobel wraps x modulo W and y modulo H. */
+      const W=FACADE_ATLAS_W, H=FACADE_ATLAS_H;
+      const srcPx=g.getImageData(0,0,W,H).data;
+      const lum=new Float32Array(W*H);
+      for(let i=0;i<W*H;i++){ const o=i*4;
         lum[i]=(srcPx[o]*0.299+srcPx[o+1]*0.587+srcPx[o+2]*0.114)/255; }
-      const nCv=document.createElement('canvas'); nCv.width=nCv.height=W;
-      const ng=nCv.getContext('2d'), nImg=ng.createImageData(W,W), nd=nImg.data;
+      const nCv=document.createElement('canvas'); nCv.width=W; nCv.height=H;
+      const ng=nCv.getContext('2d'), nImg=ng.createImageData(W,H), nd=nImg.data;
       const NSTR=2.0;
-      for(let y=0;y<W;y++){
-        const ym=((y+W-1)%W)*W, y0=y*W, yp=((y+1)%W)*W;
+      for(let y=0;y<H;y++){
+        const ym=((y+H-1)%H)*W, y0=y*W, yp=((y+1)%H)*W;
         for(let x=0;x<W;x++){
           const xm=(x+W-1)%W, xp=(x+1)%W;
           const tl=lum[ym+xm], tc=lum[ym+x], tr=lum[ym+xp];
@@ -344,10 +410,10 @@
         }
       }
       ng.putImageData(nImg,0,0);
-      const maskPx=gm.getImageData(0,0,W,W).data;
-      const rCv=document.createElement('canvas'); rCv.width=rCv.height=W;
-      const rg=rCv.getContext('2d'), rImg=rg.createImageData(W,W), rd=rImg.data;
-      for(let i=0;i<W*W;i++){
+      const maskPx=gm.getImageData(0,0,W,H).data;
+      const rCv=document.createElement('canvas'); rCv.width=W; rCv.height=H;
+      const rg=rCv.getContext('2d'), rImg=rg.createImageData(W,H), rd=rImg.data;
+      for(let i=0;i<W*H;i++){
         const v=maskPx[i*4]>127?70:235, o=i*4;
         rd[o]=rd[o+1]=rd[o+2]=v; rd[o+3]=255;
       }
@@ -423,7 +489,15 @@
         const btype = h>=26 ? (hash(bi*23)<0.6?'office':'residential')
           : h>=11 ? (hash(bi*23)<0.55?'commercial':'residential')
           : (hash(bi*23)<0.6?'shop':'commercial');
-        tileU=FACADE_TILES[btype][0]; tileV=FACADE_TILES[btype][1];
+        /* R3-4: variant column selection, deterministic per building.
+           hash(bi*149+11) uses a multiplier unused elsewhere in this
+           file (btype uses bi*23, the floor remap uses aBld =
+           hash(bi*7+3), the roof texture uses bi*101+7), so the
+           variant split is uncorrelated with type, colour and roof
+           texture. ~50/50 by design. */
+        const tileKey=hash(bi*149+11)<0.5?btype:btype+'V';
+        facadeVariantCounts[tileKey]++;
+        tileU=FACADE_TILES[tileKey][0]; tileV=FACADE_TILES[tileKey][1];
         // walls are the first 6n vertices of this building's range, the
         // roof triangles follow; normals / uv use the old push() formulas
         // on the final (post-winding-fix) positions, colours are cWall
@@ -442,11 +516,11 @@
             const gi=vStart+t+vi, go=gi*3, color=(t+vi<wallVerts)?cWall:cTop;
             col[go]=color.r; col[go+1]=color.g; col[go+2]=color.b;
             nor[go]=nx; nor[go+1]=ny; nor[go+2]=nz;
-            if(ny>0.7){ uv[gi*2]=tileU*0.5+0.015; uv[gi*2+1]=tileV*0.5+0.015; } // roof: flat texel inside this building's tile
+            if(ny>0.7){ uv[gi*2]=tileU*0.25+0.0075; uv[gi*2+1]=tileV*0.5+0.015; } // roof: flat texel inside this building's tile (tile-local 0.03,0.03: 0.0075 = 15px of the 2048px-wide atlas, as before)
             else{
               const u=(Math.abs(nx)>Math.abs(nz)? vs[vi][2] : vs[vi][0])*0.1;
               const v=vs[vi][1]*0.1;
-              uv[gi*2]=tileU*0.5+(u-Math.floor(u))*0.5; uv[gi*2+1]=tileV*0.5+(v-Math.floor(v))*0.5;
+              uv[gi*2]=tileU*0.25+(u-Math.floor(u))*0.25; uv[gi*2+1]=tileV*0.5+(v-Math.floor(v))*0.5; // R3-4: 4 tile columns (was 0.5); rows still 2, so v is unchanged
             }
           }
         }
