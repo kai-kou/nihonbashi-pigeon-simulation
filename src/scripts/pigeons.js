@@ -172,6 +172,31 @@
       return t;
     }
     const featherRoughTex=featherRoughTexture();
+    /* R1-2 (Issue #68, 外観監査 A3): the one shared tarsus scale
+       texture — a procedural bumpMap for the basic leg (SHARED_LEG_MAT
+       below). Cylinder UVs run u around the leg and v along its
+       height, so transverse scute rows are horizontal bands in canvas
+       space: a dark groove line + a light ridge line every 16 px
+       (≈8 rows over the 0.22 m tarsus), with faint vertical seams so
+       each row reads as separate scutes rather than plain rings.
+       Fully deterministic (no Math.random). No sRGB encoding: this
+       is a data texture and must stay linear, like featherRoughTex.
+       One texture only, shared by all birds; no per-bird copy. */
+    function legScaleTexture(){
+      const cv=document.createElement('canvas'); cv.width=128; cv.height=128;
+      const g=cv.getContext('2d');
+      g.fillStyle='rgb(128,128,128)'; g.fillRect(0,0,128,128);
+      for(let y=0;y<128;y+=16){
+        g.fillStyle='rgb(96,96,96)'; g.fillRect(0,y,128,3); // groove
+        g.fillStyle='rgb(168,168,168)'; g.fillRect(0,y+3,128,2); // ridge highlight
+      }
+      g.fillStyle='rgba(110,110,110,0.35)'; // faint vertical seams
+      for(let x=0;x<128;x+=16) g.fillRect(x,0,2,128);
+      const t=new THREE.CanvasTexture(cv); // no encoding: linear data texture
+      t.anisotropy=8; t.wrapS=THREE.RepeatWrapping; t.wrapT=THREE.RepeatWrapping;
+      return t;
+    }
+    const legScaleTex=legScaleTexture();
     const bodyTex=featherTexture(g=>{
       g.fillStyle='#f2f2f0'; g.fillRect(0,0,256,256);
       // darker mantle (sphere top = canvas top) fading to a pale belly
@@ -746,7 +771,17 @@
     const SHARED_PUPIL_MAT=new THREE.MeshBasicMaterial({color:0x14100c});
     const SHARED_RING_MAT=new THREE.MeshBasicMaterial({color:0xd8cfc0});
     const SHARED_BAR_MAT=new THREE.MeshStandardMaterial({color:0x101116, roughness:0.9});
-    const SHARED_LEG_MAT=new THREE.MeshBasicMaterial({color:0xea0d0d});
+    /* R1-2 (Issue #68, 外観監査 A3): basic leg goes MeshBasic →
+       MeshStandard so the tarsus shades as a column instead of a flat
+       red bar. Colour is unchanged (pure vivid red 0xea0d0d); roughness
+       0.6 sits with the neighbouring keratin values (beak 0.55,
+       ringHi 0.6, toe 0.35) rather than inventing a new finish, and
+       the shared legScaleTex above rides as bumpMap only (bumpScale
+       0.02, the thin-line value P5 uses for wing barbs). The same
+       shared material also dresses the foot plate and ankle sphere —
+       no new material is added for them. The per-frame leg positions,
+       offsets and stepping code are untouched (D1). */
+    const SHARED_LEG_MAT=new THREE.MeshStandardMaterial({color:0xea0d0d, roughness:0.6, bumpMap:legScaleTex, bumpScale:0.02});
     /* P6 (Issue #21): Hi beak keeps the slightly-darker-than-Lo
        relationship (0x776c5c → 0x2f2e33); Hi cere roughness
        0.65 → 0.85, colour unchanged. The iris drops its flat 0xe05a1a
@@ -764,7 +799,10 @@
     const corneaGeo=new THREE.SphereGeometry(0.0168,20,14);
     const SHARED_PUPIL_HI_MAT=new THREE.MeshStandardMaterial({color:0x0d0a08, roughness:0.2});
     const SHARED_RING_HI_MAT=new THREE.MeshStandardMaterial({color:0xd9d0bf, roughness:0.6});
-    const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.85});
+    /* R1-2 (Issue #68): close-LOD toe emissiveIntensity 0.85 → 0.35.
+       Colour and emissive colour are unchanged; only the glow level
+       drops so the toes stop reading as self-lit at close range. */
+    const SHARED_TOE_MAT=new THREE.MeshStandardMaterial({color:0xe80d0d, roughness:0.35, emissive:0x7a0404, emissiveIntensity:0.35});
     const SHARED_CLAW_MAT=new THREE.MeshStandardMaterial({color:0x3a3430, roughness:0.4});
     /* P4 (Issue #13): underwing flash panels share one material (and
        the one underwingTex above); the close-LOD tail fan's white
