@@ -2390,9 +2390,11 @@
         // (amplitude collapses) above HEADBOB.breakSpeed (0.81 m/s).
         // R2-1 (Issue #71): the time split is unchanged (hold 63% /
         // thrust 37% of the stride cycle); only the thrust waveform
-        // changed. Hold stays linear — the head is stabilised in world
-        // space while the body advances, so its body-relative drift is
-        // constant-speed. Thrust was linear too (a constant-speed
+        // changed. Hold stays linear — the head's world-space speed is
+        // held constant at about 0.45x body speed while the body
+        // advances (world displacement +0.03245 m per hold vs body
+        // +0.07245 m, so the head is not stationary in world space),
+        // so its body-relative drift is constant-speed. Thrust was linear too (a constant-speed
         // return), which read as a mechanical to-and-fro. It is now a
         // cubic smoothstep s(t)=t*t*(3-2*t) over the thrust interval:
         // zero velocity at both ends, peak velocity 1.5x the linear
