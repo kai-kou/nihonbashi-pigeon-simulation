@@ -654,7 +654,9 @@
     sun.position.set(300,420,140); sun.castShadow=true;
     /* shadow budget: instead of full CSM, one tight shadow camera follows
        the watched bird (0–170 m at 2048px ≈ the first CSM cascade's
-       texel density); pigeons and street props read crisp shadows there */
+       texel density); pigeons and street props read crisp shadows there
+       R3-1 (Issue #76): the extent is viewpoint-adaptive in
+       simulation.js (wide ±170 m / narrow ±90 m near the ground, no CSM) */
     sun.shadow.mapSize.set(2048,2048);
     sun.shadow.camera.left=-170; sun.shadow.camera.right=170;
     sun.shadow.camera.top=170; sun.shadow.camera.bottom=-170;
@@ -6495,6 +6497,7 @@
     const shadowGate={
       sunKey:null, cellX:null, cellZ:null,
       envKey:null, cast:null,
+      extentBucket:null,
       framesSince:1e9,
     };
     function shadowCadenceCap(){
@@ -6502,7 +6505,68 @@
       if(timeScale<=10) return 6;
       return 12;
     }
+    /* ---- R3-1 (Issue #76): viewpoint-adaptive shadow extent ----
+       The single-cascade shadow camera (CSM is deliberately NOT
+       introduced) keeps ±170 m for aerial / flock-flight views and
+       narrows to ±90 m near the ground, raising texel density by
+       ~170/90 ≈ 1.9x there. Switching uses a hysteresis band on
+       camera height (narrow at <=20 m, wide at >=40 m, hold the
+       current bucket between 20–40 m, i.e. ±10 m around a 30 m
+       centre) plus a 2 s minimum hold in real time
+       (performance.now()), so the extent cannot chatter on a
+       height oscillation or a single-frame camera move. The
+       bucket is part of the B5 gate state below, so an extent
+       change always forces a shadow-map redraw on the same frame.
+       normalBias is set to the texel equivalent
+       (2*extent/mapSize)*0.9 — about 0.15 m at 170 m / 2048 px
+       (the grooming note's "about 0.15 m" is the wide-bucket
+       value) and about 0.08 m at 90 m / 2048 px — and is
+       recomputed whenever the map size changes, since the texel
+       depends on mapSize. sun.shadow.bias (-0.0006, set in
+       build-city.js) is NOT changed: bias and normalBias are
+       separate parameters. r128 LightShadow does not auto-update
+       the projection matrix, so applyShadowExtent() always calls
+       updateProjectionMatrix() after changing the bounds. */
+    const SHADOW_EXTENT_WIDE=170, SHADOW_EXTENT_NARROW=90;
+    const SHADOW_EXTENT_NEAR_Y=20, SHADOW_EXTENT_FAR_Y=40;
+    const SHADOW_EXTENT_MIN_HOLD_MS=2000;
+    let shadowExtentM=SHADOW_EXTENT_WIDE;
+    let shadowExtentBucket='wide';
+    let shadowExtentSwitchMs=-1e9; // first switch is immediate
+    function shadowNormalBias(extent){
+      return (2*extent/sun.shadow.mapSize.x)*0.9;
+    }
+    function applyShadowExtent(extent){
+      shadowExtentM=extent;
+      sun.shadow.camera.left=-extent; sun.shadow.camera.right=extent;
+      sun.shadow.camera.top=extent; sun.shadow.camera.bottom=-extent;
+      sun.shadow.normalBias=shadowNormalBias(extent);
+      sun.shadow.camera.updateProjectionMatrix();
+    }
+    function desiredShadowExtentBucket(){
+      const fp=focus();
+      if(flockFlying || fp.state==='fly' || fp.state==='takeoff' || fp.state==='descend') return 'wide';
+      if(camera.position.y<=SHADOW_EXTENT_NEAR_Y) return 'narrow';
+      if(camera.position.y>=SHADOW_EXTENT_FAR_Y) return 'wide';
+      return shadowExtentBucket;
+    }
+    function updateShadowExtent(nowMs){
+      const desired=desiredShadowExtentBucket();
+      if(desired!==shadowExtentBucket && nowMs-shadowExtentSwitchMs>=SHADOW_EXTENT_MIN_HOLD_MS){
+        applyShadowExtent(desired==='narrow'?SHADOW_EXTENT_NARROW:SHADOW_EXTENT_WIDE);
+        shadowExtentBucket=desired;
+        shadowExtentSwitchMs=nowMs;
+      }
+      return shadowExtentBucket;
+    }
+    // Set the initial texel-equivalent normalBias for the wide
+    // bucket at load (the gate only applies on a bucket change,
+    // so without this the bias would stay at the r128 default 0
+    // until the first switch). Bounds are already ±170 m, so this
+    // only adds the bias and the projection-matrix refresh.
+    applyShadowExtent(SHADOW_EXTENT_WIDE);
     function updateShadowGate(){
+      const extentBucket=updateShadowExtent(performance.now());
       shadowGate.framesSince++;
       const sunKey=Math.round(sun.position.x/2)+':'+Math.round(sun.position.y/2)+':'+Math.round(sun.position.z/2);
       const envKey=seasonKey+'|'+weatherKey;
@@ -6511,12 +6575,14 @@
         shadowGate.framesSince>=shadowCadenceCap() ||
         sunKey!==shadowGate.sunKey ||
         shadowCellX!==shadowGate.cellX || shadowCellZ!==shadowGate.cellZ ||
-        envKey!==shadowGate.envKey || cast!==shadowGate.cast;
+        envKey!==shadowGate.envKey || cast!==shadowGate.cast ||
+        extentBucket!==shadowGate.extentBucket;
       if(!due) return false;
       renderer.shadowMap.needsUpdate=true;
       shadowGate.sunKey=sunKey;
       shadowGate.cellX=shadowCellX; shadowGate.cellZ=shadowCellZ;
       shadowGate.envKey=envKey; shadowGate.cast=cast;
+      shadowGate.extentBucket=extentBucket;
       shadowGate.framesSince=0;
       return true;
     }
@@ -6533,6 +6599,9 @@
       if(sun.shadow.mapSize.x===size) return;
       sun.shadow.mapSize.set(size, size);
       if(sun.shadow.map){ sun.shadow.map.dispose(); sun.shadow.map=null; }
+      // R3-1: the texel — and therefore normalBias — depends on
+      // mapSize, so recompute it for the current extent.
+      sun.shadow.normalBias=shadowNormalBias(shadowExtentM);
       shadowGate.framesSince=1e9; // force a redraw at the new size on the next frame
     }
     function applyRenderScale(){
@@ -7363,7 +7432,8 @@
             fadeVerts:x1State.fadeVerts, chunkVerts:x1State.chunkVerts,
             totalVerts:x1State.fadeVerts+x1State.chunkVerts,
             cityGeometries:cityFadeRecs.length},
-          shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:170,
+          shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:shadowExtentM,
+            normalBias:+sun.shadow.normalBias.toFixed(4),
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
             dprCap:dprCap(), renderScale:+renderScale.toFixed(2), frameMs:+frameEMA.toFixed(1)},
@@ -7491,6 +7561,8 @@
           +row('shadow.updates', fmt(sh.updates))
           +row('shadow.autoUpdate', fmt(sh.autoUpdate))
           +row('shadow.framesRendered', fmt(sh.framesRendered))
+          +row('shadow.extentM', fmt(sh.extentM, ' m'))
+          +row('shadow.normalBias', fmt(sh.normalBias, ' m'))
           +'</dl>';
         var rt=snap.rooftop||{}, rbt=rt.byTexture||[], rac=rt.addedByClass||{},
           rcb=rt.classBuildings||{}, rai=rt.addedItems||{}, rph=rt.parapetHeight||{};

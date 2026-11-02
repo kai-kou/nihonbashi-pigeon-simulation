@@ -49,7 +49,9 @@
     sun.position.set(300,420,140); sun.castShadow=true;
     /* shadow budget: instead of full CSM, one tight shadow camera follows
        the watched bird (0–170 m at 2048px ≈ the first CSM cascade's
-       texel density); pigeons and street props read crisp shadows there */
+       texel density); pigeons and street props read crisp shadows there
+       R3-1 (Issue #76): the extent is viewpoint-adaptive in
+       simulation.js (wide ±170 m / narrow ±90 m near the ground, no CSM) */
     sun.shadow.mapSize.set(2048,2048);
     sun.shadow.camera.left=-170; sun.shadow.camera.right=170;
     sun.shadow.camera.top=170; sun.shadow.camera.bottom=-170;

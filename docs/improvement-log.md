@@ -322,3 +322,29 @@
   - 既存の癖（変更していない）: 羽づくろい中（preT>0）に alert へ入った場合、preT の減算は perch／roost 分岐にしかないため preT が凍結し、alert 中も羽づくろい姿勢が残る既存挙動がある。本単位はその条件分岐に触れていないため、alert 頭上げはその姿勢に加算合成される（hpitch 0.5-0.12）。検証バッチで alert 姿勢として読まれた場合の切り分けに留意すること。
   - 計測環境の低速（平均 fps 約 2）について: dt は上限 0.05 秒でキャップされるため、低 fps ではシミュレーション全体が実時間に対して遅く進む（1 フレーム＝0.05 実アニメーション秒）。本単位のサッケード／保持はその dt 時間で定義されており、alertT・checkT と同一の時間軸のため、比率としての離散性は fps によらない。実時間での見え方は fps に依存する（上限フレームでは最大ステップが約 2.2 フレーム分にわたる）が、これはシミュレーション全体の時間軸の性質であり、本単位だけの歪みではない。
   - 専門レビュー指摘の反映は、専門レビュー担当のコメント後にコーディネーターが本節へ追記する。マージは行わない。
+
+## R3-1 影の柔らかさと環境光の反射（Issue #76）
+
+- 前提確認（現行 main の実読による既達・未達の切り分け）:
+  - sun は build-city.js で生成され、初期値は shadow.camera ±170・far 1600・bias -0.0006・mapSize 2048・PCFSoft。simulation.js の updateShadowGate()（B5 ゲート）がメインループで updateCamera(dt) の直後に毎フレーム呼ばれている。パネルの shadow.extentM は 170 の固定値だった。focus()・flockFlying・camera は simulation.js のスコープで既存コードが使っている（updateDaylight・updateCamera の用法と同じ）。
+  - 本単位の対象はグルーミング反映コメント（環境・性能専門監査 提案4）のうち影カメラの視点適応と normalBias の設定のみ。「環境光の反射」という Issue 題名の反射側は本単位の確定内容に含まれないため実施しない。
+- 変更内容: `src/scripts/simulation.js` を中心とし、`src/scripts/build-city.js` の既存コメントへ R3-1 の注記1行を追加。`index.html` は `tools/build.py` の再生成物。それ以外の src ファイルには触れていない。
+  1. 影範囲コントローラ（shadowGate 近傍）: 定数 WIDE=170、NARROW=90、NEAR_Y=20、FAR_Y=40、MIN_HOLD_MS=2000。状態は shadowExtentM=170、shadowExtentBucket='wide'、shadowExtentSwitchMs=-1e9（初回切替は即時）。
+  2. desiredBucket(): 飛行追跡（flockFlying または focus() の state が fly／takeoff／descend）なら 'wide'。それ以外は camera.position.y <= 20 なら 'narrow'、>= 40 なら 'wide'、帯域内（20〜40）なら現行バケット維持。中心 30m に対し高度 ±10m のヒステリシス帯と解釈する。俯瞰・飛行追跡時は ±170m を維持し、路面・至近では ±90m へ絞って texel 密度を約1.9倍（170/90 = 1.889）にする。CSM 化はしない。
+  3. applyShadowExtent(extent): sun.shadow.camera の left／right／top／bottom を ±extent に設定し、normalBias を texel 相当に設定したうえで sun.shadow.camera.updateProjectionMatrix() を呼ぶ（r128 の LightShadow は射影行列を自動更新しないため、これが無いと範囲変更が反映されない）。
+  4. normalBias の式は (2*extent / sun.shadow.mapSize.x) * 0.9。グルーミングの「約0.15m」は広域バケットの texel 相当値と解釈する: 170@2048 → 0.1494m、90@2048 → 0.0791m。狭域バケットの値は約0.08m であり、両バケット共通の 0.15m 固定ではない（この解釈をここに明記する）。ロード直後にも広域バケットの applyShadowExtent(170) を1回呼び、ゲートがバケット変化時にしか apply しないため初回切替まで bias が r128 の既定 0 のままになることを避けた。既存の sun.shadow.bias=-0.0006 は変更しない（bias と normalBias は別パラメータである旨をコードコメントに明記）。
+  5. updateShadowExtent(nowMs): desired と現行が異なり、かつ nowMs - shadowExtentSwitchMs >= 2000（実時間 performance.now() 基準）の場合のみ apply し、バケットと切替時刻を更新する。現行バケットを返す。
+  6. updateShadowGate() の先頭で updateShadowExtent(performance.now()) を呼び、due 条件に「バケットが gate の記録と異なる」を追加し、発火時に gate.extentBucket を更新する（gate オブジェクトへ extentBucket:null を追加）。範囲変更は必ず同フレームのシャドウマップ再描画を伴う。
+  7. applyShadowMapSize() で mapSize が変わった際は、現行範囲に対する normalBias を再計算する（texel は mapSize に依存するため）。normalBias 計算は applyShadowExtent と共有の小関数 shadowNormalBias() とした。参考値: 170@1024 → 0.2988m、90@1024 → 0.1582m。
+  8. パネルの shadow オブジェクト: extentM の固定値 170 を shadowExtentM へ置き換え、normalBias フィールド（+sun.shadow.normalBias.toFixed(4)）を追加した。
+- D1 厳守: 歩行の足運び・タイミング・stepping 関連コード、翼・ついばみ等のコードには一切触れていない。pigeons.js は未編集（編集ツールを使用していない）。変更は simulation.js の影ゲート近傍・mapSize 適用・パネル表示の3か所と build-city.js のコメント注記、perf-panel.js の可視パネルへの extentM／normalBias 行の追加のみ。
+- 増分目標: calls／triangles／programs／textures／geometries／meshes の静的増分はすべて +0。新規マテリアル・テクスチャ・ジオメトリ・メッシュなし。grep ベースの `new THREE.` 出現数で確認: simulation.js 70→70、index.html 全体 553→553（内訳の先頭も不変: Mesh 84、Color 55、Vector 44、MeshStandardMaterial 40、CanvasTexture 29、MeshLambertMaterial 24）。
+- ビルド: `tools/build.py` で再生成し verify PASS。変更前 4,955,249 bytes・blob 362a5891…・SHA-256 4ea354cd… → 変更後 4,959,029 bytes（+3,780 bytes＝コード・コメントの追加分がそのまま inlined されたもの）・blob 2568acbdfb1868b8eacfa73bb0241e6cdea7e15f・SHA-256 9f96e8f17ac685510da84ad5fa95ddce3aaf1e0a9eaf941238600a07e4bef9e2。決定性: 2回ビルドがバイト同一で、ディスク上の index.html ともバイト一致。inline script 6本の node --check はすべて合格（タグ境界で抽出し、citygeo＋build-city の混ざり罠を回避）。専門レビュー指摘の反映（perf-panel.js への2行追加＋改善ログ追記）後の再ビルド: 4,959,147 bytes・blob 41a7731b79bd47f60e25a8565c0c00eacfefcef6・SHA-256 957d1c23da1a2832f55f2fc5c5715779d22f59bfbf18378af60bdae4c5f65b46、verify PASS。
+- ロジック検証（レプリカ）: 定数・条件をそのまま写したレプリカで8ケース全合格。路面（高度10m）で初回即時 narrow、帯域内（30m）で現行バケット維持、高度45mで wide 復帰、2秒保持未満の切替要求は抑止・経過後に切替、飛行追跡中は高度によらず wide、飛行終了＋保持経過で narrow 復帰。
+- 受入への対応見込み: 計測可能な静的受入（範囲値・ヒステリシス帯・最小保持・normalBias 計算値・ビルド再現性・inline script 構文チェック・D1 遵守・構造量 +0）は満たす。視覚受入（路面での影の濃さ・柔らかさの変化、俯瞰での範囲維持）とランタイム計測パネル値（shadow.extentM／normalBias の切替表示）は未確認。
+- 視覚受入: 未確認。実ブラウザ目視とランタイム計測パネル値の確認は検証バッチ（R4-1、Issue #80）へ送る。
+- 留保（コーディネーター・専門レビューへの申告）:
+  - normalBias の「約0.15m」は広域バケットの値と解釈し、狭域バケットは約0.08m になる。両バケットで 0.15m 固定にしたい場合は別途判断が要る。
+  - 飛行追跡の判定は既存の updateCamera と同じ条件式（flockFlying または focus() の fly／takeoff／descend）を使った。群れ飛行でない単独飛行の注目鳩も wide になる。
+  - 専門レビュー指摘の反映（スプリント内修正）: 専門レビュー（PR コメント 6586315934）の要修正2件を反映した。(1) コード修正: 当初、パネルの shadow.extentM／normalBias は __QA__.snapshot() の値としては存在したが、可視パネル（perf-panel.js）は shadow.updates／autoUpdate／framesRendered の3行しか描画しておらず、受入観点「パネルの shadow.extentM が路面で 90・俯瞰で 170 と実値で読める」は可視パネルとして未達だったため、perf-panel.js の snapshot セクションへ shadow.extentM（単位 m）・shadow.normalBias（単位 m）の行を追加し、index.html を再生成した。(2) 記述訂正: 「俯瞰で 170」の検証条件を明確化した。170 が期待できるのは camera.position.y >= 40 の高俯瞰または飛行追跡時であり、既定 orbit（camera y ≈ 16m）・路面プリセット（y ≈ 2.6m）・高架プリセット（y ≈ 14.4m）では 90 が正しい動作である。検証バッチでは extentM の判定を camera.pos.y と併読すること。本修正は PR 本文・Issue #76・検証バッチ #80 への申し送りにも記録する。
+- 検証バッチへの申し送り（専門レビュー指摘の反映分）: extentM の期待値は camera.position.y と併読すること。170 は camera y >= 40 の高俯瞰または飛行追跡時、90 はそれ以外の路面・至近視点（既定 orbit y ≈ 16m を含む）。1024 時・広域の normalBias 0.2988m については、動的解像度最深段の鳩の影の剥離・消失を確認すること。
