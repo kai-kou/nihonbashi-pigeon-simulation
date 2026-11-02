@@ -5170,6 +5170,7 @@
         p.peckT-=dt;
         if(p.peckT<=0){
           p.peckT=clusterActive?rand(0.3,0.85):rand(1.4,4.2); p.peckAnim=1;
+          p.peckShake=0; // R2-2 specialist-review fix: a new peck fire cuts off any leftover post-hit shake, so a non-hit peck never shows a shake tail.
           // a peck only *succeeds* (finds food) inside a food cell — the
           // scattered crumb patch; elsewhere it is a searching peck.
           // R2-2 (Issue #72): the hit judgement is kept as a flag here
