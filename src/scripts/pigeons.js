@@ -260,6 +260,40 @@
       }
       for(let i=0;i<1500;i++){ g.fillStyle='rgba(60,60,64,'+(Math.random()*0.07)+')'; g.fillRect(Math.random()*256,Math.random()*256,1.4,1.4); }
     });
+    /* R1-5 (Issue #83): pied body texture variant. The shared bodyTex
+       base is near-white (#f2f2f0), so a white patch painted straight
+       on it would vanish once the morph colour multiplies it. The
+       variant therefore first lays a mid-grey wash over the base (the
+       pied body colour is pale, so the washed base stays in the
+       brightness range of the other morphs) and then paints irregular
+       white patches over shoulder-to-belly (canvas y 0.30–0.95;
+       sphere top = canvas top, same convention as the mantle
+       gradient above). Each patch is a main ellipse plus two
+       satellite flecks so the outline reads irregular, not stamped.
+       Fully deterministic: fixed patch list, no random placement.
+       One texture pair serves the whole pattern class — pied is the
+       only morph with pattern 'pied' — so it is not multiplied per
+       P7 variant. The far-LOD trunk keeps the shared bodyTex: at far
+       distance the patches are unreadable, so no extra texture is
+       spent there (see morphMatsFor). */
+    function drawPiedBodyBlobs(g, S){
+      g.fillStyle='rgba(246,245,238,0.96)';
+      const blobs=[
+        [0.22,0.38,0.16,0.11,0.30],[0.55,0.52,0.20,0.13,-0.20],[0.80,0.42,0.13,0.10,0.50],
+        [0.35,0.70,0.17,0.12,0.10],[0.68,0.78,0.15,0.11,-0.40],[0.15,0.62,0.10,0.08,0.00],
+        [0.48,0.88,0.12,0.08,0.20],[0.88,0.66,0.09,0.07,-0.30]
+      ];
+      for(const b of blobs){
+        g.beginPath(); g.ellipse(b[0]*S,b[1]*S,b[2]*S,b[3]*S,b[4],0,Math.PI*2); g.fill();
+        g.beginPath(); g.ellipse((b[0]+b[2]*0.7)*S,(b[1]+b[3]*0.4)*S,b[2]*0.45*S,b[3]*0.45*S,b[4],0,Math.PI*2); g.fill();
+        g.beginPath(); g.ellipse((b[0]-b[2]*0.6)*S,(b[1]-b[3]*0.5)*S,b[2]*0.35*S,b[3]*0.35*S,b[4],0,Math.PI*2); g.fill();
+      }
+    }
+    const bodyPiedTex=featherTexture(g=>{
+      g.drawImage(bodyTex.image,0,0);
+      g.fillStyle='rgba(52,54,60,0.38)'; g.fillRect(0,0,256,256);
+      drawPiedBodyBlobs(g,256);
+    });
     const wingTexBase=featherTexture(g=>{
       g.fillStyle='#e8e8e4'; g.fillRect(0,0,256,256);
       g.strokeStyle='rgba(70,70,76,.4)'; g.lineWidth=1.1;
@@ -300,10 +334,45 @@
         }
         g.globalAlpha=1;
       };
+      /* R1-5 (Issue #83): checker patches as overlapping scales. Same
+         6x5 grid, same checkerboard selection and same coverts-only
+         bound (cx>0.76*S excluded) as patches() above, but each patch
+         is a flat-top tile with a rounded lower edge, 1.15 row-heights
+         tall so it overlaps the row below; rows are painted
+         bottom-first so the upper tile overlays the lower one, and a
+         pale rim on the lower edge keeps the overlap readable as
+         separate scales. Bars are untouched. */
+      const scallops=(style,alpha)=>{
+        const cols=6, rows=5, cw=S/cols, ch=S/rows, rx=cw*0.55, hh=ch*1.15;
+        const tile=(cx,cy)=>{ const top=cy-0.15*hh, bot=cy+0.85*hh;
+          g.beginPath();
+          g.moveTo(cx-rx, top); g.lineTo(cx+rx, top);
+          g.quadraticCurveTo(cx+rx, bot, cx, bot);
+          g.quadraticCurveTo(cx-rx, bot, cx-rx, top);
+          g.closePath();
+        };
+        const cells=(fn)=>{ for(let r=rows-1;r>=0;r--) for(let c=0;c<cols;c++){
+          if((r+c)%2) continue;
+          const cx=(c+0.5)*cw+(r%2?cw*0.18:0), cy=(r+0.5)*ch;
+          if(cx>0.76*S) continue; // coverts only: the primary tips stay clean
+          fn(cx,cy);
+        } };
+        g.fillStyle=style; g.globalAlpha=alpha;
+        cells((cx,cy)=>{ tile(cx,cy); g.fill(); });
+        g.globalAlpha=alpha*0.4; g.strokeStyle='rgba(240,240,235,1)'; g.lineWidth=Math.max(1,S/512);
+        cells((cx,cy)=>{ const top=cy-0.15*hh, bot=cy+0.85*hh;
+          g.beginPath();
+          g.moveTo(cx-rx, top);
+          g.quadraticCurveTo(cx-rx, bot, cx, bot);
+          g.quadraticCurveTo(cx+rx, bot, cx+rx, top);
+          g.stroke();
+        });
+        g.globalAlpha=1;
+      };
       if(pattern==='bar'){
         bars('rgba(22,23,28,.94)');
       } else if(pattern==='checker'){
-        patches('#16171c',1,0.5);
+        scallops('#16171c',0.5);
         bars('rgba(22,23,28,.94)');
       } else if(pattern==='tpattern'){
         g.fillStyle='rgba(20,21,26,.28)'; g.fillRect(0,0,S,S);
@@ -346,10 +415,40 @@
         }
         g.globalAlpha=1;
       };
+      /* R1-5 (Issue #83): far-LOD twin of the scallop layout above —
+         identical tile grid, selection and coverts bound, only the
+         alpha follows the far rule (checker 0.75, rim scaled with it)
+         so the pattern still reads at distance. */
+      const scallops=(style,alpha)=>{
+        const cols=6, rows=5, cw=S/cols, ch=S/rows, rx=cw*0.55, hh=ch*1.15;
+        const cells=(fn)=>{ for(let r=rows-1;r>=0;r--) for(let c=0;c<cols;c++){
+          if((r+c)%2) continue;
+          const cx=(c+0.5)*cw+(r%2?cw*0.18:0), cy=(r+0.5)*ch;
+          if(cx>0.76*S) continue; // coverts only: the primary tips stay clean
+          fn(cx,cy);
+        } };
+        g.fillStyle=style; g.globalAlpha=alpha;
+        cells((cx,cy)=>{ const top=cy-0.15*hh, bot=cy+0.85*hh;
+          g.beginPath();
+          g.moveTo(cx-rx, top); g.lineTo(cx+rx, top);
+          g.quadraticCurveTo(cx+rx, bot, cx, bot);
+          g.quadraticCurveTo(cx-rx, bot, cx-rx, top);
+          g.closePath(); g.fill();
+        });
+        g.globalAlpha=alpha*0.4; g.strokeStyle='rgba(240,240,235,1)'; g.lineWidth=Math.max(1,S/512);
+        cells((cx,cy)=>{ const top=cy-0.15*hh, bot=cy+0.85*hh;
+          g.beginPath();
+          g.moveTo(cx-rx, top);
+          g.quadraticCurveTo(cx-rx, bot, cx, bot);
+          g.quadraticCurveTo(cx+rx, bot, cx+rx, top);
+          g.stroke();
+        });
+        g.globalAlpha=1;
+      };
       if(pattern==='bar'){
         bars('rgba(22,23,28,1)');
       } else if(pattern==='checker'){
-        patches('#16171c',1,0.75);
+        scallops('#16171c',0.75);
         bars('rgba(22,23,28,1)');
       } else if(pattern==='tpattern'){
         g.fillStyle='rgba(20,21,26,.28)'; g.fillRect(0,0,S,S);
@@ -499,6 +598,10 @@
       return t;
     }
     const bodyTexHi=hiPlaceholderTex();
+    /* R1-5 (Issue #83): pied Hi variant — same placeholder mechanism
+       as bodyTexHi; ensureHiTextures() below fills it after bodyTexHi
+       is real, so it derives from the real Hi base (see there). */
+    const bodyPiedTexHi=hiPlaceholderTex();
     const wingTexHiBase=hiPlaceholderTex();
     const tailTexHi=hiPlaceholderTex();
     let hiTexturesReady=false;
@@ -514,6 +617,15 @@
         tex.needsUpdate=true;
       };
       fill(bodyTexHi, drawBodyTexHi);
+      /* R1-5 (Issue #83): pied Hi derives from the real bodyTexHi
+         canvas filled just above (same wash + blob layout as the Lo
+         variant, in 1024-unit authoring space), so Hi detail survives
+         under the wash. */
+      fill(bodyPiedTexHi, g=>{
+        g.drawImage(bodyTexHi.image,0,0,1024,1024);
+        g.fillStyle='rgba(52,54,60,0.38)'; g.fillRect(0,0,1024,1024);
+        drawPiedBodyBlobs(g,1024);
+      });
       fill(wingTexHiBase, drawWingTexHiBase);
       fill(tailTexHi, drawTailTexHi);
     }
@@ -884,11 +996,17 @@
       if(_morphMatCache[cacheKey]) return _morphMatCache[cacheKey];
       const bc=morph.body;
       const jf=P7_VARIANTS[v].jitter, uOff=P7_VARIANTS[v].uOff;
+      /* R1-5 (Issue #83): pied body/breast use the pied texture pair;
+         every other morph keeps the shared pair. trunkFar below keeps
+         the shared bodyTex for all morphs (far distance, see the
+         bodyPiedTex comment). */
+      const bodyMapLo=(morph.pattern==='pied')?bodyPiedTex:bodyTex;
+      const bodyMapHi=(morph.pattern==='pied')?bodyPiedTexHi:bodyTexHi;
       const entry={
-        bodyLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
-        bodyHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
-        breastLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
-        breastHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        bodyLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyMapLo, bumpMap:bodyMapLo, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        bodyHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyMapHi, bumpMap:bodyMapHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.92, metalness:0.02}),
+        breastLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyMapLo, bumpMap:bodyMapLo, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
+        breastHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(jf), map:bodyMapHi, bumpMap:bodyMapHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.85}),
         headLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:bodyTex, bumpMap:bodyTex, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
         headHi:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:bodyTexHi, bumpMap:bodyTexHi, bumpScale:BUMP_BODY, roughnessMap:featherRoughTex, roughness:0.9}),
         wingLo:new THREE.MeshStandardMaterial({color:new THREE.Color(bc).multiplyScalar(0.78*jf), map:wingTextureFor(morph), bumpMap:wingTextureFor(morph), bumpScale:BUMP_WING, roughnessMap:featherRoughTex, roughness:0.95, side:THREE.DoubleSide}),

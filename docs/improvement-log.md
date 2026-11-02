@@ -132,3 +132,19 @@
 - 受入への対応見込み: 計測可能な静的受入（新規要素 +0、ビルド再現性、inline script の構文チェック、24 羽の維持＝NAMES 24 羽・新規メッシュなし、D1 遵守）は満たす。視覚受入（路面視点で空間的に隣り合う個体の模様・体格差が読め、どの個体も他個体のコピーに見えないこと。胸クセは至近でのみ判定すること）と、計測パネル値（programs・totalNodes 等）のランタイム確定計測は、本スプリントでは実ブラウザ計測ができないため「未確認」とし、検証バッチ（R4-1、Issue #80）へ送る。
 - 視覚受入: 未確認。実ブラウザ目視は検証バッチ（R4-1）へ送る。
 
+## R1-5 モーフ模様の実体化・第2弾（Issue #83、外観監査 A2）
+
+- 目的: checker の翼チェック斑を鱗状に強化し、pied の胴に白斑を実体化して、路面視点で blue bar 個体と並んだ状態でもモーフが判別できるようにする。配分是正は現行 main の実態確認により既達として扱い、weight は変更しない（下記「前提差異」参照）。
+- 前提差異（現行 main の実読による Issue 前提の訂正）:
+  - checker の翼チェック斑は既に存在する（drawWingPattern／drawWingPatternFar の patches()、雨覆部のみの楕円パッチ、Lo alpha 0.5／Far 0.75）。本単位で行うのは楕円から鱗状への形状強化のみで、バー位置・本数は不変。
+  - pied の白斑は従来「翼テクスチャ上の blobs」のみで、胴（bodyTex 系）には白斑がなかった。これが本単位の主たる未達であり、新規に胴変種を作る。
+  - モーフ配分は既に重み付きである（MORPHS の weight と buildMorphAssignment により 24 羽で blue-bar 8、blue-checker 6、t-pattern 4、spread-black 2、red 2、pied 1、white 1。blue bar＋checker で 14/24 の過半）。Issue の「全モーフ均等」という前提は現行 main では成立しないため、weight・順序・body 色は変更しない。配分は既達として記録する。
+- 変更内容: `src/scripts/pigeons.js` のみ。`index.html` は `tools/build.py` の再生成物。
+  1. pied の胴テクスチャ変種: drawPiedBodyBlobs（固定 8 斑、各斑は主楕円＋衛星フレーク 2 個で不規則な輪郭に）と bodyPiedTex（Lo、bodyTex 画像に mid-grey ウォッシュ rgba(52,54,60,0.38) を重ねてから白斑 rgba(246,245,238,0.96) を描く）を追加。共有 bodyTex の素地が近白（#f2f2f0）のため、ウォッシュなしでは白斑はモーフ色の乗算後に読めない。ウォッシュ後の素地は他モーフの明度帯に収まる。白斑の範囲は肩〜腹（キャンバス y 0.30–0.95、球体上＝キャンバス上が mantle 側という既存の対応に従う）。morphMatsFor で pattern==='pied' の場合のみ bodyLo／breastLo に bodyPiedTex、bodyHi／breastHi に bodyPiedTexHi を使う。pied は pattern 'pied' を持つ唯一のモーフのため、模様クラス単位のキャッシュとして 1 対で足り、P7 バリアントごとの増加はない。Hi 変種は ensureHiTextures() 内で bodyTexHi の実キャンバス生成直後に同ウォッシュ＋同斑レイアウト（1024 単位空間）で描くため、Hi の細部がウォッシュ下で維持される。遠距離 LOD の trunkFar は全モーフ共通で bodyTex のまま（遠距離で白斑は読めないためテクスチャ増を抑える判断。コメントに明記）。
+  2. checker の鱗状強化: drawWingPattern／drawWingPatternFar の checker 分岐のみを変更し、楕円 patches() から scallops()（6×5 グリッド・市松選択・雨覆部のみ cx>0.76*S 除外は維持）へ置き換えた。鱗は平頂・下縁丸みのタイル形状で、行高の 1.15 倍の高さを持ち下の行と重なり、下の行から先に描くことで上の鱗が下の鱗に重なる。下縁には淡いリム線（alpha の 0.4 倍）を引き、重なりが 1 つの染みではなく鱗の重なりとして読めるようにした。バーは現行のまま（Lo: 位置・alpha 不変、Far: 拡幅・alpha 1.0 の現行則を維持）。新規テクスチャは増やさず、既存キャンバスの描き直しのみ。tpattern／red の patches() は変更なし。
+  3. 含めないもの: MORPHS の weight・順序・body 色の変更、バー位置・本数の変更、ジオメトリ・ノードの追加、新規マテリアル種・プログラムの追加、翼 pied blobs・頭部テクスチャの変更、trunkFar の変更。
+- D1 厳守: 歩行の足運び・タイミング・stepping 関連コード（pigeons.js の stepping ブロック、bobPhase 駆動）には一切触れていない。差分は上記の胴変種・鱗状・Hi 派生・マテリアル選択のみで、stepping ブロックの差分はない。D4（r128 のまま）、D5（単一 HTML）、D6（手続き生成のみ）も維持。
+- ビルド: `tools/build.py` で再生成。4,921,250 bytes（変更前 4,915,080 bytes、+6,170 bytes＝コメント・コードの追加分がそのまま inlined されたもの）、git blob `35ef065adb811ad5071aa82070b5671d5dbe020a`、SHA-256 `cd9dc81dc91bc768fb41b492664cad4c9d601c3e2860be398a059322a8a9757e`、決定論的再ビルド一致（`tools/build.py verify` 合格、ディスク一致）、inline script 6 本（webfont／citygeo／build-city／pigeons／simulation／perf-panel、生成 index.html から抽出）の `node --check` 合格。
+- 静的計測（変更前 → 変更後、grep ベースのコンストラクタ出現数、src/ 配下を同一方法で計測）: CanvasTexture 29→29、MeshStandardMaterial 40→40、MeshBasicMaterial 20→20、ShaderMaterial 9→9、MeshLambertMaterial 24→24、MeshPhongMaterial 2→2、LineBasicMaterial 1→1、Geometry（`new THREE.*Geometry`）94→94、Mesh（`new THREE.Mesh(`）84→84。すべて差分 +0。コンストラクタ出現数は新規テクスチャが既存ヘルパー（featherTexture／hiPlaceholderTex）経由で作られるため変わらない。実行時テクスチャインスタンスは pied Lo＋Hi の +2 のみで、基準の最大 73 に対し 75 見込み（+4 以内・上限 88 内）。新規プログラム・新規ジオメトリ・新規メッシュはなし。形状変更なしのため avgTriangles は実施前と同値の見込み。
+- 受入への対応見込み: 計測可能な静的受入（テクスチャ増 +2・上限 88 内、形状変更なし、ビルド再現性、inline script の構文チェック、D1 遵守）は満たす。視覚受入（路面約 10m で checker 個体の翼にチェック斑・pied 個体の胴に白斑が blue bar 個体と並んだ状態で判別できること、至近 2〜5m で斑の縁が滲みではなく模様として読めること）と、計測パネル値（textures・avgTriangles 等）のランタイム確定計測は、本スプリントでは実ブラウザ計測ができないため「未確認」とし、検証バッチ（R4-1、Issue #80）へ送る。
+- 視覚受入: 未確認。実ブラウザ目視は検証バッチ（R4-1）へ送る。
