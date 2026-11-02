@@ -77,6 +77,18 @@
           +row('shadow.extentM', fmt(sh.extentM, ' m'))
           +row('shadow.normalBias', fmt(sh.normalBias, ' m'))
           +'</dl>';
+        var sk=snap.sky||{}, skf=sk.fog||{};
+        html+='<h3>空（sky）</h3><dl class="tgrid">'
+          +row('sky.dome', fmt(sk.dome))
+          +row('sky.environment', fmt(sk.environment))
+          +row('sky.envRegens', fmt(sk.envRegens))
+          +row('sky.turbidity', fmt(sk.turbidity))
+          +row('sky.rayleigh', fmt(sk.rayleigh))
+          +row('fog.near', fmt(skf.near, ' m'))
+          +row('fog.far', fmt(skf.far, ' m'))
+          +row('fog.heightFactor', fmt(skf.heightFactor))
+          +row('fog.heightTopM', fmt(skf.heightTopM, ' m'))
+          +'</dl>';
         var rt=snap.rooftop||{}, rbt=rt.byTexture||[], rac=rt.addedByClass||{},
           rcb=rt.classBuildings||{}, rai=rt.addedItems||{}, rph=rt.parapetHeight||{};
         html+='<h3>屋上レイヤー（C5）</h3><dl class="tgrid">'
