@@ -3488,7 +3488,7 @@
        relationship (0x776c5c → 0x2f2e33); Hi cere roughness
        0.65 → 0.85, colour unchanged. The iris drops its flat 0xe05a1a
        tint for the procedural irisTex gradient map (colour white,
-       roughness unchanged) — close-LOD eyeball only, the basic eye
+       roughness unchanged at P6) — close-LOD eyeball only, the basic eye
        (SHARED_EYE_MAT) is untouched. R1-6 (Issue #84) lowers that
        iris roughness 0.25 → 0.08 below, so the iris reads glossier
        under the cornea cap instead of flat. The cornea cap material is new:
@@ -3911,12 +3911,18 @@
           /* R1-6 (Issue #84): flatten the close-LOD pupil along the
              outward x axis (scale.x 0.55), so it reads as a disc on
              the eyeball surface rather than a protruding bead.
-             Geometry, position and material are unchanged. The basic
+             Flattening alone would bury the pupil inside the eyeball
+             (outer face 0.06279 vs eyeball front 0.06471 at the pupil
+             centre height), so the position is moved outward
+             0.0585 -> 0.0620: the outer face then sits at 0.06629,
+             proud of the eyeball front by 0.00158 (pre-change 0.00159)
+             and of the cornea-cap front by 0.00026 (pre-change 0.00027).
+             Geometry, colour and material are unchanged. The basic
              pupil (SHARED_PUPIL_MAT, MeshBasic small sphere) is the
              far-LOD part and is not the acceptance-distance target,
              so it is left unchanged. */
           pup.scale.set(0.55,1,1);
-          pup.position.set(0.0585*s,0.014,0.021); closeHead.add(pup);
+          pup.position.set(0.0620*s,0.014,0.021); closeHead.add(pup);
           const ringHi=new THREE.Mesh(new THREE.TorusGeometry(0.0165,0.0038,8,20), ringMatHi);
           ringHi.rotation.y=Math.PI/2; ringHi.position.set(0.0495*s,0.014,0.018); closeHead.add(ringHi);
         }
