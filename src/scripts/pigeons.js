@@ -1680,6 +1680,7 @@
         // 1 = the legs[3..5]/closeFeet[1] side) so the pose never
         // flaps sides mid-roost.
         this.breathFreq=rand(0.25,0.40); this.breathPhase=hash(i+50)*TAU;
+        this.breathEnv=0; // R2-5 fix: breathing-gate envelope (0-1), eased toward the idleStill target with tau 0.2 s; multiplies the sine so gate switches do not step the trunk scale.
         this.stillT=0; this.tailFlickT=0; this.nextFlickAt=rand(5,15);
         this.roostHideSide=(i%2===0)?0:1;
         this.target=null; this.checkPoint=null; this.finalPoint=null; this.finalKind=null;
@@ -2631,7 +2632,21 @@
          double application) and while walking (where the stride
          owns the body rhythm). */
       const idleStill=!flying && !(p.state==='forage' && p._walking);
-      const breathK=idleStill?0.015*Math.sin(idleClock*TAU*p.breathFreq + p.breathPhase):0;
+      /* R2-5 fix (specialist review): smooth the breathing gate with
+         a per-bird envelope instead of switching breathK between 0
+         and 0.015*sin(...) in one frame (a max 1.5% trunk-scale step,
+         about 8 mm display). breathEnv eases toward 1 while idleStill
+         and toward 0 otherwise, with time constant 0.2 s on dt — the
+         same real-animation dt (capped at 0.05 s) that advances
+         idleClock — so a gate switch moves the scale by at most
+         about 0.0037 in one frame at the dt cap (brute-forced over
+         phase, including the sine's own advance), and about 0.0013
+         at a normal 60 fps frame (dt 0.0167 s), against 0.01500
+         before the fix.
+         The sine's own frequency, phase and 0.015 amplitude cap are
+         unchanged; only the gate is enveloped. */
+      p.breathEnv+=((idleStill?1:0)-p.breathEnv)*(1-Math.exp(-dt/0.2));
+      const breathK=0.015*p.breathEnv*Math.sin(idleClock*TAU*p.breathFreq + p.breathPhase);
       m.bodyG.scale.set(m.r14Size*(1+breathK), 1, m.r14Size*(1+breathK));
       m.bodyG.rotation.x=lerp(m.bodyG.rotation.x, pitch, 0.2);
       m.bodyG.rotation.z=lerp(m.bodyG.rotation.z, roll, 0.15);
@@ -2752,8 +2767,15 @@
          nowhere else, so this per-frame write is the only owner).
          The existing close-LOD rule (flat basic feet 1, 4 yield to
          the jointed toes) is preserved and applied after the hide. */
-      const hideBase=roostOneLeg?(p.roostHideSide*3):-1;
-      m.legs.forEach((l,li)=>{ l.visible=legShow && li!==hideBase && li!==hideBase+1 && li!==hideBase+2 && !((li===1||li===4) && p.closeLOD); });
+      /* R2-5 fix (QA + specialist review): the old sentinel hideBase=-1
+         made hideBase+1=0 and hideBase+2=1 valid leg indices, so
+         legs[0] (left leg) and legs[1] (left foot) were hidden in
+         every non-roost state with no path back. The hidden set is
+         now explicit: empty outside roost, exactly one side's three
+         indices inside roost. The closeFeet formula below was already
+         correct and is unchanged. */
+      const hideSet=roostOneLeg?[p.roostHideSide*3, p.roostHideSide*3+1, p.roostHideSide*3+2]:[];
+      m.legs.forEach((l,li)=>{ l.visible=legShow && !hideSet.includes(li) && !((li===1||li===4) && p.closeLOD); });
       if(m.closeFeet){ m.closeFeet.forEach((f,fi)=>{ f.visible=!(roostOneLeg && fi===p.roostHideSide); }); }
       /* stepping: while a ground bird walks, the scarlet legs swing in
          alternation with the stride (same phase as the head-bob), so
