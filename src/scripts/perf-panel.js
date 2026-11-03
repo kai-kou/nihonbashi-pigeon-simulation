@@ -202,6 +202,11 @@
           +row('streetLights.opacity', fmt(sl.opacity))
           +row('streetLights.visible', fmt(sl.visible))
           +'</dl>';
+        var gd=snap.ground||{}, gdr=gd.repeat||{};
+        html+='<h3>周辺グラウンド（R3-6）</h3><dl class="tgrid">'
+          +row('ground.textured', fmt(gd.textured))
+          +row('ground.repeat', fmt(gdr.x)+' / '+fmt(gdr.y))
+          +'</dl>';
         var ff=snap.flightFlash||{};
         html+='<h3>飛行フラッシュ（P4）</h3><dl class="tgrid">'
           +row('flightFlash.underwingVisible', fmt(ff.underwingVisible))
