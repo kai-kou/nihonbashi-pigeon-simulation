@@ -123,7 +123,7 @@
       wireBundleSpacing:{lateral:1.8, upperLift:0.62, lowerDrop:1.0,
         offsets:WIRE_OFFS.map(o=>[o[0],o[1]])}};
     /* handles the season/weather system (later script) drives */
-    let cityMeshMat=null, roadsMat=null, groundMat=null, waterMatRef=null, canopyMesh=null;
+    let cityMeshMat=null, roadsMat=null, groundMat=null, groundTex=null, waterMatRef=null, canopyMesh=null;
     /* R3-5 (Issue #86): street-light handles driven by updateDaylight()
        in simulation.js (the later script shares this script's top-level
        lexical scope). Head material colour, pool material opacity and
@@ -1159,8 +1159,68 @@
         scene.add(om); c6Overlays.push(om);
         if(!c6WaterBase) c6WaterBase=wm;
       }
+      /* R3-6 (Issue #87): procedural ground texture — soil/pavement
+         mid-tone noise + large block blotches, two scales mixed, laid
+         with repeat over the plain Lambert disc so the surroundings
+         stop reading as a flat void from above. The material stays
+         Lambert (no Standard conversion: that would spend a program
+         slot); the map is a colour map, so the existing wet/snow
+         colour lerp in simulation.js — which touches only
+         groundMat.color — keeps working as a multiplier over the
+         map (three.js multiplies material.color with map), it never
+         overwrites or disables the map. The canvas base is a
+         near-white warm grey and all marks are low-alpha, so the
+         map's mean luminance stays near 1 and the multiplied result
+         stays close to the previous flat 0x585c52, mottled rather
+         than darkened. Placement uses the deterministic hash() so
+         the texture is identical on every load. Blotches are drawn
+         wrapped over all 9 tile offsets, so no seam appears at tile
+         edges under RepeatWrapping.
+         Repeat: GROUND_TEX_REPEAT=24 over the 2400 m-radius disc
+         (uv spans the 4800 m diameter), i.e. one tile = 200 m.
+         At that scale the mid blocks (40–140 px = 16–55 m) and the
+         tile-spanning soft patches (170–300 px = 67–117 m) read as
+         ground mottling from above, while the tile itself (200 m)
+         is larger than any single blotch, so no blotch repeats as
+         a lattice unit and the two-scale mix plus the
+         edge-crossing patches break the grid rhythm. A much smaller
+         repeat would make each blotch huge and the tile edge itself
+         the repeating unit; a much larger one would shrink the
+         blotches below aerial readability and invite moire. */
+      const GROUND_TEX_REPEAT=24;
+      const gcv=document.createElement('canvas'); gcv.width=gcv.height=512;
+      const gg=gcv.getContext('2d');
+      gg.fillStyle='#f2f0eb'; gg.fillRect(0,0,512,512);
+      for(let i=0;i<5200;i++){ // fine scale: speckle grain, 1–3 px
+        const a=0.04+hash(i*13.3)*0.10;
+        gg.fillStyle=hash(i*17.9)>0.5?('rgba(60,58,50,'+a+')'):('rgba(255,255,250,'+a+')');
+        gg.fillRect(hash(i*3.1)*512, hash(i*7.7)*512, 1+hash(i*23.7)*2, 1+hash(i*29.1)*2);
+      }
+      const groundBlotch=(cx,cy,rx,ry,style)=>{ // wrapped: seamless across tile edges
+        for(let ox=-512;ox<=512;ox+=512) for(let oy=-512;oy<=512;oy+=512){
+          gg.fillStyle=style; gg.beginPath();
+          gg.ellipse(cx+ox, cy+oy, rx, ry, hash(cx+cy)*3.14, 0, TAU); gg.fill();
+        }
+      };
+      for(let i=0;i<34;i++){ // block scale: mid blotches, 40–140 px
+        const cx=hash(i*31.7)*512, cy=hash(i*47.3)*512,
+          rx=20+hash(i*53.9)*50, ry=16+hash(i*61.1)*40;
+        groundBlotch(cx, cy, rx, ry,
+          hash(i*71.3)>0.45?('rgba(88,84,72,'+(0.05+hash(i*83.7)*0.09)+')')
+            :('rgba(246,244,238,'+(0.05+hash(i*97.3)*0.08)+')'));
+      }
+      for(let i=0;i<8;i++){ // tile-spanning soft patches, 170–300 px: break the lattice
+        groundBlotch(hash(1000+i*37.1)*512, hash(2000+i*43.7)*512,
+          85+hash(i*59.3)*65, 70+hash(i*67.9)*55,
+          'rgba(96,92,80,'+(0.04+hash(i*73.1)*0.05)+')');
+      }
+      groundTex=new THREE.CanvasTexture(gcv);
+      groundTex.wrapS=groundTex.wrapT=THREE.RepeatWrapping;
+      groundTex.repeat.set(GROUND_TEX_REPEAT, GROUND_TEX_REPEAT);
+      groundTex.encoding=THREE.sRGBEncoding; // as the other colour canvas textures
+      groundTex.anisotropy=8;
       // ground
-      groundMat=new THREE.MeshLambertMaterial({color:0x585c52});
+      groundMat=new THREE.MeshLambertMaterial({color:0x585c52, map:groundTex});
       const ground=new THREE.Mesh(new THREE.CircleGeometry(2400, 40), groundMat);
       ground.rotation.x=-Math.PI/2; ground.position.y=-0.05; ground.receiveShadow=true;
       scene.add(ground);

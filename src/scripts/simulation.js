@@ -1795,6 +1795,16 @@
             pools:streetLightPoolMesh?streetLightPoolMesh.count:0,
             opacity:streetLightPoolMat?+streetLightPoolMat.opacity.toFixed(3):0,
             visible:streetLightPoolMesh?streetLightPoolMesh.visible:false},
+          /* R3-6 (Issue #87): ground texture state. textured is true
+             when the ground Lambert material carries the procedural
+             map; repeat is the texture's live repeat (one tile =
+             4800/repeat m across the 2400 m-radius disc, so repeat
+             24 means 200 m tiles). The wet/snow colour lerp in
+             updateEnvironment() touches only groundMat.color, which
+             three.js multiplies with the map, so the lerp survives
+             as a multiplier and never overwrites the map. */
+          ground:{textured:!!(groundMat&&groundMat.map),
+            repeat:groundTex?{x:groundTex.repeat.x, y:groundTex.repeat.y}:null},
           facade:{normalMap:!!(cityMeshMat&&cityMeshMat.normalMap),
             roughnessMap:!!(cityMeshMat&&cityMeshMat.roughnessMap),
             emissiveMap:!!(cityMeshMat&&cityMeshMat.emissiveMap),
