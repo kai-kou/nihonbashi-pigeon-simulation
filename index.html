@@ -4318,16 +4318,25 @@
       {
         const fanMat=mm.fan;
         const fGeo=new THREE.PlaneGeometry(0.021,0.2); fGeo.translate(0,0.1,0); fGeo.rotateX(-Math.PI/2);
+        /* R4-1 (Issue #80) A1: the 12 per-bird fan pivots were Groups with a
+           single rotation each and no animation writes (only tailG itself
+           is animated). Bake the rotation into the meshes: 12 Groups/bird
+           x 24 birds = -288 nodes, with an identical world transform
+           (R * T(x) = T(Rx) * R for the outer edge strips). tailFan itself
+           stays for the setCloseLOD visibility toggle. */
         for(let k=0;k<12;k++){
-          const pivot=new THREE.Group();
-          pivot.rotation.y=(k-5.5)*0.052;
-          const f=new THREE.Mesh(fGeo, fanMat); pivot.add(f); tailFan.add(pivot);
+          const th=(k-5.5)*0.052;
+          const f=new THREE.Mesh(fGeo, fanMat); f.rotation.y=th; tailFan.add(f);
           /* P4 (Issue #13): white edge strips on the fan's outer rim
-             only — the outermost rectrix pivots (k=0 and k=11). */
+             only — the outermost rectrices (k=0 and k=11). The strip's
+             pivot-local offset (+/-0.0135 on x) is rotated into tailFan
+             space, and its own rotation.y is baked the same way. */
           if(k===0||k===11){
             const edge=new THREE.Mesh(tailEdgeGeo, SHARED_TAIL_EDGE_MAT);
-            edge.position.x=(k===0)?0.0135:-0.0135;
-            pivot.add(edge);
+            const ex=(k===0)?0.0135:-0.0135;
+            edge.position.set(ex*Math.cos(th),0,-ex*Math.sin(th));
+            edge.rotation.y=th;
+            tailFan.add(edge);
           }
         }
       }
