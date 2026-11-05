@@ -1773,7 +1773,11 @@
           phase:phaseOf(simMin),
           season:seasonKey, seasonMode, weather:weatherKey, weatherMode,
           env:{temp:ENV.temp, cloud:+ENV.cloud.toFixed(2), rain:+ENV.rain.toFixed(2), snow:+ENV.snow.toFixed(2),
-            wind:+ENV.wind.toFixed(2), wet:+ENV.wet.toFixed(2), snowCover:+ENV.snowCover.toFixed(2), postRain:Math.round(ENV.postRain)},
+            wind:+ENV.wind.toFixed(2), wet:+ENV.wet.toFixed(2), snowCover:+ENV.snowCover.toFixed(2), postRain:Math.round(ENV.postRain),
+            /* R4-3 (Issue #114): cloudFull is the live ENV.cloud at full
+               precision (raw float, NOT the 2-digit cloud above), so the
+               perf panel can show it to 3 decimals for P1 discrimination. */
+            cloudFull:ENV.cloud},
           sun:{rise:fmtMin(SUN.rise), set:fmtMin(SUN.set)},
           counts, flockFlying,
           flightFlash:{underwingVisible:pigeons.reduce((n,p)=>n+((p.mesh&&p.mesh.underL&&p.mesh.underL.visible)?1:0),0)},
@@ -1921,6 +1925,9 @@
             cityGeometries:cityFadeRecs.length},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:shadowExtentM,
             normalBias:+sun.shadow.normalBias.toFixed(4),
+            /* R4-3 (Issue #114): live sun.castShadow for P1 discrimination
+               (updateDaylight() sets it from ENV.cloud < 0.72 each frame). */
+            castShadow:sun.castShadow,
             updates:shadowUpdates, autoUpdate:renderer.shadowMap.autoUpdate, framesRendered},
           render:{fps:fpsValue, calls:renderer.info.render.calls, triangles:renderer.info.render.triangles,
             dprCap:dprCap(), renderScale:+renderScale.toFixed(2), frameMs:+frameEMA.toFixed(1)},

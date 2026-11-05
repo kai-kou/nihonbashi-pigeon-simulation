@@ -54,7 +54,7 @@
         return '<dt>'+label+'</dt><dd>'+value+'</dd>';
       }
       function render(bench, snap, viewName){
-        var mem=snap.memory||{}, sh=snap.shadow||{}, bt=snap.boot||{};
+        var mem=snap.memory||{}, sh=snap.shadow||{}, bt=snap.boot||{}, ev=snap.env||{};
         var html='';
         html+='<h3>bench（5秒）</h3><dl class="tgrid">'
           +row('avgFps', fmt(bench.avgFps))
@@ -76,6 +76,12 @@
           +row('shadow.framesRendered', fmt(sh.framesRendered))
           +row('shadow.extentM', fmt(sh.extentM, ' m'))
           +row('shadow.normalBias', fmt(sh.normalBias, ' m'))
+          /* R4-3 (Issue #114): live sun.castShadow and full-precision
+             ENV.cloud (3 decimals, read from env.cloudFull, NOT the
+             2-digit snapshot env.cloud). Both refresh on every bench
+             run, like the other snapshot rows above. */
+          +row('shadow.castShadow', fmt(sh.castShadow))
+          +row('env.cloud', fmt(ev.cloudFull!=null?ev.cloudFull.toFixed(3):null))
           +'</dl>';
         var sk=snap.sky||{}, skf=sk.fog||{};
         html+='<h3>空（sky）</h3><dl class="tgrid">'
