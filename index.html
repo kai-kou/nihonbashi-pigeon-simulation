@@ -1307,11 +1307,16 @@
    snow far shortening) is preserved, and the weight can only lighten
    fog, never double-crush rain/snow. Both facade materials share this
    function and the 'facade-c1' cache key, so no new program is added.
-   The two branches below are the stock r128 fog_fragment branches. */
+   The two branches below match the stock r128 fog_fragment branches as
+   bundled in src/assets/three.min.js (fog_pars_fragment / fog_fragment
+   declare and use the varying fogDepth). R3-2 originally used a
+   different varying name here that the bundled library does not
+   declare; R4-5 (Issue #121) corrects it to fogDepth after reading
+   the bundled chunks. */
 #ifdef FOG_EXP2
-  float r32FogFactor = 1.0 - exp(-fogDensity * fogDensity * vFogDepth * vFogDepth);
+  float r32FogFactor = 1.0 - exp(-fogDensity * fogDensity * fogDepth * fogDepth);
 #else
-  float r32FogFactor = smoothstep(fogNear, fogFar, vFogDepth);
+  float r32FogFactor = smoothstep(fogNear, fogFar, fogDepth);
 #endif
   float r32HazeW = mix(1.0, ${R32_HAZE_TOP_W.toFixed(2)}, smoothstep(0.0, ${R32_HAZE_TOP_M.toFixed(1)}, vC7BaseY));
   gl_FragColor.rgb = mix(gl_FragColor.rgb, fogColor, r32FogFactor * r32HazeW);
