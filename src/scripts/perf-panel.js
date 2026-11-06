@@ -50,6 +50,13 @@
         if(v===null||v===undefined||v==='') return '—';
         return String(v)+(suffix||'');
       }
+      /* R4-4 (Issue #119): escape cacheKey text before innerHTML.
+         Keys are internal parameter strings (shaderID / flags), but
+         raw-shader keys may contain shader source with < or >, so
+         escape them like any untrusted text. */
+      function esc(s){
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
       function row(label, value){
         return '<dt>'+label+'</dt><dd>'+value+'</dd>';
       }
@@ -83,6 +90,17 @@
           +row('shadow.castShadow', fmt(sh.castShadow))
           +row('env.cloud', fmt(ev.cloudFull!=null?ev.cloudFull.toFixed(3):null))
           +'</dl>';
+        /* R4-4 (Issue #119): programs breakdown, permanent panel rows.
+           DOM text only (a collapsed details list + total count), no
+           WebGL work. Refreshes on every bench run like the other
+           snapshot rows above. Full cacheKey text is shown so the
+           P1 / P2 / P5 attribution in #80 can tell keys apart; the
+           list starts collapsed to keep the panel compact. */
+        var pb=snap.programsBreakdown||{}, pbe=pb.entries||[];
+        html+='<h3>programs 内訳（R4-4）</h3>'
+          +'<details><summary>programs 内訳一覧（'+fmt(pb.total)+' 件）</summary><dl class="tgrid">'
+          +pbe.map(function(e){ return row(esc(e.key), fmt(e.count)+' 件'); }).join('')
+          +'</dl></details>';
         var sk=snap.sky||{}, skf=sk.fog||{};
         html+='<h3>空（sky）</h3><dl class="tgrid">'
           +row('sky.dome', fmt(sk.dome))
