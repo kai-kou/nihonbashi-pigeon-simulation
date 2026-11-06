@@ -1943,6 +1943,23 @@
             if(typeof pr.length==='number') return pr.length;
             if(typeof pr.size==='number') return pr.size;
             return 0; })(),
+          /* R4-4 (Issue #119): programs breakdown for #80 attribution.
+             Read-only: enumerates cacheKey of each entry of
+             renderer.info.programs (r128 WebGLPrograms array; each
+             program object carries .cacheKey, see three.min.js
+             WebGLProgram this.cacheKey and acquireProgram dedup by
+             cacheKey). Identical keys are aggregated with a count.
+             No material/shader/geometry/texture is created, changed
+             or disposed here. The existing numeric `programs` field
+             above is kept unchanged for backward compatibility. */
+          programsBreakdown:(()=>{ const pr=renderer.info&&renderer.info.programs;
+            if(!pr || typeof pr.length!=='number') return {total:0, entries:[]};
+            const counts={};
+            for(let i=0;i<pr.length;i++){ const p=pr[i];
+              const k=(p && typeof p.cacheKey==='string' && p.cacheKey!=='')?p.cacheKey:'(no cacheKey)';
+              counts[k]=(counts[k]||0)+1; }
+            const entries=Object.keys(counts).sort().map(k=>({key:k, count:counts[k]}));
+            return {total:pr.length, entries:entries}; })(),
           totalNodes:(()=>{ let n=0; scene.traverse(()=>{ n++; }); return n; })(),
           framesRendered,
           boot:{scriptStart:bootVal(__boot.scriptStart), decoded:bootVal(__boot.decoded),

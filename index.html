@@ -7826,6 +7826,23 @@
             if(typeof pr.length==='number') return pr.length;
             if(typeof pr.size==='number') return pr.size;
             return 0; })(),
+          /* R4-4 (Issue #119): programs breakdown for #80 attribution.
+             Read-only: enumerates cacheKey of each entry of
+             renderer.info.programs (r128 WebGLPrograms array; each
+             program object carries .cacheKey, see three.min.js
+             WebGLProgram this.cacheKey and acquireProgram dedup by
+             cacheKey). Identical keys are aggregated with a count.
+             No material/shader/geometry/texture is created, changed
+             or disposed here. The existing numeric `programs` field
+             above is kept unchanged for backward compatibility. */
+          programsBreakdown:(()=>{ const pr=renderer.info&&renderer.info.programs;
+            if(!pr || typeof pr.length!=='number') return {total:0, entries:[]};
+            const counts={};
+            for(let i=0;i<pr.length;i++){ const p=pr[i];
+              const k=(p && typeof p.cacheKey==='string' && p.cacheKey!=='')?p.cacheKey:'(no cacheKey)';
+              counts[k]=(counts[k]||0)+1; }
+            const entries=Object.keys(counts).sort().map(k=>({key:k, count:counts[k]}));
+            return {total:pr.length, entries:entries}; })(),
           totalNodes:(()=>{ let n=0; scene.traverse(()=>{ n++; }); return n; })(),
           framesRendered,
           boot:{scriptStart:bootVal(__boot.scriptStart), decoded:bootVal(__boot.decoded),
@@ -7914,6 +7931,13 @@
         if(v===null||v===undefined||v==='') return '—';
         return String(v)+(suffix||'');
       }
+      /* R4-4 (Issue #119): escape cacheKey text before innerHTML.
+         Keys are internal parameter strings (shaderID / flags), but
+         raw-shader keys may contain shader source with < or >, so
+         escape them like any untrusted text. */
+      function esc(s){
+        return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+      }
       function row(label, value){
         return '<dt>'+label+'</dt><dd>'+value+'</dd>';
       }
@@ -7947,6 +7971,17 @@
           +row('shadow.castShadow', fmt(sh.castShadow))
           +row('env.cloud', fmt(ev.cloudFull!=null?ev.cloudFull.toFixed(3):null))
           +'</dl>';
+        /* R4-4 (Issue #119): programs breakdown, permanent panel rows.
+           DOM text only (a collapsed details list + total count), no
+           WebGL work. Refreshes on every bench run like the other
+           snapshot rows above. Full cacheKey text is shown so the
+           P1 / P2 / P5 attribution in #80 can tell keys apart; the
+           list starts collapsed to keep the panel compact. */
+        var pb=snap.programsBreakdown||{}, pbe=pb.entries||[];
+        html+='<h3>programs 内訳（R4-4）</h3>'
+          +'<details><summary>programs 内訳一覧（'+fmt(pb.total)+' 件）</summary><dl class="tgrid">'
+          +pbe.map(function(e){ return row(esc(e.key), fmt(e.count)+' 件'); }).join('')
+          +'</dl></details>';
         var sk=snap.sky||{}, skf=sk.fog||{};
         html+='<h3>空（sky）</h3><dl class="tgrid">'
           +row('sky.dome', fmt(sk.dome))
