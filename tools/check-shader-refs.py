@@ -2,34 +2,43 @@
 """Static check for shader identifier references in onBeforeCompile mods.
 
 GLSL in this codebase lives inside JS string literals injected into
-shaders via onBeforeCompile / ShaderMaterial. This script scans
-src/scripts/*.js (comments stripped with a string-aware state machine)
-for varying/uniform-style identifiers (vXxx / uXxx tokens). Each
-identifier must be either
+shaders via onBeforeCompile / ShaderMaterial. This script scans the
+string literals of src/scripts/*.js (comments are stripped first with a
+string-aware state machine) for varying/uniform-style identifiers
+(vXxx / uXxx CamelCase tokens). Each referenced identifier must be
+either
 
-  * declared by the app itself (a `varying`/`uniform`/`attribute`
-    declaration in the shader strings, or a `shader.uniforms.<name>`
-    assignment), or
-  * present in the bundled library src/assets/three.min.js (i.e. declared
-    by a stock shader chunk of the bundled three.js revision).
+  * declared in the app's shader strings (a `varying`/`uniform`/
+    `attribute` declaration, including precision qualifiers and
+    comma-separated declarators), or assigned via
+    `shader.uniforms.<name> = ...`, or
+  * present as a whole word in the bundled library
+    src/assets/three.min.js (i.e. declared by a stock shader chunk of
+    the bundled three.js revision).
 
-Identifiers that are declared as plain JS variables / parameters /
-object keys in the same file are excluded (they are not GLSL references;
-in this codebase GLSL identifiers never double as JS variables).
+An identifier in neither set is an unresolved reference: the shader that
+uses it fails GLSL compilation in the browser (undeclared identifier)
+while every other static check (node --check, structural metrics) still
+passes. This is the failure mode of the 2026-11-06 facade fog incident
+(R4-5, Issue #121): R3-2 pasted a fog_fragment body that references
+`vFogDepth`, but bundled three r128 declares that varying as `fogDepth`,
+so the whole integrated building mesh silently stopped rendering and the
+failure survived three days of reviews and metrics.
 
-An identifier in none of these sets is an unresolved reference: the
-shader that uses it fails GLSL compilation in the browser (undeclared
-identifier) while every other static check (node --check, structural
-metrics) still passes. This is the failure mode of the 2026-11-06 facade
-fog incident (R4-5, Issue #121): R3-2 pasted a fog_fragment body that
-references `vFogDepth`, but bundled three r128 declares that varying as
-`fogDepth`, so the whole integrated building mesh silently stopped
-rendering and the failure survived three days of reviews and metrics.
-
-Known limitation: the comment stripper is not a full JS lexer. A regex
-literal containing a quote or a comment marker would desync it. The only
-regex literals in src/scripts today are the HTML-escape replaces in
-perf-panel.js, which contain neither.
+Scope and known limitations:
+  * Only vXxx / uXxx CamelCase identifiers are checked. snake_case
+    identifiers (e.g. `u_time`), `.replace()` anchor strings and
+    `#include` chunk names are out of scope.
+  * Only tokens inside string literals are treated as GLSL references;
+    tokens in JS code (variables, object keys, property accesses) are
+    not shader references in this codebase.
+  * The declaration set is shared across files (an app-level
+    approximation): a name declared in one file's shader strings also
+    resolves references in another file's strings.
+  * The comment stripper is not a full JS lexer. A regex literal
+    containing a quote or a comment marker would desync it. The only
+    regex literals in src/scripts today are the HTML-escape replaces in
+    perf-panel.js, which contain neither.
 
 Usage: python3 tools/check-shader-refs.py [--root <repo-root>]
 Exit code: 0 = no unresolved references, 1 = unresolved references found.
@@ -38,27 +47,28 @@ Exit code: 0 = no unresolved references, 1 = unresolved references found.
 import argparse
 import re
 import sys
+from bisect import bisect_right
 from pathlib import Path
 
 TOKEN_RE = re.compile(r"\b(?:v|u)[A-Z][A-Za-z0-9_]*\b")
-DECL_RE = re.compile(r"(?:varying|uniform|attribute)\s+\w+\s+([A-Za-z_]\w*)")
+DECL_STMT_RE = re.compile(
+    r"(?:varying|uniform|attribute)\s+"
+    r"(?:(?:highp|mediump|lowp)\s+)?"
+    r"[A-Za-z_]\w*(?:\s*\[[^\]]*\])?\s+([^;]+);")
+IDENT_RE = re.compile(r"[A-Za-z_]\w*")
 UNIFORMS_ASSIGN_RE = re.compile(r"\buniforms\.([A-Za-z_]\w*)\s*=")
-JS_VAR_RE = re.compile(r"\b(?:const|let|var)\s+([A-Za-z_]\w*)")
-JS_PARAM_RES = [
-    re.compile(r"\bfunction\s*\w*\s*\(([^)]*)\)"),
-    re.compile(r"\(([^()]*)\)\s*=>"),
-    re.compile(r"\b([A-Za-z_]\w*)\s*=>"),
-]
-JS_KEY_RE = re.compile(r"[{,]\s*([A-Za-z_]\w*)\s*:")
 ESC_N = chr(92) + "n"  # literal backslash + 'n' as written in JS sources
 
 
-def strip_comments(text: str) -> str:
-    """Replace // and /* */ comments with spaces, preserving strings
-    and newlines (so line numbers stay stable)."""
+def strip_comments(text: str):
+    """Replace // and /* */ comments with spaces, preserving strings,
+    newlines and offsets. Returns (clean_text, string_spans) where
+    string_spans are (start, end) offsets of string literals."""
     out = []
+    spans = []
     i, n = 0, len(text)
-    state = None  # None | "'" | '"' | '`' | 'line' | 'block'
+    state = None  # None | quote char | 'line' | 'block'
+    span_start = None
     while i < n:
         ch = text[i]
         nxt = text[i + 1] if i + 1 < n else ""
@@ -75,6 +85,7 @@ def strip_comments(text: str) -> str:
                 continue
             if ch in "'\"`":
                 state = ch
+                span_start = i
             out.append(ch)
             i += 1
             continue
@@ -102,21 +113,27 @@ def strip_comments(text: str) -> str:
             i += 2
             continue
         if ch == state:
+            spans.append((span_start, i + 1))
             state = None
         i += 1
-    return "".join(out)
+    return "".join(out), spans
 
 
-def js_declared(text: str) -> set:
-    names = set(JS_VAR_RE.findall(text))
-    names.update(m.group(1) for m in JS_KEY_RE.finditer(text))
-    for rx in JS_PARAM_RES:
-        for params in rx.findall(text):
-            for p in params.split(","):
-                p = p.strip().split("=")[0].strip()
-                if re.fullmatch(r"[A-Za-z_]\w*", p):
-                    names.add(p)
+def declared_names(string_contents) -> set:
+    names = set()
+    for content in string_contents:
+        normalized = content.replace(ESC_N, " ")
+        for stmt in DECL_STMT_RE.findall(normalized):
+            for declarator in stmt.split(","):
+                m = IDENT_RE.match(declarator.strip())
+                if m:
+                    names.add(m.group(0))
     return names
+
+
+def in_spans(spans, starts, pos) -> bool:
+    idx = bisect_right(starts, pos) - 1
+    return idx >= 0 and spans[idx][0] <= pos < spans[idx][1]
 
 
 def main() -> int:
@@ -138,27 +155,39 @@ def main() -> int:
         return 1
 
     declared: set = set()
-    occurrences: dict = {}
+    per_file = []
     for path in script_files:
         raw = path.read_text(encoding="utf-8", errors="replace")
-        text = strip_comments(raw)
+        text, spans = strip_comments(raw)
         declared.update(UNIFORMS_ASSIGN_RE.findall(text))
-        declared.update(DECL_RE.findall(text.replace(ESC_N, " ")))
-        local_js = js_declared(text)
-        for lineno, line in enumerate(text.splitlines(), start=1):
-            for m in TOKEN_RE.finditer(line):
-                token = m.group(0)
-                if token in local_js:
-                    continue
-                # Property accesses (obj.uOff, 'variation.uOffsets') are
-                # JS, not GLSL references. GLSL field swizzles in this
-                # codebase are lowercase (.x/.xyz), never vXxx/uXxx.
-                if m.start() > 0 and line[m.start() - 1] == ".":
-                    continue
-                occurrences.setdefault(token, []).append((path.name, lineno))
+        contents = [text[s:e] for s, e in spans]
+        declared.update(declared_names(contents))
+        per_file.append((path, text, spans))
+
+    occurrences: dict = {}
+    for path, text, spans in per_file:
+        starts = [s for s, _ in spans]
+        for m in TOKEN_RE.finditer(text):
+            if not in_spans(spans, starts, m.start()):
+                continue  # JS code, not a GLSL string
+            token = m.group(0)
+            # Property-style labels ('variation.uOffsets') are not GLSL.
+            if m.start() > 0 and text[m.start() - 1] == ".":
+                continue
+            lineno = text.count(chr(10), 0, m.start()) + 1
+            occurrences.setdefault(token, []).append((path.name, lineno))
+
+    lib_cache: dict = {}
+
+    def in_lib(token: str) -> bool:
+        if token not in lib_cache:
+            pat = re.compile(r"(?<![A-Za-z0-9_$])" + re.escape(token) +
+                             r"(?![A-Za-z0-9_$])")
+            lib_cache[token] = pat.search(lib_text) is not None
+        return lib_cache[token]
 
     unresolved = [t for t in sorted(occurrences)
-                  if t not in declared and t not in lib_text]
+                  if t not in declared and not in_lib(t)]
 
     checked = len(occurrences)
     if unresolved:
