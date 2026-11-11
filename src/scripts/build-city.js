@@ -95,7 +95,7 @@
        fade (geometry groups / ghost-material opacity) is a separate
        mechanism and is untouched. */
     const R32_HAZE_TOP_M=60, R32_HAZE_TOP_W=0.35;
-    const x1State={chunks:0, fadeBuildings:0, chunkedBuildings:0, fadeVerts:0, chunkVerts:0};
+    const x1State={chunks:0, fadeBuildings:0, chunkedBuildings:0, fadeVerts:0, chunkVerts:0, heroBuildings:0, heroVerts:0};
     let cityFadeRecs=[];
     let waterTex=null, rippleTex=null, waterNormalTex=null, waterRoughTex=null;
     /* R3-3 (Issue #78): live scroll offset of the water normal layer,
@@ -748,6 +748,142 @@
         c6Tag(cm); // C6: chunked buildings also enter the reflection
         cm.castShadow=false; cm.receiveShadow=true;
         scene.add(cm);
+      }
+      /* R5-P (Issue #151 / #140 第1段階, Bolt 第7回): ヒーロー圏の
+         描画統合（形状のみ）。window.CITYGEO_HERO（Bolt 第6回で生成、
+         1,443 棟・頂点 158,823・三角形 52,941）と window.CITY_HERO
+         （buildings 1,443 件、counts と同一順序）を、旧市街とは別の
+         1 枚の merged geometry として描画する。旧描画経路（上の
+         CITYGEO／CITY のループと X1 分割）は一切変更しない。
+         hero データが無い（旧ビルド）場合はこの節だけが skip され、
+         旧市街のみが描画される（CITYGEO／CITY へのフォールバック）。
+         hero 棟は buildingsAABB／buildingVertRanges へは入れない
+         ため、X1 フェード候補・屋根レイヤー・aabbGrid は旧市街のみ
+         を対象とし続ける（hero 領域の視覚未確認がある間は、後続
+         Unit も hero 領域へ触れない — G3）。
+         色分けは法線基準 (b): ny>0.7 → cTop、それ以外 → cWall。
+         旧規則（先頭 6n 頂点が壁）との不一致は hero LOD1 棟で 0 件
+         （30,063 頂点・643 棟で検証済み）であり、LOD2 棟では旧規則
+         だと 79,710/128,760 頂点が誤色になるため (b) が要る。
+         uv の分岐（ny>0.7 が屋根テクセル）は旧規則と同じく法線
+         によるため、色分けとテクスチャ写像は整合する。
+         付帯物（rooftopItems／perchPoints／ledgePoints）は baseZ
+         を加算する（y=baseZ+h 等）。現行ゲート（|cx|<880 等）は
+         hero 圏（北 1,750〜2,804 m）では 0 件しか通らないため、
+         本 Bolt では hero 由来の付帯物は 0 件だが、加算の式自体は
+         #141 でのゲート見直しに備えて実装してある。
+         C7 の AO グラデーションは確認のみ: vC7BaseY は絶対高さ
+         （position.y）で駆動するため、baseZ の高い hero 棟では
+         1.0 に飽和する（暗い基部が出ない）。シェーダ文字列は本
+         Bolt では変更しない（G1 対象外のまま）。
+         テクスチャアトラスは使わない（形状のみ・第2段階の範囲）。 */
+      if(window.CITYGEO_HERO && window.CITY_HERO && window.CITY_HERO.buildings){
+        const heroGeo=window.CITYGEO_HERO, heroB=window.CITY_HERO.buildings;
+        const heroPosI16=new Int16Array(_b64buf(heroGeo.pos));
+        const heroCounts=new Uint32Array(_b64buf(heroGeo.counts));
+        if(heroCounts.length===heroB.length){
+          const heroTotal=heroPosI16.length/3;
+          const heroPos=new Float64Array(heroPosI16.length);
+          for(let i=0;i<heroPosI16.length;i++) heroPos[i]=heroPosI16[i]/10;
+          const heroCol=new Float32Array(heroTotal*3), heroNor=new Float32Array(heroTotal*3),
+                heroUv=new Float32Array(heroTotal*2), heroBld=new Float32Array(heroTotal);
+          const heroBi0=B.length; // hash seed offset: hero bi continues after legacy
+          let heroStart=0;
+          for(let li=0; li<heroB.length; li++){
+            const bi=heroBi0+li;
+            const vStart=heroStart;
+            const count=heroCounts[li];
+            heroStart+=count;
+            const seedB=hash(bi*7+3);
+            for(let t=0;t<count;t++) heroBld[vStart+t]=seedB;
+            const h=heroB[li][0]/10, baseZ=heroB[li][4]/10, flat=heroB[li][2], n=flat.length/2;
+            const pts=[];
+            let x0=1e9,x1=-1e9,z0=1e9,z1=-1e9, cx=0, cn=0;
+            for(let i=0;i<n;i++){
+              const x=flat[i*2]/10, zn=flat[i*2+1]/10, z=-zn;
+              pts.push([x,z]); cx+=x; cn+=zn;
+              if(x<x0)x0=x; if(x>x1)x1=x; if(z<z0)z0=z; if(z>z1)z1=z;
+            }
+            cx/=n; cn/=n;
+            const tall=h>34, mid=h>15;
+            const kind=hash(bi*3+1);
+            if(kind<0.52){
+              cWall.setHSL(0.1+hash(bi*5)*0.04, 0.03+hash(bi)*0.05, tall?0.6+hash(bi)*0.12:(mid?0.62+hash(bi)*0.14:0.64+hash(bi*7)*0.16));
+            } else if(kind<0.78){
+              cWall.setHSL(0.58, 0.08+hash(bi*5)*0.08, tall?0.5+hash(bi)*0.14:0.55+hash(bi)*0.13);
+            } else {
+              cWall.setHSL(0.05+hash(bi*5)*0.04, 0.2+hash(bi)*0.12, 0.48+hash(bi*7)*0.13);
+            }
+            cTop.setHSL(0.08+hash(bi*13)*0.04, 0.06+hash(bi)*0.08, 0.3+hash(bi*13)*0.12);
+            if(hash(bi*19)>0.9) cTop.setHSL(0.02,0.25,0.36);
+            const btype = h>=26 ? (hash(bi*23)<0.6?'office':'residential')
+              : h>=11 ? (hash(bi*23)<0.55?'commercial':'residential')
+              : (hash(bi*23)<0.6?'shop':'commercial');
+            const tileKey=hash(bi*149+11)<0.5?btype:btype+'V';
+            facadeVariantCounts[tileKey]++;
+            tileU=FACADE_TILES[tileKey][0]; tileV=FACADE_TILES[tileKey][1];
+            for(let t=0;t<count;t+=3){
+              const o=(vStart+t)*3;
+              const ax=heroPos[o], ay=heroPos[o+1], az=heroPos[o+2];
+              const bx=heroPos[o+3], by=heroPos[o+4], bz=heroPos[o+5];
+              const qx=heroPos[o+6], qy=heroPos[o+7], qz=heroPos[o+8];
+              const ux=bx-ax, uy=by-ay, uz=bz-az, vx=qx-ax, vy=qy-ay, vz=qz-az;
+              let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
+              const l=Math.hypot(nx,ny,nz)||1; nx/=l; ny/=l; nz/=l;
+              const vs=[[ax,ay,az],[bx,by,bz],[qx,qy,qz]];
+              for(let vi=0;vi<3;vi++){
+                const gi=vStart+t+vi, go=gi*3, color=(ny>0.7)?cTop:cWall;
+                heroCol[go]=color.r; heroCol[go+1]=color.g; heroCol[go+2]=color.b;
+                heroNor[go]=nx; heroNor[go+1]=ny; heroNor[go+2]=nz;
+                if(ny>0.7){ heroUv[gi*2]=tileU*0.25+0.0075; heroUv[gi*2+1]=tileV*0.5+0.015; }
+                else{
+                  const u=(Math.abs(nx)>Math.abs(nz)? vs[vi][2] : vs[vi][0])*0.1;
+                  const v=vs[vi][1]*0.1;
+                  heroUv[gi*2]=tileU*0.25+(u-Math.floor(u))*0.25; heroUv[gi*2+1]=tileV*0.5+(v-Math.floor(v))*0.5;
+                }
+              }
+            }
+            // 付帯物: y には baseZ を加算する（§4 項目3）。
+            const rw=x1-x0, rd=z1-z0;
+            if(h>=13 && rw>9 && rd>9 && hash(bi*41)>0.35 && Math.abs(cx)<880 && Math.abs(cn)<880){
+              const nBox=hash(bi*43)>0.6?2:1;
+              for(let k=0;k<nBox;k++){
+                rooftopItems.push({
+                  x:lerp(x0+2.5,x1-2.5,hash(bi*47+k*3)), z:lerp(z0+2.5,z1-2.5,hash(bi*53+k*5)), y:baseZ+h,
+                  sx:rand(2.2,4.6), sy:rand(1.1,2.6), sz:rand(2.2,4.2), rot:hash(bi*59+k)*0.6-0.3
+                });
+              }
+              if(h>30 && hash(bi*61)>0.5){
+                rooftopItems.push({x:cx, z:-cn, y:baseZ+h, sx:0.35, sy:rand(4,8), sz:0.35, rot:0});
+              }
+              if((btype==='commercial'||btype==='office') && h>20 && hash(bi*67)>0.45 && Math.abs(cx)<620 && Math.abs(cn)<620){
+                signItems.push({x:cx, z:-cn, y:baseZ+h, sx:rand(5,9.5), sy:rand(1.8,3.2), sz:1.1, rot:hash(bi*71)*0.8-0.4, hue:hash(bi*73)});
+              }
+            }
+            if(h>=5 && h<=70 && Math.abs(cx)<850 && Math.abs(cn)<850){
+              for(let i=0;i<n;i+= (n>6?2:1)){
+                const a=pts[i], b=pts[(i+1)%n];
+                const mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
+                if(Math.hypot(mx,mz)<820) perchPoints.push({p:V3(mx,baseZ+h+0.02,mz), popular:hash(bi*31+i)>0.62, kind:'roof'});
+              }
+              const a=pts[0], b=pts[1];
+              ledgePoints.push({p:V3((a[0]+b[0])/2, baseZ+Math.min(3.2,h-0.4), (a[1]+b[1])/2), popular:hash(bi*17)>0.7, kind:'ledge'});
+            }
+          }
+          const heroGg=new THREE.BufferGeometry();
+          heroGg.setAttribute('position', new THREE.Float32BufferAttribute(heroPos,3));
+          heroGg.setAttribute('color', new THREE.Float32BufferAttribute(heroCol,3));
+          heroGg.setAttribute('normal', new THREE.Float32BufferAttribute(heroNor,3));
+          heroGg.setAttribute('uv', new THREE.Float32BufferAttribute(heroUv,2));
+          heroGg.setAttribute('aBld', new THREE.Float32BufferAttribute(heroBld,1));
+          heroGg.clearGroups(); heroGg.addGroup(0, heroTotal, 0);
+          const heroMesh=new THREE.Mesh(heroGg,[m, cityGhostMat]);
+          c6Tag(heroMesh); // C6: hero buildings enter the planar reflection
+          heroMesh.castShadow=false; heroMesh.receiveShadow=true;
+          scene.add(heroMesh);
+          x1State.heroBuildings=heroB.length;
+          x1State.heroVerts=heroTotal;
+        }
       }
       // ledge points were collected separately; merge them into the perch
       // pool so 'ledge' lookups (shelters, two-stage landings) actually hit
