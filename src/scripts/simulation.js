@@ -1921,6 +1921,7 @@
           x1:{cellM:X1_CELL, fadeRadiusM:X1_FADE_RADIUS, chunks:x1State.chunks,
             fadeBuildings:x1State.fadeBuildings, chunkedBuildings:x1State.chunkedBuildings,
             fadeVerts:x1State.fadeVerts, chunkVerts:x1State.chunkVerts,
+            heroBuildings:x1State.heroBuildings, heroVerts:x1State.heroVerts,
             totalVerts:x1State.fadeVerts+x1State.chunkVerts,
             cityGeometries:cityFadeRecs.length},
           shadow:{mode:'focus-following single cascade (CSM代替)', mapSize:sun.shadow.mapSize.x, extentM:shadowExtentM,
