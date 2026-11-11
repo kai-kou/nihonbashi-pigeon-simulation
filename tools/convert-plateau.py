@@ -22,6 +22,11 @@ Coordinate conversion: equirectangular around origin, standard metres-per-degree
 formulae evaluated at lat0. Sentinel heights (-9999 / 9999 / <=0 / missing) fall
 back to the lod1Solid z-range; buildings with no derivable height are dropped
 and counted in dropped_no_height (0 is required for the hero meshes).
+Base z is min z over GroundSurface polys, else min z over the lod1Solid
+(footprint solid); fallback 0 only when neither exists. Self-check: per-mesh
+stats record the baseZ source (ground polys / lod1Solid / fallback 0) and flag
+baseZ values that disagree with lod1Solid zmin by more than 0.5 m, and baseZ=0
+buildings whose lod1Solid zmin is positive (Bolt 第4回 proposal 3).
 
 Determinism: the output depends only on the input files and their order.
 No timestamps, no randomness, no dict/set iteration over unordered data:
@@ -178,27 +183,44 @@ def parse_building(elem, surf_tex, stats):
     gs = [v for v in polys.values() if v[0] == 2]
     if gs:
         base_z = min(p[2] for _, pts in gs for p in pts)
-    # height fallback from lod1Solid z range
+    # lod1Solid z range, read unconditionally: it is the base_z fallback for
+    # LOD1-only buildings (no GroundSurface polys) even when measuredHeight
+    # is valid, and the height fallback when h is missing. (Was: read only
+    # inside `if h is None:`, so measuredHeight-valid LOD1-only buildings
+    # kept base_z None -> 0.0. Fixed in Bolt 第4回 fix-up, 2026-11-11.)
+    lod1_zmin = lod1_zmax = None
+    el = elem.find('bldg:lod1Solid', NS)
+    if el is not None:
+        zs = []
+        for pl in el.iter(f"{{{NS['gml']}}}posList"):
+            if pl.text:
+                zs += parse_poslist(pl.text)
+        if zs:
+            lod1_zmin = min(p[2] for p in zs)
+            lod1_zmax = max(p[2] for p in zs)
+    if base_z is None and lod1_zmin is not None:
+        base_z = lod1_zmin
+        stats['basez_from_lod1'] = stats.get('basez_from_lod1', 0) + 1
+    # height fallback from lod1Solid z range (h derivation unchanged)
     if h is None:
-        el = elem.find('bldg:lod1Solid', NS)
-        if el is not None:
-            zs = []
-            for pl in el.iter(f"{{{NS['gml']}}}posList"):
-                if pl.text:
-                    zs += parse_poslist(pl.text)
-            if zs:
-                zmin = min(p[2] for p in zs)
-                zmax = max(p[2] for p in zs)
-                if zmax > zmin:
-                    h = zmax - zmin
-                    stats['h_derived'] += 1
-                    if base_z is None:
-                        base_z = zmin
+        if lod1_zmin is not None and lod1_zmax is not None and lod1_zmax > lod1_zmin:
+            h = lod1_zmax - lod1_zmin
+            stats['h_derived'] += 1
     if h is None or h <= 0:
         stats['dropped_no_height'] += 1
         return None
     if base_z is None:
         base_z = 0.0
+        stats['basez_fallback0'] = stats.get('basez_fallback0', 0) + 1
+    # self-check (proposal 3, Bolt 第4回): baseZ must agree with lod1Solid
+    # zmin within 0.5 m where both exist, and a baseZ of 0 with a positive
+    # lod1Solid zmin is flagged (the old fallback-bug pattern).
+    if lod1_zmin is not None and abs(base_z - lod1_zmin) > 0.5:
+        stats['basez_lod1_mismatch'] = stats.get('basez_lod1_mismatch', 0) + 1
+    if base_z == 0.0:
+        stats['basez_zero'] = stats.get('basez_zero', 0) + 1
+        if lod1_zmin is not None and lod1_zmin > 0.5:
+            stats['basez_zero_lod1_positive'] = stats.get('basez_zero_lod1_positive', 0) + 1
     # footprint to dm, drop closing duplicate
     fp = []
     pts2 = [(p[0], p[1]) for p in fp_pts]
@@ -268,7 +290,18 @@ def main(argv=None):
                        'dropped_no_height': stats['dropped_no_height'],
                        'h_derived': stats['h_derived'],
                        'sentinel_h': stats['sentinel_h'],
+                       'basez_from_lod1': stats.get('basez_from_lod1', 0),
+                       'basez_fallback0': stats.get('basez_fallback0', 0),
+                       'basez_zero': stats.get('basez_zero', 0),
+                       'basez_lod1_mismatch': stats.get('basez_lod1_mismatch', 0),
+                       'basez_zero_lod1_positive': stats.get('basez_zero_lod1_positive', 0),
                        'fp_source': stats['fp_source']})
+    for m in meshes:
+        if m['basez_lod1_mismatch'] or m['basez_zero_lod1_positive']:
+            print(f"WARNING {m['mesh']}: baseZ self-check failed "
+                  f"(mismatch={m['basez_lod1_mismatch']}, "
+                  f"zero_with_positive_lod1={m['basez_zero_lod1_positive']})",
+                  file=sys.stderr)
     for b in all_buildings:
         if b[3] == -2:
             b[3] = -1
