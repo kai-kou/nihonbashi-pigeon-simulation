@@ -14,7 +14,7 @@ Bolt 第4回（通し第152回）、2026-11-11 19:40–20:20 JST。
 | `tools/build-citygeo-hero.py` | PLATEAU-CITY v1 JSON → `window.CITYGEO_HERO` の生成器（662 行、earcut ポート内包） | 22,663 bytes |
 | `src/data/citygeo-hero.js` | `window.CITYGEO_HERO = { pos, counts }`（base64） | 1,278,327 bytes |
 | `docs/plateau-hero-data.md` | 本記録 | — |
-| `docs/improvement-log.md` | R5-P 節を追記 | +4,425 bytes |
+| `docs/improvement-log.md` | R5-P 節を追記 | +5,262 bytes |
 
 中間 JSON（PLATEAU-CITY v1 形式、421+422 合計）は repo には含めない。
 `~/workspace/goals/nihonbashi-pigeon-simulation/hidden_files/bolt4/plateau-city-hero.json`
