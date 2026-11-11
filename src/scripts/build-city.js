@@ -776,17 +776,70 @@
          （position.y）で駆動するため、baseZ の高い hero 棟では
          1.0 に飽和する（暗い基部が出ない）。シェーダ文字列は本
          Bolt では変更しない（G1 対象外のまま）。
-         テクスチャアトラスは使わない（形状のみ・第2段階の範囲）。 */
+         R5-P #159（Bolt 第13回）: アトラス描画統合。window.CITYGEO_HERO
+         の uv（Bolt 第12回、シート上端基準・センチネル (0,0)）を使い、
+         アトラス UV を持つ三角形は新規のアトラスマテリアル（1 テクスチャ）
+         で描画し、センチネル頂点の三角形は従来の手続きファサードのまま
+         描画する。既存の共有ファサードマテリアル m／cityGhostMat は
+         その場で変更しない（G3 の前提）。UV は描画時に flipY 変換
+         （v_three = 1 - v'）する。形状（pos/counts）は変更しない。 */
       if(window.CITYGEO_HERO && window.CITY_HERO && window.CITY_HERO.buildings){
         const heroGeo=window.CITYGEO_HERO, heroB=window.CITY_HERO.buildings;
         const heroPosI16=new Int16Array(_b64buf(heroGeo.pos));
         const heroCounts=new Uint32Array(_b64buf(heroGeo.counts));
+        // R5-P #159 (Bolt 第13回): アトラス UV（Bolt 第12回で citygeo-hero.js
+        // へ追加。base64 Float32、頂点 2 値×158,823、pos と同一の頂点順）。
+        // シート上端基準で、持たない頂点はセンチネル (0, 0)。無い・長さが
+        // 合わない旧データでは heroUvAtlas=null としてアトラスを使わず、
+        // 従来の手続きファサードのみで描画する（旧ビルドへのフォールバック）。
+        const heroUvAtlas=(heroGeo.uv)
+          ? new Float32Array(_b64buf(heroGeo.uv)) : null;
+        const heroUvOk=!!(heroUvAtlas && heroUvAtlas.length===heroPosI16.length/3*2);
         if(heroCounts.length===heroB.length){
           const heroTotal=heroPosI16.length/3;
           const heroPos=new Float64Array(heroPosI16.length);
           for(let i=0;i<heroPosI16.length;i++) heroPos[i]=heroPosI16[i]/10;
           const heroCol=new Float32Array(heroTotal*3), heroNor=new Float32Array(heroTotal*3),
                 heroUv=new Float32Array(heroTotal*2), heroBld=new Float32Array(heroTotal);
+          // R5-P #159 (Bolt 第13回): アトラステクスチャとアトラスマテリアル。
+          // window.TEXTURE_ATLAS は tools/build.py が src/data/texture-atlas.jpg
+          // を base64 データ URI として単一 HTML へインライン化したもの
+          // （template.html の base64 取り込み行）。画像の読み込みは非同期
+          // のため needsUpdate は onload でのみ立てる（未読み込みのまま立て
+          // ると r128 は "image is incomplete" の警告を出す）。読み込み前は
+          // version 0 のまま静かに skip され、読み込み後にアップロードされる。
+          // flipY は既定の true のまま（UV 側で v_three = 1 - v' に変換する
+          // ため、ここで false にしてはならない）。
+          // マテリアルは facadeParams と同一のプロファイル（map／normalMap／
+          // roughnessMap／emissiveMap／vertexColors の有無が同一）で、map だけ
+          // をアトラステクスチャに差し替える。onBeforeCompile（facadeShaderMod）
+          // と customProgramCacheKey（'facade-c1'）も同一のため、r128 の
+          // program cache key（getParameters の map／mapEncoding／normalMap／
+          // roughnessMap／emissiveMap／vertexColors 等＋末尾の
+          // customProgramCacheKey）は facade マテリアルと一致し、新規 program
+          // は追加されない（programs +0）。mapEncoding は key に入るため、
+          // アトラステクスチャの encoding は facadeTex と同じ sRGBEncoding に
+          // する（Linear のままだと別 program になる）。
+          // normalScale は program key に入らない uniform のため (0,0) で
+          // 中和する: facade の法線アトラスをアトラス UV でサンプルすると
+          // 誤った法線になるため（mapN.xy *= normalScale で (0,0,1) となり
+          // 幾何法線にほぼ一致する）。roughnessMap は facade のものを共有する
+          // ため、アトラス UV 位置の値（ガラス 70／壁 235 相当）がそのまま
+          // roughness になる（視覚受入 #143 で判定。留保）。
+          // emissiveMap は emissiveIntensity 0 のため寄与しない。
+          let heroAtlasMat=null;
+          if(window.TEXTURE_ATLAS && heroUvOk){
+            const heroAtlasImg=new Image();
+            const heroAtlasTex=new THREE.Texture(heroAtlasImg);
+            heroAtlasTex.encoding=THREE.sRGBEncoding;
+            heroAtlasTex.anisotropy=8;
+            heroAtlasImg.onload=function(){ heroAtlasTex.needsUpdate=true; };
+            heroAtlasImg.src=window.TEXTURE_ATLAS;
+            heroAtlasMat=new THREE.MeshStandardMaterial(Object.assign({}, facadeParams,
+              {map:heroAtlasTex, normalScale:new THREE.Vector2(0,0)}));
+            heroAtlasMat.onBeforeCompile=facadeShaderMod;
+            heroAtlasMat.customProgramCacheKey=function(){ return 'facade-c1'; };
+          }
           const heroBi0=B.length; // hash seed offset: hero bi continues after legacy
           // R5-P #141 (Bolt 第8回): 天守中心基準のゲート用定数。
           // 天守は idx 1374 の建物で特定（中心 (1847.8, 2281.3)、
@@ -835,15 +888,29 @@
               let nx=uy*vz-uz*vy, ny=uz*vx-ux*vz, nz=ux*vy-uy*vx;
               const l=Math.hypot(nx,ny,nz)||1; nx/=l; ny/=l; nz/=l;
               const vs=[[ax,ay,az],[bx,by,bz],[qx,qy,qz]];
+              // R5-P #159: この三角形がアトラス UV を持つかは、先頭頂点の
+              // 格納 UV で判定する（同一面の fan 三角形は同じ面に属するため
+              // 3 頂点の判定は一致する。センチネル (0,0) は手続きファサード）。
+              const triAtlas=heroAtlasMat!==null && heroUvOk
+                && !(heroUvAtlas[(vStart+t)*2]===0 && heroUvAtlas[(vStart+t)*2+1]===0);
               for(let vi=0;vi<3;vi++){
-                const gi=vStart+t+vi, go=gi*3, color=(ny>0.7)?cTop:cWall;
-                heroCol[go]=color.r; heroCol[go+1]=color.g; heroCol[go+2]=color.b;
+                const gi=vStart+t+vi, go=gi*3;
                 heroNor[go]=nx; heroNor[go+1]=ny; heroNor[go+2]=nz;
-                if(ny>0.7){ heroUv[gi*2]=tileU*0.25+0.0075; heroUv[gi*2+1]=tileV*0.5+0.015; }
-                else{
-                  const u=(Math.abs(nx)>Math.abs(nz)? vs[vi][2] : vs[vi][0])*0.1;
-                  const v=vs[vi][1]*0.1;
-                  heroUv[gi*2]=tileU*0.25+(u-Math.floor(u))*0.25; heroUv[gi*2+1]=tileV*0.5+(v-Math.floor(v))*0.5;
+                if(triAtlas){
+                  // 白: 写真の色をそのまま出す（cWall/cTop の tint を掛けない）。
+                  // UV はシート上端基準から three.js 規約へ flipY 変換する。
+                  heroCol[go]=1; heroCol[go+1]=1; heroCol[go+2]=1;
+                  heroUv[gi*2]=heroUvAtlas[gi*2];
+                  heroUv[gi*2+1]=1-heroUvAtlas[gi*2+1];
+                } else {
+                  const color=(ny>0.7)?cTop:cWall;
+                  heroCol[go]=color.r; heroCol[go+1]=color.g; heroCol[go+2]=color.b;
+                  if(ny>0.7){ heroUv[gi*2]=tileU*0.25+0.0075; heroUv[gi*2+1]=tileV*0.5+0.015; }
+                  else{
+                    const u=(Math.abs(nx)>Math.abs(nz)? vs[vi][2] : vs[vi][0])*0.1;
+                    const v=vs[vi][1]*0.1;
+                    heroUv[gi*2]=tileU*0.25+(u-Math.floor(u))*0.25; heroUv[gi*2+1]=tileV*0.5+(v-Math.floor(v))*0.5;
+                  }
                 }
               }
             }
@@ -881,14 +948,55 @@
               ledgePoints.push({p:V3((a[0]+b[0])/2, baseZ+Math.min(3.2,h-0.4), (a[1]+b[1])/2), popular:hash(bi*17)>0.7, kind:'ledge'});
             }
           }
+          // R5-P #159: アトラス三角形を先頭へ寄せ、2 グループに分ける。
+          // group 0（material index 2 = heroAtlasMat）がアトラス面、
+          // group 1（material index 0 = m）が手続きファサード面。
+          // 頂点・三角形の総数と位置は変わらない（並び替えのみ）。
+          // applyOcclGroups は cityFadeRecs（旧市街のみ）を走査するため
+          // hero の group には触れない。アトラスが無い旧データでは
+          // 従来どおり単一グループ・2 マテリアルとする。
+          let heroPosA=heroPos, heroColA=heroCol, heroNorA=heroNor,
+              heroUvA=heroUv, heroBldA=heroBld, heroAtlasCount=0;
+          if(heroAtlasMat!==null && heroUvOk){
+            const rPos=new Float32Array(heroTotal*3), rCol=new Float32Array(heroTotal*3),
+                  rNor=new Float32Array(heroTotal*3), rUv=new Float32Array(heroTotal*2),
+                  rBld=new Float32Array(heroTotal);
+            let w=0;
+            const copyTri=function(t){
+              for(let k=0;k<3;k++){
+                const gi=t+k, go=gi*3, wo=w*3;
+                rPos[wo]=heroPos[go]; rPos[wo+1]=heroPos[go+1]; rPos[wo+2]=heroPos[go+2];
+                rCol[wo]=heroCol[go]; rCol[wo+1]=heroCol[go+1]; rCol[wo+2]=heroCol[go+2];
+                rNor[wo]=heroNor[go]; rNor[wo+1]=heroNor[go+1]; rNor[wo+2]=heroNor[go+2];
+                rUv[w*2]=heroUv[gi*2]; rUv[w*2+1]=heroUv[gi*2+1];
+                rBld[w]=heroBld[gi];
+                w++;
+              }
+            };
+            for(let t=0;t<heroTotal;t+=3){
+              if(!(heroUvAtlas[t*2]===0 && heroUvAtlas[t*2+1]===0)) copyTri(t);
+            }
+            heroAtlasCount=w;
+            for(let t=0;t<heroTotal;t+=3){
+              if(heroUvAtlas[t*2]===0 && heroUvAtlas[t*2+1]===0) copyTri(t);
+            }
+            heroPosA=rPos; heroColA=rCol; heroNorA=rNor; heroUvA=rUv; heroBldA=rBld;
+          }
           const heroGg=new THREE.BufferGeometry();
-          heroGg.setAttribute('position', new THREE.Float32BufferAttribute(heroPos,3));
-          heroGg.setAttribute('color', new THREE.Float32BufferAttribute(heroCol,3));
-          heroGg.setAttribute('normal', new THREE.Float32BufferAttribute(heroNor,3));
-          heroGg.setAttribute('uv', new THREE.Float32BufferAttribute(heroUv,2));
-          heroGg.setAttribute('aBld', new THREE.Float32BufferAttribute(heroBld,1));
-          heroGg.clearGroups(); heroGg.addGroup(0, heroTotal, 0);
-          const heroMesh=new THREE.Mesh(heroGg,[m, cityGhostMat]);
+          heroGg.setAttribute('position', new THREE.Float32BufferAttribute(heroPosA,3));
+          heroGg.setAttribute('color', new THREE.Float32BufferAttribute(heroColA,3));
+          heroGg.setAttribute('normal', new THREE.Float32BufferAttribute(heroNorA,3));
+          heroGg.setAttribute('uv', new THREE.Float32BufferAttribute(heroUvA,2));
+          heroGg.setAttribute('aBld', new THREE.Float32BufferAttribute(heroBldA,1));
+          heroGg.clearGroups();
+          if(heroAtlasMat!==null){
+            heroGg.addGroup(0, heroAtlasCount, 2);
+            heroGg.addGroup(heroAtlasCount, heroTotal-heroAtlasCount, 0);
+          } else {
+            heroGg.addGroup(0, heroTotal, 0);
+          }
+          const heroMesh=new THREE.Mesh(heroGg,
+            heroAtlasMat!==null ? [m, cityGhostMat, heroAtlasMat] : [m, cityGhostMat]);
           c6Tag(heroMesh); // C6: hero buildings enter the planar reflection
           heroMesh.castShadow=false; heroMesh.receiveShadow=true;
           scene.add(heroMesh);

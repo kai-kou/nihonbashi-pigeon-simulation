@@ -1247,3 +1247,79 @@ P1）。director() の r<0.75 分岐（定期飛行で群れの一部が別の�
 - 性能増分: index.html +1,694,392 bytes（6,426,545 → 8,120,937 bytes）。推定 totalNodes +0・geometries +0・programs +0・textures +0。いずれも天井の内側。実ブラウザでの再計測は #143 で行う。
 - 所有者へ上げた事項: なし（アトラス込みの HTML 合計の見通し 11,094,813 bytes は 12MB級未満のため、12〜15MB級の許容可否の所有者判断を要しない）。
 - D1 厳守: 歩行の足運び・タイミングには触れていない。描画物・マテリアル・メッシュの形状には触れていない。シェーダ文字列・既存の描画用テクスチャ・フォグには触れていない。Three.js r128 のまま。単一 HTML を維持。
+
+## 13. アトラス描画統合＋ビルド＋静的計測（Bolt 第13回（通し第161回）、2026-11-12）
+
+#159 [R5-3c] の Construction Bolt。#151 [R5-P] 先行統合の範囲内で実施した。範囲は (1) tools/build.py へのアトラス画像の取り込み経路の追加（Bolt 第11回専門レビュー P1・Bolt 第12回からの申し送り）、(2) src/scripts/build-city.js の hero パスでアトラス 1 枚を使うマテリアル（1 テクスチャ）によるヒーロー圏 LOD2 800棟の描画、(3) tools/build.py による index.html の再生成と検証、(4) 静的計測と天井照合。範囲外: 視覚受入（#143）、公開反映（#142・Operations 側）。128px 化によるファサードのにじみ・継ぎ目は #143 の視覚受入で判定し、本単位では受入条件に含めない。A1（長辺 256）への切り替えは本単位の範囲外。
+
+### 13.1 取り込み経路の方式選択（build.py）
+
+- 採用した方式 (a): `window.TEXTURE_ATLAS` のような data URI 文字列定数のスクリプトブロック。template.html に city-hero-buildings include の直後へ次の 1 行を追加した（build-city.js の include より前で、実行時に定義済みになる）。
+  `    <script>window.TEXTURE_ATLAS = "data:image/jpeg;base64,<!-- @include-base64 data/texture-atlas.jpg -->";</script>`
+- build.py の変更（10,809 → 13,259 bytes、+2,450）: 新しいトークン `<!-- @include-base64 <path> -->` を追加した。build 時に同トークンをファイルの base64 へ置き換える。citygeo.js 等のデータと同様、dist／artifact の両モードでインライン化する（アセットスクリプト 2 本だけがモードで変わる）。split には対応する復元処理を追加した。アトラス行を認識して base64 を復号し src/data/texture-atlas.jpg へ書き戻し、テンプレート行を復元する。split の往復検証に `atlas_seen` の assert を追加した（assets_seen == ASSETS の assert は維持）。
+- 却下した方式 (b) img 要素による取り込み: DOM へ画像要素を追加することになり、表示・非表示の扱いと、artifact 形での外部ファイル参照の扱い（build.py には jpg を別アセットとして運ぶ仕組みが無い）が要る。data URI 文字列定数なら既存の build.py の方式（base64 インライン化）の延長で済み、split の往復も 1 行の認識で完結するため却下した。根拠は上記の実読と、build.py の既存の仕組みとの整合である。
+- 方式選択の前提の実測: src/data/texture-atlas.jpg（2,230,406 bytes）は build トークン（@include／@script-asset／<!--）を一切含まないことをバイト検査で確認した。含んでいた場合は read_part のガードに抵触するため別方式が必要だったが、該当しなかった。
+
+### 13.2 描画統合（build-city.js の hero パス）
+
+- 変更（139,120 → 146,630 bytes、+7,510）: hero パスのみ。pigeons.js には触れない。シェーダ文字列には触れない。pos/counts（形状）は変更しない。
+- アトラステクスチャとアトラスマテリアル: `window.TEXTURE_ATLAS`（data URI）から `new Image()` で読み、`new THREE.Texture(img)` を 1 個だけ作る（textures 増分 +1 の実体）。encoding は facadeTex と同じ sRGBEncoding、anisotropy は 8。flipY は既定の true のままにする（UV 側で v_three = 1 - v' に変換するため、ここで false にしてはならない）。画像の読み込みは非同期のため needsUpdate は onload でのみ立てる（未読み込みのまま立てると r128 は "image is incomplete" の警告を出す。読み込み前は version 0 のまま静かに skip され、読み込み後にアップロードされる）。読み込み前の数フレームはアトラス面が黒く見える過渡状態がある（留保。data URI のため読み込みは速く、boot スナップショット時点では読み込み済みになる見込み。実測は #143）。
+- アトラスマテリアル（追加 1 件）: `new THREE.MeshStandardMaterial(Object.assign({}, facadeParams, {map: heroAtlasTex, normalScale: new THREE.Vector2(0, 0)}))` とし、onBeforeCompile に facadeShaderMod、customProgramCacheKey に 'facade-c1' を設定した。既存の共有ファサードマテリアル m／cityGhostMat はその場で変更していない（G3 判定の前提を維持する。詳細は 13.6 を参照）。
+- programs +0 の根拠（バンドルされた three.min.js r128 の実読）: program cache key は getParameters の戻り値（map／mapEncoding／normalMap／roughnessMap／emissiveMap／vertexColors 等の有無・値と、末尾の customProgramCacheKey）から作られる。アトラスマテリアルは facadeParams と同一のプロファイルで、map だけを差し替えるため、key に入る有無はすべて一致する。mapEncoding は key に入るため、アトラステクスチャの encoding を facadeTex と同じ sRGBEncoding にした（Linear のままだと別 program になる）。テクスチャオブジェクト自体の同一性は key に入らない。normalScale は key に入らない uniform のため (0,0) で中和した（facade の法線アトラスをアトラス UV でサンプルすると誤った法線になるため。mapN.xy *= normalScale で (0,0,1) となり幾何法線にほぼ一致する）。onBeforeCompile は key 未取得のマテリアルに対して呼ばれ、取得済みの program は key で再利用されるため、同一の関数オブジェクトを使う限り結果は同一である。以上の理由により programs の増分は +0 である（実ブラウザでの再計測は #143）。
+- UV の扱い: 格納 UV（シート上端基準）から描画時に flipY 変換（v_three = 1 - v'）する。センチネル (0, 0) の頂点は手続きファサード（現行どおり）の合図として扱う。同一面の fan 三角形は同じ面に属するため、三角形のアトラス判定は先頭頂点の格納 UV で行い、3 頂点の判定が一致することはハーネスで検証した（混合三角形 0 件）。アトラス三角形の頂点色は白 (1,1,1) とし、写真の色をそのまま出す（cWall／cTop の tint を掛けない）。手続き三角形の色分けは従来どおり法線基準 (b)（ny>0.7 → cTop）である。
+- グループ分割: 同一の hero ジオメトリ内にアトラス三角形を先頭へ寄せ、group 0（material index 2 = アトラスマテリアル）がアトラス面、group 1（material index 0 = m）が手続きファサード面になるよう 2 グループに分けた。頂点・三角形の総数と位置は変わらない（並び替えのみ）。hero メッシュは従来どおり 1 個で、ジオメトリも 1 個のままである（totalNodes +0・geometries +0）。applyOcclGroups は cityFadeRecs（旧市街のみ）を走査するため hero の group には触れない。旧データ（heroGeo.uv が無い・window.TEXTURE_ATLAS が無い）ではアトラスを使わず、従来どおり単一グループ・2 マテリアルで描画する（旧ビルドへのフォールバック）。
+- 対象と除外: アトラス面は 128,367 頂点（42,789 三角形）、手続き面は 30,456 頂点（10,152 三角形）で、合計 158,823 頂点・52,941 三角形は Bolt 第6回の実測と一致する。手続き面の内訳は LOD1 643 棟の 30,063 頂点と、GML にテクスチャが無い Wall 60 面の 393 頂点である（#158 の処分どおり。当該の壁が手続き色のまま見えることは想定内）。
+
+### 13.3 ビルド実測
+
+| 項目 | Before（main 4544ec11） | After（本 Bolt） | 増分 |
+|---|---|---|---|
+| index.html | 8,120,937 bytes（SHA-256 3830b59bf43c080c5528a2674c0abf6494407e2998b1de6ad42c1146588010a2、blob ca54c1125307b85d63d99179cdcde62a6952511d） | 11,102,394 bytes（SHA-256 b42104b5e0b6bb388b9630c04f86a25a0b2c262c1a432d9791cd73229523afa6、blob 2b8483168badfed977e151db2c022632decd5956） | +2,981,457 bytes（+36.7%） |
+| tools/build.py verify | PASS | PASS（2 回のビルドがバイト同一、ディスク上の index.html と一致） | — |
+
+- 増分の内訳: base64 +2,973,876 bytes（2,230,406 bytes の JPEG を base64 化したもの。実測の base64 文字数は 2,973,876 で見込みと一致）、build-city.js +7,510 bytes、template.html のアトラス行の base64 以外の scaffolding +71 bytes。合計 2,973,876 + 7,510 + 71 = 2,981,457 bytes で実測の増分と一致する。
+- ビルドした index.html 内の TEXTURE_ATLAS 行は 1 行で、base64 を復号した SHA-256 は cc45c0d08668c27f843ccae9b288220c798550ee048e2cdeacc7c4fdd0d7a8dc で src/data/texture-atlas.jpg と一致する。include-base64 トークンはビルド後の index.html に 0 件残る（置き換え済み）。
+- split の往復検証: artifact 形を split へ通し、artifact 形の再ビルドが入力とバイト同一であることと、dist 形が本 Bolt のビルド（11,102,394 bytes、SHA-256 b42104b5…）と同一であることを確認した。復号した texture-atlas.jpg の SHA-256 も cc45c0d0… で一致する。ただし split 後の src/template.html は repo-main のものと一致しない（3,154,275 bytes）。原因は Bolt 第7回からの既存の制限で、split は citygeo-hero.js／city-hero-buildings.js の単行 script include 行をテンプレートへそのまま写す（@include 行への復元に対応していない）ためである。本 Bolt のアトラス行は正しくトークンへ復元される（split 後の template.html に include-base64 が 1 件残る）。hero include 行の split 対応は本単位の範囲外とし、別単位への申し送りとする（留保）。
+- tools/check-shader-refs.py は 36 識別子・未解決 0 件（G1。シェーダ文字列に触れない変更なしの確認として実行）。
+
+### 13.4 静的計測と天井との照合
+
+| 項目 | Before | After | 増分 | 天井 | 判定 |
+|---|---|---|---|---|---|
+| index.html | 8,120,937 bytes | 11,102,394 bytes | +2,981,457 bytes | ≤ 15,000,000 bytes（§10.4 (i)） | 内側（余裕 3,897,606） |
+| totalNodes | 3,977 | 3,977 | +0（hero メッシュは従来どおり 1 個で新規メッシュなし） | 4,046 | 内側（余裕 69） |
+| geometries | 645 | 645 | +0（hero ジオメトリは従来どおり 1 個で新規ジオメトリなし） | 683 | 内側（余裕 38） |
+| programs | 42 | 42 | +0（13.2 の r128 実読による。マテリアル追加は 1 件だが program は facade-c1 を共有する） | 45 | 内側（余裕 3） |
+| textures | 73 | 74 | +1（実測。ハーネスで hero ブロックを実行し THREE.Texture の生成が 1 件であることを数えた。推定ではない） | 88 | 内側（余裕 14） |
+| GPU 試算 | — | RGBA8 67,108,864 bytes（64.00 MiB）、mipmap 込み 89,478,485 bytes（85.33 MiB） | —（#157 の正確値と同一。アトラス画像は同一物のため） | ≤ 102MB（106,954,752 bytes） | 内側（mipmap 込みでも余裕 17,476,267 bytes） |
+| usedJSHeapSizeMB | —（未記録） | 未確認（実ブラウザ計測が必要） | — | 102MB | 未確認 |
+
+- §10.4 のフォールバック判定条件の再照合: (i) HTML 合計 11,102,394 bytes ≤ 15,000,000 を満たす。(ii) GPU 試算（画素数×4、mipmap なし）31,367,168 bytes（29.91 MiB）≤ 102MB を満たす。シート全体の RGBA8 確保量でも 64.00 MiB、mipmap 込みでも 85.33 MiB で天井の内側である。(iii) textures +1（73→74）で増分 ≤ +6 かつ合計 ≤ 88 を満たす。(iv) #143 の街頭視点での視覚受入は未確認。(i)(ii)(iii) をすべて満たすため、本単位は停止せず、視覚受入へ送る。
+- totalNodes／geometries／programs／textures の After 値は、2026-11-01 時点の静的実測ベースに本 Bolt の増分（ハーネスで実行して数えた生成数と、r128 の program key の実読）を加えたものである。実ブラウザでの再計測は #143 で行う。
+- 性能天井は引き上げていない。受入基準の事後変更はしていない。
+
+### 13.5 ハーネス検証（描画ハーネス、Bolt 第7回の方式を #159 用に拡張）
+
+- 手段: `hidden_files/bolt13/harness-hero-atlas.js`。build-city.js の hero ブロックをそのまま切り出し、実データ（citygeo-hero.js・city-hero-buildings.js）で Node 上で実行する。THREE／scene／共有配列をスタブし、Texture／Material／Mesh／Geometry の生成を数える。
+- 結果: ALL ASSERTIONS PASSED。格納 UV のセンチネル頂点 30,456・ アトラス頂点 128,367 は #158 §12.4 の期待値と一致し、混合三角形 0 件。メッシュ追加 1 個・ジオメトリ生成 1 個。グループは [[0, 128367, 2], [128367, 30456, 0]] で、アトラス三角形が先頭・手続き三角形が後方に並ぶ。アトラス UV の flipY 変換は不一致 0 件で、変換後の u は 0.000488〜0.998523、v は 0.480957〜0.999512（タイル範囲の内側）。色はアトラス頂点がすべて白 (1,1,1) で、手続き頂点の法則 (b) の不一致 0 件。位置範囲は x 603.8〜2,925.2 m・y 0.4〜166.6 m・北 1,749.6〜2,803.5 m で Bolt 第7回と同一。perchPoints 1,347 件・ledgePoints 295 件（#141 のゲートによるもので、本 Bolt では変更していないロジックの出力。記録のみ）。
+- テクスチャ／マテリアルの生成数: THREE.Texture の生成は 1 件（encoding は sRGBEncoding で facadeTex と一致、anisotropy 8）。Image の生成は 1 件で、src は window.TEXTURE_ATLAS と一致する。needsUpdate は読み込み前には立てず、onload で 1 回だけ立てることを確認した（r128 の "image is incomplete" 警告を出さないための順序）。MeshStandardMaterial の生成は 1 件で、map／normalMap／roughnessMap／emissiveMap／vertexColors の有無と roughness／metalness／emissiveIntensity の値が facadeParams と一致し、normalScale だけが (0,0) であること、onBeforeCompile が facadeShaderMod と同一の関数オブジェクトであること、customProgramCacheKey() が 'facade-c1' であることを確認した。既存の共有ファサードマテリアル m は material index 0 としてそのまま使われ、変更されていない。
+
+### 13.6 判断ログ（Bolt 第13回の Writer 記録）
+
+- Unit ID と Bolt 番号: #159 [R5-3c] アトラス描画統合＋ビルド＋静的計測。Bolt 第13回（通し第161回）、Construction。
+- Intent の 1 行要約: ヒーロー圏 LOD2 800棟へアトラス 1 枚を描画し、index.html を再生成して静的計測と天井照合を行い、視覚受入を #143 へ送る。
+- Writer: Bolt 第13回 Writer（実装担当サブエージェント）。Approver（実装）＝専門レビュー担当（環境・性能、Writer と別人・別セッション、コーディネーターが指名）。Approver（受入）＝QA 担当（Writer および実装 Approver と別セッション、コーディネーターが指名）。Approver（Bolt の合否とマージ可否の最終判定）はコーディネーター。所有者は Approver ではない。
+- 主要な設計決定と理由: (a) 取り込み経路は方式 (a) の data URI 文字列定数とした（13.1 の理由）。(b) アトラスマテリアルは facadeParams と同一のプロファイルで map だけを差し替え、onBeforeCompile と customProgramCacheKey を同一にした（programs +0 のため。13.2 の r128 実読による）。(c) normalScale は (0,0) で中和した（program key に入らない uniform であり、facade の法線アトラスを誤ってサンプルするのを防ぐため）。(d) アトラス三角形の頂点色は白とした（写真の色をそのまま出すため）。(e) 同一ジオメトリ内に 2 グループで分け、新規メッシュ・新規ジオメトリを作らなかった（totalNodes／geometries の増分を +0 に抑えるため）。(f) UV の flipY 変換は描画統合で行い、格納値はシート上端基準のままとした（#158 の決定どおり。配置表と同一座標系のため QA の再計算が完結する）。(g) 旧データではアトラスを使わず従来の描画にフォールバックする（旧ビルドとの互換のため）。
+- 却下した代替案: (a) img 要素による取り込み（13.1）。(b) アトラスマテリアルから normalMap／roughnessMap／emissiveMap を外す方式は、program key の有無が変わり新規 program が追加される（programs +1 となり停止条件に当たる）ため却下した。(c) 既存の共有ファサードマテリアル m の map をアトラスに差し替える方式は、旧市街の描画も変わり G3 判定の前提（既存の共有ファサードマテリアルを変更しない）を崩すため却下し、新規マテリアルの追加とした。(d) アトラス用に別メッシュ・別ジオメトリを作る方式は、totalNodes +1・geometries +1 になるため採用せず、同一ジオメトリの 2 グループとした（天井の内側ではあるが、増分を抑える方が望ましいため）。(e) roughnessMap の中和（roughness 値での打ち消し）は、roughnessMap がある限り texel が掛かるため定数化できず、採用しなかった。アトラス UV 位置の roughness 値がそのまま使われることは留保として残す。
+- G3 に関する注意（報告書の求めに対する回答）: コーディネーターの claim における G3 判定は「本単位はヒーローメッシュの形状と既存の共有ファサードマテリアルを変更せず、新規のアトラスマテリアルを追加する」ことを前提としている。実装の結果、既存のファサードマテリアル m／cityGhostMat をその場で変更する形にはなっていない。変更したのは hero メッシュのマテリアル配列（[m, cityGhostMat] → [m, cityGhostMat, heroAtlasMat]）と hero ジオメトリの三角形の並び順・グループ分けのみで、m／cityGhostMat オブジェクト自体とその map／normalMap／roughnessMap／emissiveMap／onBeforeCompile／customProgramCacheKey は一切変更していない。形状（pos/counts）も変更していない。したがって判定の前提は崩れていない。
+- 適用したゲート: G1 適用（シェーダ文字列に触れない。check-shader-refs は 36 識別子・未解決 0 件）。G2 適用だがブラウザ計測を行わないため発動せず（コンソールエラーの帰属確認は #143 の実ブラウザ検証で行う）。G3 適用・着手可（上記のとおり既存の共有ファサードマテリアルを変更せず、新規のアトラスマテリアルを追加する。hero 自体の視覚受入は #143 へ送る）。G4 対象外（公開反映を含まない）。
+- 合否と処分: Writer のセルフレビューでは差分にブロッカーは見当たらない。マージ可否は専門レビュー（実装 Approver）と QA（受入 Approver）の 2 段の独立判定を経てコーディネーターが最終判定すること。視覚受入は #143 へ送る。
+- 留保: 視覚受入は未確認（#143 へ送る）。roughnessMap は facade のものを共有するため、アトラス UV 位置の roughness 値（ガラス 70／壁 235 相当）がそのまま使われる。画像読み込み前の数フレームはアトラス面が黒く見える過渡状態がある。split の hero include 行の復元は既存の制限として残る（13.3）。アトラス面のにじみ・継ぎ目は #143 の視覚受入で判定する。
+- 性能増分: index.html +2,981,457 bytes（8,120,937 → 11,102,394 bytes）。totalNodes +0・geometries +0・programs +0・textures +1（73→74）。いずれも天井の内側。
+- 所有者へ上げた事項: なし（HTML 合計 11,102,394 bytes は 12MB級未満のため、12〜15MB級の許容可否の所有者判断を要しない）。
+- D1 厳守: 歩行の足運び・タイミングには触れていない（pigeons.js には触れていない）。Three.js r128 のまま。単一 HTML を維持。PLATEAU 由来テクスチャのみ使用。
+
+### 13.7 検証時の補正
+
+- (a) 初回のビルドで build.py が「part file must not contain build tokens: src/scripts/build-city.js」で失敗した。原因は、build-city.js へ追加したコメントの中に "@include-base64" という文字列があり、read_part のガード（@include を含む部品ファイルの禁止）に抵触したためである。コメントの文言を「template.html の base64 取り込み行」へ書き換えて解消した。実装の差分・生成物・ビルド検証への影響はない（コメント文言のみの修正）。
+- (b) split の往復検証で、split 後の src/template.html が repo-main のものと一致しないことを確認した（13.3）。原因は Bolt 第7回からの既存の制限で、本 Bolt の変更によるものではない。split の artifact 再ビルドと dist のバイト同一は成立しており、ビルド検証への影響はない。本 Bolt では修正せず、別単位への申し送りとして記録する。
