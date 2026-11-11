@@ -613,5 +613,5 @@
 
 - 目的: R4-6（Issue #126）の検証バッチを領域別の4単位へ分解し、ready な子 Issue として起票すること。バックログは実行可能な ready な Issue が枯渇に近いため、この Bolt 内でリファインメントを実施した（Inception Bolt）。
 - 分解: R4-6a 外観10項目（Issue #130、E-01〜E-10）、R4-6b 行動7項目（Issue #131、B-01〜B-07）、R4-6c 環境13項目（Issue #132、V-01〜V-13）、R4-6d 性能6条件と構造量の再計測（Issue #133）。30項目の割り当てに漏れ・重複はない。各単位は #126 の実行分解であり新規スコープではない。
-- ロードマップ: docs/realism-roadmap.md の運用節を Bolt 様式へ更新し、R4 節へ R4-6a〜d の分解を追加し、進捗率の定義へ分母の扱いを追記した（ブランチ bolt/r4-6-decomposition）。分母は 26 のまま（#126 を 1 件として数える）。
+- ロードマップ: docs/realism-roadmap.md の運用節を Bolt 様式へ更新し、R4 節へ R4-6a〜d の分解を追加し、進捗率の定義へ分母の扱いを追記した（ブランチ bolt/r4-6-decomposition、PR #134）。分母は 26 のまま（#126 を 1 件として数える）。
 - 変更しないもの: プログラム範囲の内容（フェーズ、完了条件、D1〜D6）、docs/verification-criteria.md、性能天井の数値、src/・index.html。
