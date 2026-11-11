@@ -312,9 +312,9 @@
         <button class="btn" id="btn-closeup" title="注目鳩のすぐそばへ移動">鳩に寄る</button>
       </div>
       <div class="toolbtns">
-        <button class="btn" id="btn-street" title="路面レベルへ移動し、電柱・自販機・マンホール・横断歩道・袖看板を見る">路面で見る</button>
-        <button class="btn" id="btn-river" title="道頓堀川の水面近くへ移動する">川面を見る</button>
-        <button class="btn" id="btn-expressway" title="阪神高速の半透明遮音壁を横から見る">高架の遮音壁</button>
+        <button class="btn" id="btn-street" title="天守前広場の路面レベルへ移動し、ハトと天守を見る">天守前で見る</button>
+        <button class="btn" id="btn-river" title="大阪城公園の広場から天守を望む">公園で見る</button>
+        <button class="btn" id="btn-expressway" title="大手前の街並みを路面レベルで見る">大手前で見る</button>
       </div>
       <div id="occl-tools">
         <button class="btn" id="btn-roster">鳩を選ぶ</button>
@@ -566,7 +566,7 @@
         <h3>路面レベルの判別性強化（2026-10-30、実ブラウザ検証の指摘反映）</h3>
         <ul>
           <li><span class="tag d">設計案</span>実ブラウザ検証で「角度・距離によっては判別できない」とされた9項目を強化した。電柱は太さ・本数を増やし架線を1px線分から実チューブ（サグ付き4本束）に変更、自動販売機はドリンク窓・価格帯・投币口・受取口を持つ発光フロント、自販機と分かる面構成にした。マンホールは ø1.1 m の蓋テクスチャ（縁リング＋「下水道」）＋縁石リングで大型化し、横断歩道はゼブラバーを拡大・高輝度化して停止線・中央線ダッシュ・進行方向矢印を追加した。</li>
-          <li><span class="tag d">設計案</span>高架の遮音壁は高さ約2.8 m の半透明パネル（不透明度0.30、青味）に鋼製支柱と上・中・下レール＋パネル継ぎ目を付け、デッキが透けて見える構成にした。袖看板は支持アーム付きの突出し形状に縦書きの業種文字（薬局・喫茶・電器店など商標でない一般名称）を両面に表示した。川面は流れの筋・白い反射・波紋の2層テクスチャを異なる速度で流し、水の流れが読めるようにした。右上の「路面で見る」「川面を見る」「高架の遮音壁」ボタンで各視点へ直接移動できる。</li>
+          <li><span class="tag d">設計案</span>高架の遮音壁は高さ約2.8 m の半透明パネル（不透明度0.30、青味）に鋼製支柱と上・中・下レール＋パネル継ぎ目を付け、デッキが透けて見える構成にした。袖看板は支持アーム付きの突出し形状に縦書きの業種文字（薬局・喫茶・電器店など商標でない一般名称）を両面に表示した。川面は流れの筋・白い反射・波紋の2層テクスチャを異なる速度で流し、水の流れが読めるようにした。右上の「天守前で見る」「公園で見る」「大手前で見る」ボタンで各視点へ直接移動できる。</li>
           <li><span class="tag d">設計案</span>鳩側は、首の構造色を彩度の高い緑⇔紫にし、横視点で飽和色が出るよう視点方位の正弦で振る方式に変更（従来は横視点で中間色に潰れた）。胸にも同素材の虹色パッチを広げた。脚は胴体中心高を 0.29→0.34 m に上げ、太く鮮やかな赤（緋色）の脚・足指にして、歩行時は歩幅に合わせて左右交互に踏み出す動きを付けたため、立って歩く・採餌する個体では赤い足が胴体の下に隠れない。</li>
         </ul>
 
@@ -649,7 +649,7 @@
     scene.background=new THREE.Color(0x9fc3d8);
     scene.fog=new THREE.Fog(0x9fc3d8, 700, 2600);
     const camera=new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 5000);
-    camera.position.set(14, 7, 24);
+    camera.position.set(1814, 7, -2144); // R5-P #141 (Bolt 第8回): 初期視点は天守前広場
 
     const hemi=new THREE.HemisphereLight(0xcfe5ef, 0x54503f, 0.85); scene.add(hemi);
     const sun=new THREE.DirectionalLight(0xfff2dd, 1.6);
@@ -1375,10 +1375,10 @@
          uv の分岐（ny>0.7 が屋根テクセル）は旧規則と同じく法線
          によるため、色分けとテクスチャ写像は整合する。
          付帯物（rooftopItems／perchPoints／ledgePoints）は baseZ
-         を加算する（y=baseZ+h 等）。現行ゲート（|cx|<880 等）は
-         hero 圏（北 1,750〜2,804 m）では 0 件しか通らないため、
-         本 Bolt では hero 由来の付帯物は 0 件だが、加算の式自体は
-         #141 でのゲート見直しに備えて実装してある。
+         を加算する（y=baseZ+h 等）。perchPoints／ledgePoints の
+         ゲートは #141（Bolt 第8回）で天守中心基準へ変えた。
+         rooftopItems／signItems のゲート（|cx|<880 等）は G3 に
+         より変更せず、hero 圏では 0 件のまま（#143 の完了後に扱う）。
          C7 の AO グラデーションは確認のみ: vC7BaseY は絶対高さ
          （position.y）で駆動するため、baseZ の高い hero 棟では
          1.0 に飽和する（暗い基部が出ない）。シェーダ文字列は本
@@ -1395,6 +1395,10 @@
           const heroCol=new Float32Array(heroTotal*3), heroNor=new Float32Array(heroTotal*3),
                 heroUv=new Float32Array(heroTotal*2), heroBld=new Float32Array(heroTotal);
           const heroBi0=B.length; // hash seed offset: hero bi continues after legacy
+          // R5-P #141 (Bolt 第8回): 天守中心基準のゲート用定数。
+          // 天守は idx 1374 の建物で特定（中心 (1847.8, 2281.3)、
+          // 高さ 53.2 m＋baseZ 30.9 m）。cx は東向き m、cn は北向き m。
+          const HERO_CX=1848, HERO_CN=2281;
           let heroStart=0;
           for(let li=0; li<heroB.length; li++){
             const bi=heroBi0+li;
@@ -1451,6 +1455,9 @@
               }
             }
             // 付帯物: y には baseZ を加算する（§4 項目3）。
+            // R5-P #141 (Bolt 第8回): rooftopItems／signItems の
+            // ゲートは G3 により変更しない（hero 視覚受入 #143 の
+            // 完了後に扱う）。ヒーロー圏の屋上付帯物・看板は 0 件のまま。
             const rw=x1-x0, rd=z1-z0;
             if(h>=13 && rw>9 && rd>9 && hash(bi*41)>0.35 && Math.abs(cx)<880 && Math.abs(cn)<880){
               const nBox=hash(bi*43)>0.6?2:1;
@@ -1467,11 +1474,15 @@
                 signItems.push({x:cx, z:-cn, y:baseZ+h, sx:rand(5,9.5), sy:rand(1.8,3.2), sz:1.1, rot:hash(bi*71)*0.8-0.4, hue:hash(bi*73)});
               }
             }
-            if(h>=5 && h<=70 && Math.abs(cx)<850 && Math.abs(cn)<850){
+            // R5-P #141 (Bolt 第8回): 止まり木ゲートを天守中心基準へ
+            // 変える。旧市街の原点基準 |cx|<850 等はヒーロー圏
+            // （北 1,750〜2,804 m）では 0 件しか通らない。mz は
+            // z＝南向きのため北向き中心との差は mz-(-HERO_CN)=mz+HERO_CN。
+            if(h>=5 && h<=70 && Math.abs(cx-HERO_CX)<850 && Math.abs(cn-HERO_CN)<850){
               for(let i=0;i<n;i+= (n>6?2:1)){
                 const a=pts[i], b=pts[(i+1)%n];
                 const mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
-                if(Math.hypot(mx,mz)<820) perchPoints.push({p:V3(mx,baseZ+h+0.02,mz), popular:hash(bi*31+i)>0.62, kind:'roof'});
+                if(Math.hypot(mx-HERO_CX, mz+HERO_CN)<820) perchPoints.push({p:V3(mx,baseZ+h+0.02,mz), popular:hash(bi*31+i)>0.62, kind:'roof'});
               }
               const a=pts[0], b=pts[1];
               ledgePoints.push({p:V3((a[0]+b[0])/2, baseZ+Math.min(3.2,h-0.4), (a[1]+b[1])/2), popular:hash(bi*17)>0.7, kind:'ledge'});
@@ -2951,18 +2962,24 @@
       }
     }
 
-    /* sites (report-grounded anchor points) */
+    /* sites (report-grounded anchor points) — R5-P #141 (Bolt 第8回):
+       餌場・水場・飛行回路をヒーロー圏（大手前・大阪城公園）へ移す。
+       座標は CITY 座標（x=東 m、z=南 m、北は -z）。天守は idx 1374
+       の建物で特定（中心 (1847.8, -2281.3)、高さ 53.2 m＋baseZ 30.9 m）。
+       各中心のフットプリントからのクリアランスは半径以上（実測は
+       docs/plateau-hero-data.md §8 参照）。 */
     const FORAGE=[
-      {name:'日本橋駅前', p:V3(6,0,-14), r:13},
-      {name:'でんでんタウン前', p:V3(14,0,300), r:15},
-      {name:'道頓堀リバーウォーク', p:V3(-120,0,-238), r:16},
-      {name:'黒門市場入口', p:V3(112,0,-70), r:11},
-      {name:'なんば駅前', p:V3(-330,0,330), r:15},
+      {name:'天守前広場', p:V3(1814,0,-2144), r:15},
+      {name:'西の丸庭園方面', p:V3(1474,0,-2234), r:15},
+      {name:'城公園北側・堀側', p:V3(1834,0,-2734), r:16},
+      {name:'大手前', p:V3(1364,0,-2094), r:13},
+      {name:'城公園東側広場', p:V3(2354,0,-2084), r:15},
     ];
-    const DRINK=[V3(-95,0.4,-246), V3(150,0.4,-248), V3(-215,0.4,-240)];
-    const CIRCUIT=[ // flight circuit over streets / river (x, alt, z)
-      [0,34,-255],[-260,38,-230],[-420,42,-40],[-360,36,300],[-120,30,430],[60,32,300],
-      [240,36,120],[430,40,-60],[300,44,-260],[120,38,-330]
+    const DRINK=[V3(1794,0.4,-2694), V3(1904,0.4,-2714), V3(1764,0.4,-2764)];
+    const CIRCUIT=[ // flight circuit around the keep (x, alt, z): 天守中心
+      // (1847.8,-2281.3) の半径 420 m の円周。高度は旧回路と同じ。
+      [1848,34,-1861],[2095,38,-1942],[2247,42,-2152],[2247,36,-2411],[2095,30,-2621],
+      [1848,32,-2701],[1601,36,-2621],[1448,40,-2411],[1448,44,-2152],[1601,38,-1942]
     ].map(a=>V3(a[0],a[1],a[2]));
 
     buildCity(); __boot.cityBuilt=performance.now(); setLoad(0.45,'道路・高架・川を描画中…');
@@ -4812,7 +4829,10 @@
       if(!cand.length) return null;
       return cand[randi(0,cand.length-1)];
     }
-    const roostPerches=nearestPerches(V3(0,0,0), 60, ['girder']);
+    // R5-P #141 (Bolt 第8回): ねぐらは天守中心から 60 件以内の 'roof'
+    // 止まり木とする。ヒーロー圏に高架の桁はないため旧市街の 'girder'
+    // では 0 件しか当たらず、屋根でねぐらをとる。
+    const roostPerches=nearestPerches(V3(1848,0,-2281), 60, ['roof']);
     function placeAtPerch(p, pp){
       p.pos.copy(pp.p); p.pos.y+=BODY_Y; p.vel.set(0,0,0);
       p.heading=rand(0,TAU); p.setState('perch'); p.perch=pp; p.fold=1;
@@ -4826,11 +4846,11 @@
     pigeons.forEach((p,i)=>{
       if(i<8){ const pp=roostPerches[i%roostPerches.length]||perchPoints[i]; placeAtPerch(p,pp); p.setState('roost'); }
       else if(i<17){ placeAtGround(p, FORAGE[i%FORAGE.length]); }
-      else { const pp=randomPerchNear(V3(0,0,0), 420, true); if(pp) placeAtPerch(p,pp); else placeAtGround(p,FORAGE[0]); }
+      else { const pp=randomPerchNear(V3(1848,0,-2281), 420, true); if(pp) placeAtPerch(p,pp); else placeAtGround(p,FORAGE[0]); }
     });
 
     /* ================= flock anchor & flight control ================= */
-    const anchor={ pos:V3(0,36,-255), heading:0, path:[], speed:13, mode:'idle', landSite:null, landPerches:null, circuitLeft:0 };
+    const anchor={ pos:V3(1848,36,-1861), heading:0, path:[], speed:13, mode:'idle', landSite:null, landPerches:null, circuitLeft:0 }; // R5-P #141: CIRCUIT[0] と同一 XZ。高度 36 は旧 anchor と同じく waypoint 高度 34＋2
     let flockFlying=false;
     // R2-4 (Issue #74): flock breathing clock in real-animation seconds.
     // Advanced once per frame at the top of anchorUpdate (before its
@@ -4905,7 +4925,7 @@
           p.finalKind='ground'; p.site=site; p.checkPoint=null;
         } else {
           const pp=randomPerchNear(anchor.pos, 300, true);
-          p.finalPoint=pp?pp.p:V3(0,BODY_Y,0); p.finalKind=pp?'perch':'ground'; p.perch=pp;
+          p.finalPoint=pp?pp.p:V3(1848,BODY_Y,-2281); p.finalKind=pp?'perch':'ground'; p.perch=pp;
           p.checkPoint=pp?pickCheckPoint(pp.p):null; p.checked=false; p.checkFails=0;
         }
         p.setState('descend');
@@ -6188,7 +6208,7 @@
     function shelterNow(){
       if(flockFlying || phaseOf(simMin)==='roost') return;
       const grounded=pigeons.some(p=>!p.player&&(p.state==='forage'||p.state==='drink'||p.state==='bathe'));
-      if(grounded) startFlockFlight({fraction:0.75, landPerches:nearestPerches(V3(0,0,0),24,['girder','ledge'])});
+      if(grounded) startFlockFlight({fraction:0.75, landPerches:nearestPerches(V3(1848,0,-2281),24,['girder','ledge'])}); // R5-P #141: 中心だけ天守中心へ。種別はそのまま（ヒーロー圏では桁がなく庇のみが当たる）
     }
     function updatePrecip(dt){
       const fp=focus();
@@ -6313,9 +6333,9 @@
         if(ph==='wake'||ph==='forage'){
           if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[randi(0,FORAGE.length-1)]});
         } else if(ph==='loaf'){
-          if(!flockFlying) startFlockFlight({loops:1, landPerches:nearestPerches(V3(0,0,0),24,['roof'])});
+          if(!flockFlying) startFlockFlight({loops:1, landPerches:nearestPerches(V3(1848,0,-2281),24,['roof'])}); // R5-P #141: 中心だけ天守中心へ
         } else if(ph==='evening'){
-          if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[2]}); // river walk: drink before roost
+          if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[2]}); // 城公園北側・堀側: drink before roost
         } else if(ph==='roost'){
           if(!flockFlying) startFlockFlight({loops:1, landPerches:roostPerches.slice(0,24)});
         }
@@ -6329,14 +6349,14 @@
         if(directorT<=0 && !flockFlying){ startFlockFlight({loops:1, landPerches:roostPerches.slice(0,24)}); eveningStep=2; }
         return;
       }
-      // rain shelter: grounded birds are periodically moved under the
-      // expressway girders / eaves until the rain passes
+      // rain shelter: grounded birds are periodically moved under the eaves
+      // until the rain passes (R5-P #141: ヒーロー圏では桁がなく庇（ledge）のみが当たる)
       if(ENV.rain>0.4 && ph!=='roost' && !flockFlying && !playerControl.active){
         shelterT-=dt*timeScale/60;
         if(shelterT<=0){
           shelterT=14;
           const grounded=pigeons.filter(p=>!p.player&&(p.state==='forage'||p.state==='drink'||p.state==='bathe')).length;
-          if(grounded>3) startFlockFlight({fraction:0.55, landPerches:nearestPerches(V3(0,0,0),24,['girder','ledge'])});
+          if(grounded>3) startFlockFlight({fraction:0.55, landPerches:nearestPerches(V3(1848,0,-2281),24,['girder','ledge'])}); // R5-P #141: 中心だけ天守中心へ
         }
       }
       if((ph==='forage'||ph==='peak'||ph==='loaf') && !playerControl.active){
@@ -6704,7 +6724,7 @@
     let camMode='orbit';
     const orbit={az:0.7, el:0.55, r:30, tx:0, ty:2, tz:0, idle:0};
     { const fpI=focus(); orbit.tx=fpI.pos.x; orbit.ty=fpI.pos.y+0.4; orbit.tz=fpI.pos.z; }
-    const followPos=V3(140,80,260);
+    const followPos=V3(1814,80,-2144); // R5-P #141 (Bolt 第8回): 追跡カメラの初期位置は天守前広場
     let povFov=55;
     const pointers={down:false, x:0, y:0, mx:0, my:0};
     const cv=renderer.domElement;
@@ -7496,12 +7516,12 @@
       viewpointHold=14;
       toast(msg);
     }
-    $('btn-street').addEventListener('click', ()=>goViewpoint(27,1.1,30, 11, 0.14, 0.85,
-      '路面レベル — 横断歩道・マンホール・自販機・袖看板・電柱と架線が見える'));
-    $('btn-river').addEventListener('click', ()=>goViewpoint(-95,1.2,-243, 15, 0.16, 2.4,
-      '道頓堀川の川面 — 流れの筋と波紋が動く'));
-    $('btn-expressway').addEventListener('click', ()=>goViewpoint(-160,11.8,-16, 26, 0.10, 1.35,
-      '阪神高速の側面 — 半透明の遮音壁越しにデッキが見える'));
+    $('btn-street').addEventListener('click', ()=>goViewpoint(1814,1.1,-2144, 11, 0.14, 0.85,
+      '天守前広場の路面 — 餌場のハトと天守が見える'));
+    $('btn-river').addEventListener('click', ()=>goViewpoint(1848,45,-2281, 90, 0.15, 0.0,
+      '大阪城公園 — 天守を望む'));
+    $('btn-expressway').addEventListener('click', ()=>goViewpoint(1364,1.1,-2094, 15, 0.14, 1.35,
+      '大手前の街並み — 路面レベルで見る'));
     function syncPlayerToFocus(){
       if(camMode==='play'){ if(playerPigeon) playerPigeon.player=false; playerPigeon=focus(); playerPigeon.player=true; }
     }
@@ -8052,9 +8072,9 @@
         var el=document.getElementById(id);
         if(el) el.addEventListener('click', function(){ lastViewpoint=name; });
       }
-      mark('btn-street', '路面で見る');
-      mark('btn-river', '川面を見る');
-      mark('btn-expressway', '高架の遮音壁');
+      mark('btn-street', '天守前で見る');
+      mark('btn-river', '公園で見る');
+      mark('btn-expressway', '大手前で見る');
       mark('btn-closeup', '鳩に寄る');
       var segMode=document.getElementById('seg-mode');
       if(segMode) segMode.addEventListener('click', function(){ lastViewpoint=null; });
