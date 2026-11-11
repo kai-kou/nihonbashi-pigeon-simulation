@@ -162,7 +162,7 @@
     function shelterNow(){
       if(flockFlying || phaseOf(simMin)==='roost') return;
       const grounded=pigeons.some(p=>!p.player&&(p.state==='forage'||p.state==='drink'||p.state==='bathe'));
-      if(grounded) startFlockFlight({fraction:0.75, landPerches:nearestPerches(V3(0,0,0),24,['girder','ledge'])});
+      if(grounded) startFlockFlight({fraction:0.75, landPerches:nearestPerches(V3(1848,0,-2281),24,['girder','ledge'])}); // R5-P #141: 中心だけ天守中心へ。種別はそのまま（ヒーロー圏では桁がなく庇のみが当たる）
     }
     function updatePrecip(dt){
       const fp=focus();
@@ -287,9 +287,9 @@
         if(ph==='wake'||ph==='forage'){
           if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[randi(0,FORAGE.length-1)]});
         } else if(ph==='loaf'){
-          if(!flockFlying) startFlockFlight({loops:1, landPerches:nearestPerches(V3(0,0,0),24,['roof'])});
+          if(!flockFlying) startFlockFlight({loops:1, landPerches:nearestPerches(V3(1848,0,-2281),24,['roof'])}); // R5-P #141: 中心だけ天守中心へ
         } else if(ph==='evening'){
-          if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[2]}); // river walk: drink before roost
+          if(!flockFlying) startFlockFlight({loops:1, landSite:FORAGE[2]}); // 城公園北側・堀側: drink before roost
         } else if(ph==='roost'){
           if(!flockFlying) startFlockFlight({loops:1, landPerches:roostPerches.slice(0,24)});
         }
@@ -303,14 +303,14 @@
         if(directorT<=0 && !flockFlying){ startFlockFlight({loops:1, landPerches:roostPerches.slice(0,24)}); eveningStep=2; }
         return;
       }
-      // rain shelter: grounded birds are periodically moved under the
-      // expressway girders / eaves until the rain passes
+      // rain shelter: grounded birds are periodically moved under the eaves
+      // until the rain passes (R5-P #141: ヒーロー圏では桁がなく庇（ledge）のみが当たる)
       if(ENV.rain>0.4 && ph!=='roost' && !flockFlying && !playerControl.active){
         shelterT-=dt*timeScale/60;
         if(shelterT<=0){
           shelterT=14;
           const grounded=pigeons.filter(p=>!p.player&&(p.state==='forage'||p.state==='drink'||p.state==='bathe')).length;
-          if(grounded>3) startFlockFlight({fraction:0.55, landPerches:nearestPerches(V3(0,0,0),24,['girder','ledge'])});
+          if(grounded>3) startFlockFlight({fraction:0.55, landPerches:nearestPerches(V3(1848,0,-2281),24,['girder','ledge'])}); // R5-P #141: 中心だけ天守中心へ
         }
       }
       if((ph==='forage'||ph==='peak'||ph==='loaf') && !playerControl.active){
@@ -678,7 +678,7 @@
     let camMode='orbit';
     const orbit={az:0.7, el:0.55, r:30, tx:0, ty:2, tz:0, idle:0};
     { const fpI=focus(); orbit.tx=fpI.pos.x; orbit.ty=fpI.pos.y+0.4; orbit.tz=fpI.pos.z; }
-    const followPos=V3(140,80,260);
+    const followPos=V3(1814,80,-2144); // R5-P #141 (Bolt 第8回): 追跡カメラの初期位置は天守前広場
     let povFov=55;
     const pointers={down:false, x:0, y:0, mx:0, my:0};
     const cv=renderer.domElement;
@@ -1470,12 +1470,12 @@
       viewpointHold=14;
       toast(msg);
     }
-    $('btn-street').addEventListener('click', ()=>goViewpoint(27,1.1,30, 11, 0.14, 0.85,
-      '路面レベル — 横断歩道・マンホール・自販機・袖看板・電柱と架線が見える'));
-    $('btn-river').addEventListener('click', ()=>goViewpoint(-95,1.2,-243, 15, 0.16, 2.4,
-      '道頓堀川の川面 — 流れの筋と波紋が動く'));
-    $('btn-expressway').addEventListener('click', ()=>goViewpoint(-160,11.8,-16, 26, 0.10, 1.35,
-      '阪神高速の側面 — 半透明の遮音壁越しにデッキが見える'));
+    $('btn-street').addEventListener('click', ()=>goViewpoint(1814,1.1,-2144, 11, 0.14, 0.85,
+      '天守前広場の路面 — 餌場のハトと天守が見える'));
+    $('btn-river').addEventListener('click', ()=>goViewpoint(1848,45,-2281, 90, 0.15, 0.0,
+      '大阪城公園 — 天守を望む'));
+    $('btn-expressway').addEventListener('click', ()=>goViewpoint(1364,1.1,-2094, 15, 0.14, 1.35,
+      '大手前の街並み — 路面レベルで見る'));
     function syncPlayerToFocus(){
       if(camMode==='play'){ if(playerPigeon) playerPigeon.player=false; playerPigeon=focus(); playerPigeon.player=true; }
     }

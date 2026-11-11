@@ -1832,7 +1832,10 @@
       if(!cand.length) return null;
       return cand[randi(0,cand.length-1)];
     }
-    const roostPerches=nearestPerches(V3(0,0,0), 60, ['girder']);
+    // R5-P #141 (Bolt 第8回): ねぐらは天守中心から 60 件以内の 'roof'
+    // 止まり木とする。ヒーロー圏に高架の桁はないため旧市街の 'girder'
+    // では 0 件しか当たらず、屋根でねぐらをとる。
+    const roostPerches=nearestPerches(V3(1848,0,-2281), 60, ['roof']);
     function placeAtPerch(p, pp){
       p.pos.copy(pp.p); p.pos.y+=BODY_Y; p.vel.set(0,0,0);
       p.heading=rand(0,TAU); p.setState('perch'); p.perch=pp; p.fold=1;
@@ -1846,11 +1849,11 @@
     pigeons.forEach((p,i)=>{
       if(i<8){ const pp=roostPerches[i%roostPerches.length]||perchPoints[i]; placeAtPerch(p,pp); p.setState('roost'); }
       else if(i<17){ placeAtGround(p, FORAGE[i%FORAGE.length]); }
-      else { const pp=randomPerchNear(V3(0,0,0), 420, true); if(pp) placeAtPerch(p,pp); else placeAtGround(p,FORAGE[0]); }
+      else { const pp=randomPerchNear(V3(1848,0,-2281), 420, true); if(pp) placeAtPerch(p,pp); else placeAtGround(p,FORAGE[0]); }
     });
 
     /* ================= flock anchor & flight control ================= */
-    const anchor={ pos:V3(0,36,-255), heading:0, path:[], speed:13, mode:'idle', landSite:null, landPerches:null, circuitLeft:0 };
+    const anchor={ pos:V3(1848,36,-1861), heading:0, path:[], speed:13, mode:'idle', landSite:null, landPerches:null, circuitLeft:0 }; // R5-P #141: CIRCUIT[0] と同一 XZ。高度 36 は旧 anchor と同じく waypoint 高度 34＋2
     let flockFlying=false;
     // R2-4 (Issue #74): flock breathing clock in real-animation seconds.
     // Advanced once per frame at the top of anchorUpdate (before its
@@ -1925,7 +1928,7 @@
           p.finalKind='ground'; p.site=site; p.checkPoint=null;
         } else {
           const pp=randomPerchNear(anchor.pos, 300, true);
-          p.finalPoint=pp?pp.p:V3(0,BODY_Y,0); p.finalKind=pp?'perch':'ground'; p.perch=pp;
+          p.finalPoint=pp?pp.p:V3(1848,BODY_Y,-2281); p.finalKind=pp?'perch':'ground'; p.perch=pp;
           p.checkPoint=pp?pickCheckPoint(pp.p):null; p.checked=false; p.checkFails=0;
         }
         p.setState('descend');

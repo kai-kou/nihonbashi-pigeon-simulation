@@ -42,7 +42,7 @@
     scene.background=new THREE.Color(0x9fc3d8);
     scene.fog=new THREE.Fog(0x9fc3d8, 700, 2600);
     const camera=new THREE.PerspectiveCamera(55, innerWidth/innerHeight, 0.1, 5000);
-    camera.position.set(14, 7, 24);
+    camera.position.set(1814, 7, -2144); // R5-P #141 (Bolt 第8回): 初期視点は天守前広場
 
     const hemi=new THREE.HemisphereLight(0xcfe5ef, 0x54503f, 0.85); scene.add(hemi);
     const sun=new THREE.DirectionalLight(0xfff2dd, 1.6);
@@ -768,10 +768,10 @@
          uv の分岐（ny>0.7 が屋根テクセル）は旧規則と同じく法線
          によるため、色分けとテクスチャ写像は整合する。
          付帯物（rooftopItems／perchPoints／ledgePoints）は baseZ
-         を加算する（y=baseZ+h 等）。現行ゲート（|cx|<880 等）は
-         hero 圏（北 1,750〜2,804 m）では 0 件しか通らないため、
-         本 Bolt では hero 由来の付帯物は 0 件だが、加算の式自体は
-         #141 でのゲート見直しに備えて実装してある。
+         を加算する（y=baseZ+h 等）。perchPoints／ledgePoints の
+         ゲートは #141（Bolt 第8回）で天守中心基準へ変えた。
+         rooftopItems／signItems のゲート（|cx|<880 等）は G3 に
+         より変更せず、hero 圏では 0 件のまま（#143 の完了後に扱う）。
          C7 の AO グラデーションは確認のみ: vC7BaseY は絶対高さ
          （position.y）で駆動するため、baseZ の高い hero 棟では
          1.0 に飽和する（暗い基部が出ない）。シェーダ文字列は本
@@ -788,6 +788,10 @@
           const heroCol=new Float32Array(heroTotal*3), heroNor=new Float32Array(heroTotal*3),
                 heroUv=new Float32Array(heroTotal*2), heroBld=new Float32Array(heroTotal);
           const heroBi0=B.length; // hash seed offset: hero bi continues after legacy
+          // R5-P #141 (Bolt 第8回): 天守中心基準のゲート用定数。
+          // 天守は idx 1374 の建物で特定（中心 (1847.8, 2281.3)、
+          // 高さ 53.2 m＋baseZ 30.9 m）。cx は東向き m、cn は北向き m。
+          const HERO_CX=1848, HERO_CN=2281;
           let heroStart=0;
           for(let li=0; li<heroB.length; li++){
             const bi=heroBi0+li;
@@ -844,6 +848,9 @@
               }
             }
             // 付帯物: y には baseZ を加算する（§4 項目3）。
+            // R5-P #141 (Bolt 第8回): rooftopItems／signItems の
+            // ゲートは G3 により変更しない（hero 視覚受入 #143 の
+            // 完了後に扱う）。ヒーロー圏の屋上付帯物・看板は 0 件のまま。
             const rw=x1-x0, rd=z1-z0;
             if(h>=13 && rw>9 && rd>9 && hash(bi*41)>0.35 && Math.abs(cx)<880 && Math.abs(cn)<880){
               const nBox=hash(bi*43)>0.6?2:1;
@@ -860,11 +867,15 @@
                 signItems.push({x:cx, z:-cn, y:baseZ+h, sx:rand(5,9.5), sy:rand(1.8,3.2), sz:1.1, rot:hash(bi*71)*0.8-0.4, hue:hash(bi*73)});
               }
             }
-            if(h>=5 && h<=70 && Math.abs(cx)<850 && Math.abs(cn)<850){
+            // R5-P #141 (Bolt 第8回): 止まり木ゲートを天守中心基準へ
+            // 変える。旧市街の原点基準 |cx|<850 等はヒーロー圏
+            // （北 1,750〜2,804 m）では 0 件しか通らない。mz は
+            // z＝南向きのため北向き中心との差は mz-(-HERO_CN)=mz+HERO_CN。
+            if(h>=5 && h<=70 && Math.abs(cx-HERO_CX)<850 && Math.abs(cn-HERO_CN)<850){
               for(let i=0;i<n;i+= (n>6?2:1)){
                 const a=pts[i], b=pts[(i+1)%n];
                 const mx=(a[0]+b[0])/2, mz=(a[1]+b[1])/2;
-                if(Math.hypot(mx,mz)<820) perchPoints.push({p:V3(mx,baseZ+h+0.02,mz), popular:hash(bi*31+i)>0.62, kind:'roof'});
+                if(Math.hypot(mx-HERO_CX, mz+HERO_CN)<820) perchPoints.push({p:V3(mx,baseZ+h+0.02,mz), popular:hash(bi*31+i)>0.62, kind:'roof'});
               }
               const a=pts[0], b=pts[1];
               ledgePoints.push({p:V3((a[0]+b[0])/2, baseZ+Math.min(3.2,h-0.4), (a[1]+b[1])/2), popular:hash(bi*17)>0.7, kind:'ledge'});
@@ -2344,18 +2355,24 @@
       }
     }
 
-    /* sites (report-grounded anchor points) */
+    /* sites (report-grounded anchor points) — R5-P #141 (Bolt 第8回):
+       餌場・水場・飛行回路をヒーロー圏（大手前・大阪城公園）へ移す。
+       座標は CITY 座標（x=東 m、z=南 m、北は -z）。天守は idx 1374
+       の建物で特定（中心 (1847.8, -2281.3)、高さ 53.2 m＋baseZ 30.9 m）。
+       各中心のフットプリントからのクリアランスは半径以上（実測は
+       docs/plateau-hero-data.md §8 参照）。 */
     const FORAGE=[
-      {name:'日本橋駅前', p:V3(6,0,-14), r:13},
-      {name:'でんでんタウン前', p:V3(14,0,300), r:15},
-      {name:'道頓堀リバーウォーク', p:V3(-120,0,-238), r:16},
-      {name:'黒門市場入口', p:V3(112,0,-70), r:11},
-      {name:'なんば駅前', p:V3(-330,0,330), r:15},
+      {name:'天守前広場', p:V3(1814,0,-2144), r:15},
+      {name:'西の丸庭園方面', p:V3(1474,0,-2234), r:15},
+      {name:'城公園北側・堀側', p:V3(1834,0,-2734), r:16},
+      {name:'大手前', p:V3(1364,0,-2094), r:13},
+      {name:'城公園東側広場', p:V3(2354,0,-2084), r:15},
     ];
-    const DRINK=[V3(-95,0.4,-246), V3(150,0.4,-248), V3(-215,0.4,-240)];
-    const CIRCUIT=[ // flight circuit over streets / river (x, alt, z)
-      [0,34,-255],[-260,38,-230],[-420,42,-40],[-360,36,300],[-120,30,430],[60,32,300],
-      [240,36,120],[430,40,-60],[300,44,-260],[120,38,-330]
+    const DRINK=[V3(1794,0.4,-2694), V3(1904,0.4,-2714), V3(1764,0.4,-2764)];
+    const CIRCUIT=[ // flight circuit around the keep (x, alt, z): 天守中心
+      // (1847.8,-2281.3) の半径 420 m の円周。高度は旧回路と同じ。
+      [1848,34,-1861],[2095,38,-1942],[2247,42,-2152],[2247,36,-2411],[2095,30,-2621],
+      [1848,32,-2701],[1601,36,-2621],[1448,40,-2411],[1448,44,-2152],[1601,38,-1942]
     ].map(a=>V3(a[0],a[1],a[2]));
 
     buildCity(); __boot.cityBuilt=performance.now(); setLoad(0.45,'道路・高架・川を描画中…');

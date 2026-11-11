@@ -27,9 +27,9 @@
         var el=document.getElementById(id);
         if(el) el.addEventListener('click', function(){ lastViewpoint=name; });
       }
-      mark('btn-street', '路面で見る');
-      mark('btn-river', '川面を見る');
-      mark('btn-expressway', '高架の遮音壁');
+      mark('btn-street', '天守前で見る');
+      mark('btn-river', '公園で見る');
+      mark('btn-expressway', '大手前で見る');
       mark('btn-closeup', '鳩に寄る');
       var segMode=document.getElementById('seg-mode');
       if(segMode) segMode.addEventListener('click', function(){ lastViewpoint=null; });
