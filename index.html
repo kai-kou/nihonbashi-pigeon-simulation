@@ -6379,7 +6379,7 @@
             // (over cap → duration is cut to a single segment first)
             startFlockFlight({segments:overCap?1:randi(2,4), fraction:rand(0.3,0.55), landSite:FORAGE[randi(0,FORAGE.length-1)]});
           } else if(r<0.75){
-            startFlockFlight({segments:overCap?1:randi(2,3), fraction:rand(0.25,0.45), landPerches:nearestPerches(V3(rand(-200,200),0,rand(-200,200)),24,['roof'])});
+            startFlockFlight({segments:overCap?1:randi(2,3), fraction:rand(0.25,0.45), landPerches:nearestPerches(V3(1848+rand(-450,450),0,-2281+rand(-450,450)),24,['roof'])}); // R5-P #141: 着陸中心を天守中心±450のランダム点へ（ヒーロー圏内。旧市街原点付近からの移転）
           }
           // else: no flight this tick — the flock simply keeps foraging / loafing
         }
