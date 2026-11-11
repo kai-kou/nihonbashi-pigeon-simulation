@@ -900,8 +900,9 @@ P1）。director() の r<0.75 分岐（定期飛行で群れの一部が別の�
   R5-P #141 の旨のコメントを付けた。
 - director() 内の他の旧市街原点参照: 実読で確認したところ、:336 以外
   に director() 内の `V3(0,0,0)`／`rand(-200,200)` 形の中心参照は
-  0 件（他分岐は Bolt 第8回で移転済み。:165／:290／:313 は天守中心、
-  evening は roostPerches、FORAGE 経由の分岐は FORAGE 参照）。
+  0 件（他分岐は Bolt 第8回で移転済み。:290 の loaf 分岐と :313 の
+  雨避難分岐は天守中心、evening は roostPerches、FORAGE 経由の分岐は
+  FORAGE 参照）。
   simulation.js 全体でも `rand(-200,200)` は 0 件になった。
 - 変更しないもの: CIRCUIT（ヒーロー圏の半径 420 m 円周、Bolt 第8回で
   移転済み）、segments／loops／fraction の振る舞い、startFlockFlight／
