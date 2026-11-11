@@ -1,0 +1,5602 @@
+[
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0183.jpg",
+  "comp": 36754,
+  "uncomp": 37316,
+  "method": 8,
+  "offset": 776292724
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0184.jpg",
+  "comp": 16251,
+  "uncomp": 16899,
+  "method": 8,
+  "offset": 776329577
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0185.jpg",
+  "comp": 6425,
+  "uncomp": 6634,
+  "method": 8,
+  "offset": 776345927
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0217.jpg",
+  "comp": 3354,
+  "uncomp": 3557,
+  "method": 8,
+  "offset": 776352451
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0218.jpg",
+  "comp": 1024,
+  "uncomp": 1170,
+  "method": 8,
+  "offset": 776355904
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0219.jpg",
+  "comp": 1223,
+  "uncomp": 1357,
+  "method": 8,
+  "offset": 776357027
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0220.jpg",
+  "comp": 1222,
+  "uncomp": 1388,
+  "method": 8,
+  "offset": 776358349
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0224.jpg",
+  "comp": 109590,
+  "uncomp": 114497,
+  "method": 8,
+  "offset": 776359670
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0225.jpg",
+  "comp": 24661,
+  "uncomp": 25816,
+  "method": 8,
+  "offset": 776469359
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0226.jpg",
+  "comp": 61032,
+  "uncomp": 62359,
+  "method": 8,
+  "offset": 776494119
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0227.jpg",
+  "comp": 6822,
+  "uncomp": 7069,
+  "method": 8,
+  "offset": 776555250
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0228.jpg",
+  "comp": 6375,
+  "uncomp": 6702,
+  "method": 8,
+  "offset": 776562171
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0229.jpg",
+  "comp": 98400,
+  "uncomp": 103519,
+  "method": 8,
+  "offset": 776568645
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0230.jpg",
+  "comp": 57068,
+  "uncomp": 59350,
+  "method": 8,
+  "offset": 776667144
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0231.jpg",
+  "comp": 19585,
+  "uncomp": 19927,
+  "method": 8,
+  "offset": 776724311
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0232.jpg",
+  "comp": 910,
+  "uncomp": 1061,
+  "method": 8,
+  "offset": 776743995
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0233.jpg",
+  "comp": 1715,
+  "uncomp": 1846,
+  "method": 8,
+  "offset": 776745004
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0234.jpg",
+  "comp": 2681,
+  "uncomp": 2992,
+  "method": 8,
+  "offset": 776746818
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0235.jpg",
+  "comp": 776,
+  "uncomp": 937,
+  "method": 8,
+  "offset": 776749598
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0236.jpg",
+  "comp": 1651,
+  "uncomp": 1779,
+  "method": 8,
+  "offset": 776750473
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0237.jpg",
+  "comp": 1336,
+  "uncomp": 1478,
+  "method": 8,
+  "offset": 776752223
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0238.jpg",
+  "comp": 32302,
+  "uncomp": 33103,
+  "method": 8,
+  "offset": 776753658
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0239.jpg",
+  "comp": 34787,
+  "uncomp": 35509,
+  "method": 8,
+  "offset": 776786059
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0240.jpg",
+  "comp": 56128,
+  "uncomp": 57196,
+  "method": 8,
+  "offset": 776820945
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0241.jpg",
+  "comp": 19191,
+  "uncomp": 19537,
+  "method": 8,
+  "offset": 776877172
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0242.jpg",
+  "comp": 19255,
+  "uncomp": 20268,
+  "method": 8,
+  "offset": 776896462
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0243.jpg",
+  "comp": 13005,
+  "uncomp": 13190,
+  "method": 8,
+  "offset": 776915816
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0244.jpg",
+  "comp": 8420,
+  "uncomp": 9214,
+  "method": 8,
+  "offset": 776928920
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0245.jpg",
+  "comp": 26552,
+  "uncomp": 27817,
+  "method": 8,
+  "offset": 776937439
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0246.jpg",
+  "comp": 29885,
+  "uncomp": 30976,
+  "method": 8,
+  "offset": 776964090
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0247.jpg",
+  "comp": 1135,
+  "uncomp": 1278,
+  "method": 8,
+  "offset": 776994074
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0248.jpg",
+  "comp": 1338,
+  "uncomp": 1475,
+  "method": 8,
+  "offset": 776995308
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0249.jpg",
+  "comp": 9788,
+  "uncomp": 9956,
+  "method": 8,
+  "offset": 776996745
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0250.jpg",
+  "comp": 4377,
+  "uncomp": 4681,
+  "method": 8,
+  "offset": 777006632
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0251.jpg",
+  "comp": 1361,
+  "uncomp": 1490,
+  "method": 8,
+  "offset": 777011108
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0252.jpg",
+  "comp": 6338,
+  "uncomp": 6523,
+  "method": 8,
+  "offset": 777012568
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0253.jpg",
+  "comp": 12800,
+  "uncomp": 13335,
+  "method": 8,
+  "offset": 777019005
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0254.jpg",
+  "comp": 116039,
+  "uncomp": 118553,
+  "method": 8,
+  "offset": 777031904
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0255.jpg",
+  "comp": 201644,
+  "uncomp": 212956,
+  "method": 8,
+  "offset": 777148042
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0256.jpg",
+  "comp": 11032,
+  "uncomp": 11576,
+  "method": 8,
+  "offset": 777349785
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0257.jpg",
+  "comp": 3177,
+  "uncomp": 3367,
+  "method": 8,
+  "offset": 777360916
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0258.jpg",
+  "comp": 27962,
+  "uncomp": 28944,
+  "method": 8,
+  "offset": 777364192
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0259.jpg",
+  "comp": 225572,
+  "uncomp": 235377,
+  "method": 8,
+  "offset": 777392253
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0260.jpg",
+  "comp": 9052,
+  "uncomp": 9292,
+  "method": 8,
+  "offset": 777617924
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0261.jpg",
+  "comp": 23726,
+  "uncomp": 24957,
+  "method": 8,
+  "offset": 777627075
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0262.jpg",
+  "comp": 12369,
+  "uncomp": 13046,
+  "method": 8,
+  "offset": 777650900
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0263.jpg",
+  "comp": 26014,
+  "uncomp": 27186,
+  "method": 8,
+  "offset": 777663368
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0264.jpg",
+  "comp": 4523,
+  "uncomp": 4674,
+  "method": 8,
+  "offset": 777689481
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0265.jpg",
+  "comp": 5825,
+  "uncomp": 5962,
+  "method": 8,
+  "offset": 777694103
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0266.jpg",
+  "comp": 6518,
+  "uncomp": 6926,
+  "method": 8,
+  "offset": 777700027
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0267.jpg",
+  "comp": 22773,
+  "uncomp": 23968,
+  "method": 8,
+  "offset": 777706644
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0268.jpg",
+  "comp": 24325,
+  "uncomp": 25733,
+  "method": 8,
+  "offset": 777729516
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0269.jpg",
+  "comp": 2793,
+  "uncomp": 2935,
+  "method": 8,
+  "offset": 777753940
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0270.jpg",
+  "comp": 27622,
+  "uncomp": 28571,
+  "method": 8,
+  "offset": 777756832
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0271.jpg",
+  "comp": 2613,
+  "uncomp": 2837,
+  "method": 8,
+  "offset": 777784553
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0272.jpg",
+  "comp": 7754,
+  "uncomp": 8003,
+  "method": 8,
+  "offset": 777787265
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0273.jpg",
+  "comp": 2318,
+  "uncomp": 2478,
+  "method": 8,
+  "offset": 777795118
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0274.jpg",
+  "comp": 11896,
+  "uncomp": 12340,
+  "method": 8,
+  "offset": 777797535
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0275.jpg",
+  "comp": 6578,
+  "uncomp": 6880,
+  "method": 8,
+  "offset": 777809530
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0276.jpg",
+  "comp": 915,
+  "uncomp": 1065,
+  "method": 8,
+  "offset": 777816207
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0277.jpg",
+  "comp": 1239,
+  "uncomp": 1381,
+  "method": 8,
+  "offset": 777817221
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0278.jpg",
+  "comp": 917,
+  "uncomp": 1068,
+  "method": 8,
+  "offset": 777818559
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0279.jpg",
+  "comp": 7517,
+  "uncomp": 7791,
+  "method": 8,
+  "offset": 777819575
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0280.jpg",
+  "comp": 4465,
+  "uncomp": 4603,
+  "method": 8,
+  "offset": 777827191
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0281.jpg",
+  "comp": 2046,
+  "uncomp": 2210,
+  "method": 8,
+  "offset": 777831755
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0282.jpg",
+  "comp": 28600,
+  "uncomp": 29387,
+  "method": 8,
+  "offset": 777833900
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0283.jpg",
+  "comp": 15347,
+  "uncomp": 15862,
+  "method": 8,
+  "offset": 777862599
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0284.jpg",
+  "comp": 3877,
+  "uncomp": 4106,
+  "method": 8,
+  "offset": 777878045
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0285.jpg",
+  "comp": 1629,
+  "uncomp": 1783,
+  "method": 8,
+  "offset": 777882021
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0286.jpg",
+  "comp": 8755,
+  "uncomp": 8995,
+  "method": 8,
+  "offset": 777883749
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0287.jpg",
+  "comp": 4391,
+  "uncomp": 4534,
+  "method": 8,
+  "offset": 777892603
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0288.jpg",
+  "comp": 6134,
+  "uncomp": 6414,
+  "method": 8,
+  "offset": 777897093
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0289.jpg",
+  "comp": 7937,
+  "uncomp": 8187,
+  "method": 8,
+  "offset": 777903326
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0290.jpg",
+  "comp": 7305,
+  "uncomp": 7612,
+  "method": 8,
+  "offset": 777911362
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0291.jpg",
+  "comp": 3446,
+  "uncomp": 3631,
+  "method": 8,
+  "offset": 777918766
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0292.jpg",
+  "comp": 6727,
+  "uncomp": 6971,
+  "method": 8,
+  "offset": 777922311
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0293.jpg",
+  "comp": 7091,
+  "uncomp": 7303,
+  "method": 8,
+  "offset": 777929137
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0294.jpg",
+  "comp": 25876,
+  "uncomp": 27144,
+  "method": 8,
+  "offset": 777936327
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0295.jpg",
+  "comp": 12553,
+  "uncomp": 13003,
+  "method": 8,
+  "offset": 777962302
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0296.jpg",
+  "comp": 5938,
+  "uncomp": 6146,
+  "method": 8,
+  "offset": 777974954
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0297.jpg",
+  "comp": 8992,
+  "uncomp": 9210,
+  "method": 8,
+  "offset": 777980991
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0298.jpg",
+  "comp": 6739,
+  "uncomp": 7032,
+  "method": 8,
+  "offset": 777990082
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0299.jpg",
+  "comp": 6135,
+  "uncomp": 6269,
+  "method": 8,
+  "offset": 777996920
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0300.jpg",
+  "comp": 7688,
+  "uncomp": 7889,
+  "method": 8,
+  "offset": 778003154
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0301.jpg",
+  "comp": 15032,
+  "uncomp": 15558,
+  "method": 8,
+  "offset": 778010941
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0302.jpg",
+  "comp": 1129,
+  "uncomp": 1270,
+  "method": 8,
+  "offset": 778026072
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0303.jpg",
+  "comp": 2559,
+  "uncomp": 2856,
+  "method": 8,
+  "offset": 778027300
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0304.jpg",
+  "comp": 10300,
+  "uncomp": 10537,
+  "method": 8,
+  "offset": 778029958
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0305.jpg",
+  "comp": 8883,
+  "uncomp": 9155,
+  "method": 8,
+  "offset": 778040357
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0306.jpg",
+  "comp": 1198,
+  "uncomp": 1336,
+  "method": 8,
+  "offset": 778049339
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0307.jpg",
+  "comp": 2295,
+  "uncomp": 2443,
+  "method": 8,
+  "offset": 778050636
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0308.jpg",
+  "comp": 3736,
+  "uncomp": 3958,
+  "method": 8,
+  "offset": 778053030
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0309.jpg",
+  "comp": 27258,
+  "uncomp": 28319,
+  "method": 8,
+  "offset": 778056865
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0310.jpg",
+  "comp": 63278,
+  "uncomp": 65629,
+  "method": 8,
+  "offset": 778084222
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0311.jpg",
+  "comp": 16792,
+  "uncomp": 17191,
+  "method": 8,
+  "offset": 778147599
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0312.jpg",
+  "comp": 1583,
+  "uncomp": 1720,
+  "method": 8,
+  "offset": 778164490
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0313.jpg",
+  "comp": 1442,
+  "uncomp": 1582,
+  "method": 8,
+  "offset": 778166172
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0314.jpg",
+  "comp": 990,
+  "uncomp": 1138,
+  "method": 8,
+  "offset": 778167713
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0315.jpg",
+  "comp": 69345,
+  "uncomp": 70933,
+  "method": 8,
+  "offset": 778168802
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0316.jpg",
+  "comp": 3634,
+  "uncomp": 3860,
+  "method": 8,
+  "offset": 778238246
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0317.jpg",
+  "comp": 10979,
+  "uncomp": 11178,
+  "method": 8,
+  "offset": 778241979
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0318.jpg",
+  "comp": 5698,
+  "uncomp": 5871,
+  "method": 8,
+  "offset": 778253057
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0319.jpg",
+  "comp": 2806,
+  "uncomp": 2940,
+  "method": 8,
+  "offset": 778258854
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0320.jpg",
+  "comp": 1076,
+  "uncomp": 1219,
+  "method": 8,
+  "offset": 778261759
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0321.jpg",
+  "comp": 2364,
+  "uncomp": 2510,
+  "method": 8,
+  "offset": 778262934
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0322.jpg",
+  "comp": 1439,
+  "uncomp": 1575,
+  "method": 8,
+  "offset": 778265397
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0323.jpg",
+  "comp": 832,
+  "uncomp": 988,
+  "method": 8,
+  "offset": 778266935
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0324.jpg",
+  "comp": 2492,
+  "uncomp": 2643,
+  "method": 8,
+  "offset": 778267866
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0325.jpg",
+  "comp": 7696,
+  "uncomp": 8374,
+  "method": 8,
+  "offset": 778270457
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0326.jpg",
+  "comp": 22833,
+  "uncomp": 23908,
+  "method": 8,
+  "offset": 778278252
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0327.jpg",
+  "comp": 19073,
+  "uncomp": 19828,
+  "method": 8,
+  "offset": 778301184
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0328.jpg",
+  "comp": 13392,
+  "uncomp": 13737,
+  "method": 8,
+  "offset": 778320356
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0329.jpg",
+  "comp": 8075,
+  "uncomp": 8264,
+  "method": 8,
+  "offset": 778333847
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0330.jpg",
+  "comp": 1530,
+  "uncomp": 1654,
+  "method": 8,
+  "offset": 778342021
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0331.jpg",
+  "comp": 4174,
+  "uncomp": 4365,
+  "method": 8,
+  "offset": 778343650
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0332.jpg",
+  "comp": 7112,
+  "uncomp": 7406,
+  "method": 8,
+  "offset": 778347923
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0333.jpg",
+  "comp": 18307,
+  "uncomp": 18664,
+  "method": 8,
+  "offset": 778355134
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0334.jpg",
+  "comp": 1731,
+  "uncomp": 1864,
+  "method": 8,
+  "offset": 778373540
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0335.jpg",
+  "comp": 4185,
+  "uncomp": 4419,
+  "method": 8,
+  "offset": 778375370
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0336.jpg",
+  "comp": 1121,
+  "uncomp": 1283,
+  "method": 8,
+  "offset": 778379654
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0339.jpg",
+  "comp": 3578,
+  "uncomp": 3750,
+  "method": 8,
+  "offset": 778380874
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0340.jpg",
+  "comp": 2195,
+  "uncomp": 2351,
+  "method": 8,
+  "offset": 778384551
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0341.jpg",
+  "comp": 1974,
+  "uncomp": 2138,
+  "method": 8,
+  "offset": 778386845
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0342.jpg",
+  "comp": 794,
+  "uncomp": 956,
+  "method": 8,
+  "offset": 778388918
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0343.jpg",
+  "comp": 1906,
+  "uncomp": 2058,
+  "method": 8,
+  "offset": 778389811
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0344.jpg",
+  "comp": 925,
+  "uncomp": 1092,
+  "method": 8,
+  "offset": 778391816
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0345.jpg",
+  "comp": 782,
+  "uncomp": 943,
+  "method": 8,
+  "offset": 778392840
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0346.jpg",
+  "comp": 3945,
+  "uncomp": 4136,
+  "method": 8,
+  "offset": 778393721
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0347.jpg",
+  "comp": 49439,
+  "uncomp": 51207,
+  "method": 8,
+  "offset": 778397765
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0349.jpg",
+  "comp": 2600,
+  "uncomp": 2844,
+  "method": 8,
+  "offset": 778447303
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0350.jpg",
+  "comp": 1237,
+  "uncomp": 1394,
+  "method": 8,
+  "offset": 778450002
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0351.jpg",
+  "comp": 2682,
+  "uncomp": 2817,
+  "method": 8,
+  "offset": 778451338
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0354.jpg",
+  "comp": 1529,
+  "uncomp": 1656,
+  "method": 8,
+  "offset": 778454119
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0356.jpg",
+  "comp": 1777,
+  "uncomp": 1915,
+  "method": 8,
+  "offset": 778455747
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0357.jpg",
+  "comp": 2977,
+  "uncomp": 3119,
+  "method": 8,
+  "offset": 778457623
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0358.jpg",
+  "comp": 32280,
+  "uncomp": 33092,
+  "method": 8,
+  "offset": 778460699
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0362.jpg",
+  "comp": 3253,
+  "uncomp": 3393,
+  "method": 8,
+  "offset": 778493078
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakaa0363.jpg",
+  "comp": 1487,
+  "uncomp": 1623,
+  "method": 8,
+  "offset": 778496430
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0001.jpg",
+  "comp": 29181,
+  "uncomp": 30360,
+  "method": 8,
+  "offset": 778498016
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0002.jpg",
+  "comp": 15993,
+  "uncomp": 16457,
+  "method": 8,
+  "offset": 778527296
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0003.jpg",
+  "comp": 29974,
+  "uncomp": 30559,
+  "method": 8,
+  "offset": 778543388
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0004.jpg",
+  "comp": 22172,
+  "uncomp": 22367,
+  "method": 8,
+  "offset": 778573461
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0005.jpg",
+  "comp": 893,
+  "uncomp": 1046,
+  "method": 8,
+  "offset": 778595732
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0006.jpg",
+  "comp": 853,
+  "uncomp": 1010,
+  "method": 8,
+  "offset": 778596724
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0007.jpg",
+  "comp": 6684,
+  "uncomp": 6987,
+  "method": 8,
+  "offset": 778597676
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0008.jpg",
+  "comp": 4743,
+  "uncomp": 4883,
+  "method": 8,
+  "offset": 778604459
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0009.jpg",
+  "comp": 2706,
+  "uncomp": 2863,
+  "method": 8,
+  "offset": 778609301
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0013.jpg",
+  "comp": 602,
+  "uncomp": 769,
+  "method": 8,
+  "offset": 778612106
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0014.jpg",
+  "comp": 21780,
+  "uncomp": 23112,
+  "method": 8,
+  "offset": 778612807
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0015.jpg",
+  "comp": 1621,
+  "uncomp": 1815,
+  "method": 8,
+  "offset": 778634686
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0016.jpg",
+  "comp": 3406,
+  "uncomp": 3669,
+  "method": 8,
+  "offset": 778636406
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0017.jpg",
+  "comp": 8220,
+  "uncomp": 8517,
+  "method": 8,
+  "offset": 778639911
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0018.jpg",
+  "comp": 6790,
+  "uncomp": 7142,
+  "method": 8,
+  "offset": 778648230
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0019.jpg",
+  "comp": 51735,
+  "uncomp": 54234,
+  "method": 8,
+  "offset": 778655119
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0020.jpg",
+  "comp": 14942,
+  "uncomp": 15313,
+  "method": 8,
+  "offset": 778706953
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0021.jpg",
+  "comp": 1142,
+  "uncomp": 1278,
+  "method": 8,
+  "offset": 778721994
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0022.jpg",
+  "comp": 29560,
+  "uncomp": 30416,
+  "method": 8,
+  "offset": 778723235
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0023.jpg",
+  "comp": 1038,
+  "uncomp": 1183,
+  "method": 8,
+  "offset": 778752894
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0024.jpg",
+  "comp": 20141,
+  "uncomp": 22188,
+  "method": 8,
+  "offset": 778754031
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0025.jpg",
+  "comp": 33346,
+  "uncomp": 33508,
+  "method": 8,
+  "offset": 778774271
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0026.jpg",
+  "comp": 29265,
+  "uncomp": 30105,
+  "method": 8,
+  "offset": 778807716
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0027.jpg",
+  "comp": 1908,
+  "uncomp": 2037,
+  "method": 8,
+  "offset": 778837080
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0028.jpg",
+  "comp": 2296,
+  "uncomp": 2430,
+  "method": 8,
+  "offset": 778839087
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0029.jpg",
+  "comp": 14118,
+  "uncomp": 15045,
+  "method": 8,
+  "offset": 778841482
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0030.jpg",
+  "comp": 1327,
+  "uncomp": 1476,
+  "method": 8,
+  "offset": 778855699
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0031.jpg",
+  "comp": 948,
+  "uncomp": 1094,
+  "method": 8,
+  "offset": 778857125
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0032.jpg",
+  "comp": 862,
+  "uncomp": 1017,
+  "method": 8,
+  "offset": 778858172
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0033.jpg",
+  "comp": 1239,
+  "uncomp": 1399,
+  "method": 8,
+  "offset": 778859133
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0035.jpg",
+  "comp": 23454,
+  "uncomp": 24436,
+  "method": 8,
+  "offset": 778860471
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0036.jpg",
+  "comp": 27028,
+  "uncomp": 28213,
+  "method": 8,
+  "offset": 778884024
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0037.jpg",
+  "comp": 14823,
+  "uncomp": 15120,
+  "method": 8,
+  "offset": 778911151
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0038.jpg",
+  "comp": 2689,
+  "uncomp": 2835,
+  "method": 8,
+  "offset": 778926073
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0039.jpg",
+  "comp": 2620,
+  "uncomp": 2759,
+  "method": 8,
+  "offset": 778928861
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0040.jpg",
+  "comp": 6028,
+  "uncomp": 6475,
+  "method": 8,
+  "offset": 778931580
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0041.jpg",
+  "comp": 13749,
+  "uncomp": 14235,
+  "method": 8,
+  "offset": 778937707
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0042.jpg",
+  "comp": 1455,
+  "uncomp": 1579,
+  "method": 8,
+  "offset": 778951555
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0043.jpg",
+  "comp": 1304,
+  "uncomp": 1440,
+  "method": 8,
+  "offset": 778953109
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0044.jpg",
+  "comp": 4471,
+  "uncomp": 4692,
+  "method": 8,
+  "offset": 778954512
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0045.jpg",
+  "comp": 14177,
+  "uncomp": 14567,
+  "method": 8,
+  "offset": 778959082
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0046.jpg",
+  "comp": 4579,
+  "uncomp": 4744,
+  "method": 8,
+  "offset": 778973358
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0047.jpg",
+  "comp": 4353,
+  "uncomp": 4535,
+  "method": 8,
+  "offset": 778978036
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0048.jpg",
+  "comp": 4029,
+  "uncomp": 4243,
+  "method": 8,
+  "offset": 778982488
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0049.jpg",
+  "comp": 27454,
+  "uncomp": 28354,
+  "method": 8,
+  "offset": 778986616
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0050.jpg",
+  "comp": 25511,
+  "uncomp": 26549,
+  "method": 8,
+  "offset": 779014169
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0051.jpg",
+  "comp": 28146,
+  "uncomp": 29068,
+  "method": 8,
+  "offset": 779039779
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0052.jpg",
+  "comp": 1374,
+  "uncomp": 1514,
+  "method": 8,
+  "offset": 779068024
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0053.jpg",
+  "comp": 10040,
+  "uncomp": 11121,
+  "method": 8,
+  "offset": 779069497
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0054.jpg",
+  "comp": 1961,
+  "uncomp": 2132,
+  "method": 8,
+  "offset": 779079636
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0055.jpg",
+  "comp": 1024,
+  "uncomp": 1171,
+  "method": 8,
+  "offset": 779081696
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0056.jpg",
+  "comp": 34691,
+  "uncomp": 35454,
+  "method": 8,
+  "offset": 779082819
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0057.jpg",
+  "comp": 64396,
+  "uncomp": 65383,
+  "method": 8,
+  "offset": 779117609
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0058.jpg",
+  "comp": 16543,
+  "uncomp": 16987,
+  "method": 8,
+  "offset": 779182104
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0059.jpg",
+  "comp": 2109,
+  "uncomp": 2239,
+  "method": 8,
+  "offset": 779198746
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0060.jpg",
+  "comp": 6458,
+  "uncomp": 6698,
+  "method": 8,
+  "offset": 779200954
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0061.jpg",
+  "comp": 16701,
+  "uncomp": 17034,
+  "method": 8,
+  "offset": 779207511
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0062.jpg",
+  "comp": 11918,
+  "uncomp": 12072,
+  "method": 8,
+  "offset": 779224311
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0063.jpg",
+  "comp": 8208,
+  "uncomp": 8382,
+  "method": 8,
+  "offset": 779236328
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0064.jpg",
+  "comp": 4666,
+  "uncomp": 4810,
+  "method": 8,
+  "offset": 779244635
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0065.jpg",
+  "comp": 9703,
+  "uncomp": 9994,
+  "method": 8,
+  "offset": 779249400
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0066.jpg",
+  "comp": 5198,
+  "uncomp": 5370,
+  "method": 8,
+  "offset": 779259202
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0067.jpg",
+  "comp": 4157,
+  "uncomp": 4331,
+  "method": 8,
+  "offset": 779264499
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0070.jpg",
+  "comp": 3533,
+  "uncomp": 3809,
+  "method": 8,
+  "offset": 779268755
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0071.jpg",
+  "comp": 21698,
+  "uncomp": 23220,
+  "method": 8,
+  "offset": 779272387
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0072.jpg",
+  "comp": 2367,
+  "uncomp": 2541,
+  "method": 8,
+  "offset": 779294184
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0073.jpg",
+  "comp": 49607,
+  "uncomp": 51398,
+  "method": 8,
+  "offset": 779296650
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0074.jpg",
+  "comp": 7785,
+  "uncomp": 8197,
+  "method": 8,
+  "offset": 779346356
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0075.jpg",
+  "comp": 2552,
+  "uncomp": 2686,
+  "method": 8,
+  "offset": 779354240
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0076.jpg",
+  "comp": 6061,
+  "uncomp": 6200,
+  "method": 8,
+  "offset": 779356891
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0077.jpg",
+  "comp": 5100,
+  "uncomp": 5284,
+  "method": 8,
+  "offset": 779363051
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0078.jpg",
+  "comp": 3697,
+  "uncomp": 3829,
+  "method": 8,
+  "offset": 779368250
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0079.jpg",
+  "comp": 2942,
+  "uncomp": 3080,
+  "method": 8,
+  "offset": 779372046
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0080.jpg",
+  "comp": 8249,
+  "uncomp": 8584,
+  "method": 8,
+  "offset": 779375087
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0081.jpg",
+  "comp": 10769,
+  "uncomp": 11008,
+  "method": 8,
+  "offset": 779383435
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0082.jpg",
+  "comp": 1661,
+  "uncomp": 1793,
+  "method": 8,
+  "offset": 779394303
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0083.jpg",
+  "comp": 760,
+  "uncomp": 922,
+  "method": 8,
+  "offset": 779396063
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0084.jpg",
+  "comp": 831,
+  "uncomp": 1003,
+  "method": 8,
+  "offset": 779396922
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0085.jpg",
+  "comp": 8511,
+  "uncomp": 8748,
+  "method": 8,
+  "offset": 779397852
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0086.jpg",
+  "comp": 2000,
+  "uncomp": 2161,
+  "method": 8,
+  "offset": 779406462
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0087.jpg",
+  "comp": 27759,
+  "uncomp": 28801,
+  "method": 8,
+  "offset": 779408561
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0088.jpg",
+  "comp": 1169,
+  "uncomp": 1307,
+  "method": 8,
+  "offset": 779436419
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0089.jpg",
+  "comp": 1167,
+  "uncomp": 1311,
+  "method": 8,
+  "offset": 779437687
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0090.jpg",
+  "comp": 4969,
+  "uncomp": 5183,
+  "method": 8,
+  "offset": 779438953
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0091.jpg",
+  "comp": 1037,
+  "uncomp": 1182,
+  "method": 8,
+  "offset": 779444021
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0092.jpg",
+  "comp": 32150,
+  "uncomp": 32766,
+  "method": 8,
+  "offset": 779445157
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0093.jpg",
+  "comp": 1282,
+  "uncomp": 1423,
+  "method": 8,
+  "offset": 779477406
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0094.jpg",
+  "comp": 1186,
+  "uncomp": 1331,
+  "method": 8,
+  "offset": 779478787
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0095.jpg",
+  "comp": 2107,
+  "uncomp": 2240,
+  "method": 8,
+  "offset": 779480072
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0096.jpg",
+  "comp": 1120,
+  "uncomp": 1270,
+  "method": 8,
+  "offset": 779482278
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0097.jpg",
+  "comp": 8878,
+  "uncomp": 9172,
+  "method": 8,
+  "offset": 779483497
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0098.jpg",
+  "comp": 27207,
+  "uncomp": 28617,
+  "method": 8,
+  "offset": 779492474
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0099.jpg",
+  "comp": 17707,
+  "uncomp": 17891,
+  "method": 8,
+  "offset": 779519780
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0100.jpg",
+  "comp": 13045,
+  "uncomp": 13564,
+  "method": 8,
+  "offset": 779537586
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0101.jpg",
+  "comp": 26517,
+  "uncomp": 27758,
+  "method": 8,
+  "offset": 779550730
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0102.jpg",
+  "comp": 13276,
+  "uncomp": 13957,
+  "method": 8,
+  "offset": 779577346
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0103.jpg",
+  "comp": 1192,
+  "uncomp": 1331,
+  "method": 8,
+  "offset": 779590721
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0104.jpg",
+  "comp": 12985,
+  "uncomp": 13686,
+  "method": 8,
+  "offset": 779592012
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0105.jpg",
+  "comp": 17160,
+  "uncomp": 17642,
+  "method": 8,
+  "offset": 779605096
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0106.jpg",
+  "comp": 30844,
+  "uncomp": 32138,
+  "method": 8,
+  "offset": 779622355
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0107.jpg",
+  "comp": 8829,
+  "uncomp": 9097,
+  "method": 8,
+  "offset": 779653298
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0108.jpg",
+  "comp": 5974,
+  "uncomp": 6411,
+  "method": 8,
+  "offset": 779662226
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0109.jpg",
+  "comp": 9067,
+  "uncomp": 9261,
+  "method": 8,
+  "offset": 779668299
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0110.jpg",
+  "comp": 24923,
+  "uncomp": 26122,
+  "method": 8,
+  "offset": 779677465
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0111.jpg",
+  "comp": 12055,
+  "uncomp": 12501,
+  "method": 8,
+  "offset": 779702487
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0112.jpg",
+  "comp": 768,
+  "uncomp": 939,
+  "method": 8,
+  "offset": 779714641
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0113.jpg",
+  "comp": 1157,
+  "uncomp": 1297,
+  "method": 8,
+  "offset": 779715508
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0114.jpg",
+  "comp": 14714,
+  "uncomp": 15200,
+  "method": 8,
+  "offset": 779716764
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0115.jpg",
+  "comp": 7369,
+  "uncomp": 8507,
+  "method": 8,
+  "offset": 779731577
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0116.jpg",
+  "comp": 1221,
+  "uncomp": 1360,
+  "method": 8,
+  "offset": 779739045
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0117.jpg",
+  "comp": 1140,
+  "uncomp": 1302,
+  "method": 8,
+  "offset": 779740365
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0118.jpg",
+  "comp": 15874,
+  "uncomp": 16300,
+  "method": 8,
+  "offset": 779741604
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0119.jpg",
+  "comp": 4347,
+  "uncomp": 4497,
+  "method": 8,
+  "offset": 779757577
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0120.jpg",
+  "comp": 9374,
+  "uncomp": 9520,
+  "method": 8,
+  "offset": 779762023
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0121.jpg",
+  "comp": 3228,
+  "uncomp": 3434,
+  "method": 8,
+  "offset": 779771496
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0122.jpg",
+  "comp": 8488,
+  "uncomp": 8688,
+  "method": 8,
+  "offset": 779774823
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0123.jpg",
+  "comp": 6296,
+  "uncomp": 6722,
+  "method": 8,
+  "offset": 779783410
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0124.jpg",
+  "comp": 3963,
+  "uncomp": 4156,
+  "method": 8,
+  "offset": 779789805
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0125.jpg",
+  "comp": 2308,
+  "uncomp": 2445,
+  "method": 8,
+  "offset": 779793867
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0126.jpg",
+  "comp": 5241,
+  "uncomp": 5650,
+  "method": 8,
+  "offset": 779796274
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0127.jpg",
+  "comp": 15258,
+  "uncomp": 15738,
+  "method": 8,
+  "offset": 779801614
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0128.jpg",
+  "comp": 4044,
+  "uncomp": 4208,
+  "method": 8,
+  "offset": 779816971
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0129.jpg",
+  "comp": 2470,
+  "uncomp": 2812,
+  "method": 8,
+  "offset": 779821114
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0130.jpg",
+  "comp": 2981,
+  "uncomp": 3183,
+  "method": 8,
+  "offset": 779823683
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0131.jpg",
+  "comp": 11885,
+  "uncomp": 12503,
+  "method": 8,
+  "offset": 779826763
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0132.jpg",
+  "comp": 6282,
+  "uncomp": 6482,
+  "method": 8,
+  "offset": 779838747
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0133.jpg",
+  "comp": 9944,
+  "uncomp": 10428,
+  "method": 8,
+  "offset": 779845128
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0134.jpg",
+  "comp": 4414,
+  "uncomp": 4921,
+  "method": 8,
+  "offset": 779855171
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0135.jpg",
+  "comp": 5867,
+  "uncomp": 6063,
+  "method": 8,
+  "offset": 779859684
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0136.jpg",
+  "comp": 2040,
+  "uncomp": 2181,
+  "method": 8,
+  "offset": 779865650
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0137.jpg",
+  "comp": 28939,
+  "uncomp": 29784,
+  "method": 8,
+  "offset": 779867789
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0138.jpg",
+  "comp": 1678,
+  "uncomp": 1841,
+  "method": 8,
+  "offset": 779896827
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0139.jpg",
+  "comp": 15453,
+  "uncomp": 16024,
+  "method": 8,
+  "offset": 779898604
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0140.jpg",
+  "comp": 27998,
+  "uncomp": 28951,
+  "method": 8,
+  "offset": 779914156
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0141.jpg",
+  "comp": 13671,
+  "uncomp": 14119,
+  "method": 8,
+  "offset": 779942253
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0142.jpg",
+  "comp": 3893,
+  "uncomp": 4093,
+  "method": 8,
+  "offset": 779956023
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0143.jpg",
+  "comp": 1139,
+  "uncomp": 1287,
+  "method": 8,
+  "offset": 779960015
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0144.jpg",
+  "comp": 2499,
+  "uncomp": 2832,
+  "method": 8,
+  "offset": 779961253
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0145.jpg",
+  "comp": 690,
+  "uncomp": 861,
+  "method": 8,
+  "offset": 779963851
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0146.jpg",
+  "comp": 7187,
+  "uncomp": 7442,
+  "method": 8,
+  "offset": 779964640
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0147.jpg",
+  "comp": 7112,
+  "uncomp": 7281,
+  "method": 8,
+  "offset": 779971926
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0148.jpg",
+  "comp": 6783,
+  "uncomp": 7115,
+  "method": 8,
+  "offset": 779979137
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0149.jpg",
+  "comp": 6420,
+  "uncomp": 6697,
+  "method": 8,
+  "offset": 779986019
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0150.jpg",
+  "comp": 11540,
+  "uncomp": 12447,
+  "method": 8,
+  "offset": 779992538
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0151.jpg",
+  "comp": 27562,
+  "uncomp": 28879,
+  "method": 8,
+  "offset": 780004177
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0152.jpg",
+  "comp": 8172,
+  "uncomp": 8441,
+  "method": 8,
+  "offset": 780031838
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0153.jpg",
+  "comp": 14096,
+  "uncomp": 14731,
+  "method": 8,
+  "offset": 780040109
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0154.jpg",
+  "comp": 3088,
+  "uncomp": 3307,
+  "method": 8,
+  "offset": 780054304
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0155.jpg",
+  "comp": 3183,
+  "uncomp": 3414,
+  "method": 8,
+  "offset": 780057491
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0156.jpg",
+  "comp": 9863,
+  "uncomp": 10354,
+  "method": 8,
+  "offset": 780060773
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0157.jpg",
+  "comp": 5179,
+  "uncomp": 5388,
+  "method": 8,
+  "offset": 780070735
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0158.jpg",
+  "comp": 2117,
+  "uncomp": 2255,
+  "method": 8,
+  "offset": 780076013
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0159.jpg",
+  "comp": 2170,
+  "uncomp": 2462,
+  "method": 8,
+  "offset": 780078229
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0160.jpg",
+  "comp": 2403,
+  "uncomp": 2724,
+  "method": 8,
+  "offset": 780080498
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0161.jpg",
+  "comp": 1943,
+  "uncomp": 2100,
+  "method": 8,
+  "offset": 780083000
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0162.jpg",
+  "comp": 10403,
+  "uncomp": 10924,
+  "method": 8,
+  "offset": 780085042
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0163.jpg",
+  "comp": 3614,
+  "uncomp": 3818,
+  "method": 8,
+  "offset": 780095544
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0164.jpg",
+  "comp": 2467,
+  "uncomp": 2694,
+  "method": 8,
+  "offset": 780099257
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0165.jpg",
+  "comp": 3989,
+  "uncomp": 4179,
+  "method": 8,
+  "offset": 780101823
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0166.jpg",
+  "comp": 3936,
+  "uncomp": 4146,
+  "method": 8,
+  "offset": 780105911
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0167.jpg",
+  "comp": 5843,
+  "uncomp": 6127,
+  "method": 8,
+  "offset": 780109946
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0168.jpg",
+  "comp": 8172,
+  "uncomp": 8444,
+  "method": 8,
+  "offset": 780115888
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0169.jpg",
+  "comp": 6606,
+  "uncomp": 6989,
+  "method": 8,
+  "offset": 780124159
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0170.jpg",
+  "comp": 13123,
+  "uncomp": 13534,
+  "method": 8,
+  "offset": 780130864
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0171.jpg",
+  "comp": 7753,
+  "uncomp": 8023,
+  "method": 8,
+  "offset": 780144086
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0172.jpg",
+  "comp": 7555,
+  "uncomp": 7869,
+  "method": 8,
+  "offset": 780151938
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0173.jpg",
+  "comp": 3793,
+  "uncomp": 3975,
+  "method": 8,
+  "offset": 780159592
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0174.jpg",
+  "comp": 5903,
+  "uncomp": 6373,
+  "method": 8,
+  "offset": 780163484
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0175.jpg",
+  "comp": 9781,
+  "uncomp": 10008,
+  "method": 8,
+  "offset": 780169486
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0176.jpg",
+  "comp": 8915,
+  "uncomp": 9243,
+  "method": 8,
+  "offset": 780179366
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0177.jpg",
+  "comp": 9261,
+  "uncomp": 9550,
+  "method": 8,
+  "offset": 780188380
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0178.jpg",
+  "comp": 3953,
+  "uncomp": 4140,
+  "method": 8,
+  "offset": 780197740
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0179.jpg",
+  "comp": 3668,
+  "uncomp": 3825,
+  "method": 8,
+  "offset": 780201792
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0180.jpg",
+  "comp": 1863,
+  "uncomp": 2023,
+  "method": 8,
+  "offset": 780205559
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0181.jpg",
+  "comp": 2616,
+  "uncomp": 2741,
+  "method": 8,
+  "offset": 780207521
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0182.jpg",
+  "comp": 2376,
+  "uncomp": 2531,
+  "method": 8,
+  "offset": 780210236
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0183.jpg",
+  "comp": 2452,
+  "uncomp": 2595,
+  "method": 8,
+  "offset": 780212711
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0184.jpg",
+  "comp": 1770,
+  "uncomp": 1900,
+  "method": 8,
+  "offset": 780215262
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0185.jpg",
+  "comp": 1657,
+  "uncomp": 1788,
+  "method": 8,
+  "offset": 780217131
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0186.jpg",
+  "comp": 1658,
+  "uncomp": 1799,
+  "method": 8,
+  "offset": 780218887
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0187.jpg",
+  "comp": 14535,
+  "uncomp": 15421,
+  "method": 8,
+  "offset": 780220644
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0188.jpg",
+  "comp": 19819,
+  "uncomp": 20208,
+  "method": 8,
+  "offset": 780235278
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0189.jpg",
+  "comp": 15962,
+  "uncomp": 16571,
+  "method": 8,
+  "offset": 780255196
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0190.jpg",
+  "comp": 16813,
+  "uncomp": 17174,
+  "method": 8,
+  "offset": 780271257
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0191.jpg",
+  "comp": 4818,
+  "uncomp": 4984,
+  "method": 8,
+  "offset": 780288169
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0192.jpg",
+  "comp": 9216,
+  "uncomp": 9561,
+  "method": 8,
+  "offset": 780293086
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0193.jpg",
+  "comp": 1189,
+  "uncomp": 1331,
+  "method": 8,
+  "offset": 780302401
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0194.jpg",
+  "comp": 2148,
+  "uncomp": 2301,
+  "method": 8,
+  "offset": 780303689
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0195.jpg",
+  "comp": 8690,
+  "uncomp": 8969,
+  "method": 8,
+  "offset": 780305936
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0196.jpg",
+  "comp": 114406,
+  "uncomp": 117572,
+  "method": 8,
+  "offset": 780314725
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0197.jpg",
+  "comp": 5749,
+  "uncomp": 6099,
+  "method": 8,
+  "offset": 780429230
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0198.jpg",
+  "comp": 16185,
+  "uncomp": 16355,
+  "method": 8,
+  "offset": 780435078
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0199.jpg",
+  "comp": 6437,
+  "uncomp": 6670,
+  "method": 8,
+  "offset": 780451362
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0200.jpg",
+  "comp": 17515,
+  "uncomp": 17871,
+  "method": 8,
+  "offset": 780457898
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0201.jpg",
+  "comp": 22914,
+  "uncomp": 24358,
+  "method": 8,
+  "offset": 780475512
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0202.jpg",
+  "comp": 7574,
+  "uncomp": 7780,
+  "method": 8,
+  "offset": 780498525
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0203.jpg",
+  "comp": 3711,
+  "uncomp": 3908,
+  "method": 8,
+  "offset": 780506198
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0204.jpg",
+  "comp": 3724,
+  "uncomp": 3926,
+  "method": 8,
+  "offset": 780510008
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0205.jpg",
+  "comp": 2902,
+  "uncomp": 3096,
+  "method": 8,
+  "offset": 780513831
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0206.jpg",
+  "comp": 7423,
+  "uncomp": 7769,
+  "method": 8,
+  "offset": 780516832
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0207.jpg",
+  "comp": 8546,
+  "uncomp": 8896,
+  "method": 8,
+  "offset": 780524354
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0208.jpg",
+  "comp": 8074,
+  "uncomp": 8253,
+  "method": 8,
+  "offset": 780532999
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0209.jpg",
+  "comp": 8674,
+  "uncomp": 8931,
+  "method": 8,
+  "offset": 780541172
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0210.jpg",
+  "comp": 12598,
+  "uncomp": 13424,
+  "method": 8,
+  "offset": 780549945
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0211.jpg",
+  "comp": 15343,
+  "uncomp": 15912,
+  "method": 8,
+  "offset": 780562642
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0212.jpg",
+  "comp": 7146,
+  "uncomp": 7379,
+  "method": 8,
+  "offset": 780578084
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0213.jpg",
+  "comp": 7483,
+  "uncomp": 7704,
+  "method": 8,
+  "offset": 780585329
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0214.jpg",
+  "comp": 3422,
+  "uncomp": 3635,
+  "method": 8,
+  "offset": 780592911
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0215.jpg",
+  "comp": 14897,
+  "uncomp": 15443,
+  "method": 8,
+  "offset": 780596432
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0216.jpg",
+  "comp": 4063,
+  "uncomp": 4270,
+  "method": 8,
+  "offset": 780611428
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0217.jpg",
+  "comp": 8289,
+  "uncomp": 8546,
+  "method": 8,
+  "offset": 780615590
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0218.jpg",
+  "comp": 8722,
+  "uncomp": 8951,
+  "method": 8,
+  "offset": 780623978
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0219.jpg",
+  "comp": 4041,
+  "uncomp": 4208,
+  "method": 8,
+  "offset": 780632799
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0220.jpg",
+  "comp": 33942,
+  "uncomp": 34888,
+  "method": 8,
+  "offset": 780636939
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0221.jpg",
+  "comp": 14189,
+  "uncomp": 14654,
+  "method": 8,
+  "offset": 780670980
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0222.jpg",
+  "comp": 5472,
+  "uncomp": 5809,
+  "method": 8,
+  "offset": 780685268
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0223.jpg",
+  "comp": 23033,
+  "uncomp": 24261,
+  "method": 8,
+  "offset": 780690839
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0224.jpg",
+  "comp": 6949,
+  "uncomp": 7215,
+  "method": 8,
+  "offset": 780713971
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0225.jpg",
+  "comp": 2138,
+  "uncomp": 2273,
+  "method": 8,
+  "offset": 780721019
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0226.jpg",
+  "comp": 5288,
+  "uncomp": 5729,
+  "method": 8,
+  "offset": 780723256
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0227.jpg",
+  "comp": 27515,
+  "uncomp": 28746,
+  "method": 8,
+  "offset": 780728643
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0228.jpg",
+  "comp": 14020,
+  "uncomp": 14556,
+  "method": 8,
+  "offset": 780756257
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0229.jpg",
+  "comp": 8149,
+  "uncomp": 8341,
+  "method": 8,
+  "offset": 780770376
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0230.jpg",
+  "comp": 22427,
+  "uncomp": 23798,
+  "method": 8,
+  "offset": 780778624
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0231.jpg",
+  "comp": 4387,
+  "uncomp": 4552,
+  "method": 8,
+  "offset": 780801150
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0232.jpg",
+  "comp": 7148,
+  "uncomp": 7327,
+  "method": 8,
+  "offset": 780805636
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0233.jpg",
+  "comp": 7668,
+  "uncomp": 7856,
+  "method": 8,
+  "offset": 780812883
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0234.jpg",
+  "comp": 7304,
+  "uncomp": 7694,
+  "method": 8,
+  "offset": 780820650
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0235.jpg",
+  "comp": 14546,
+  "uncomp": 15118,
+  "method": 8,
+  "offset": 780828053
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0236.jpg",
+  "comp": 20281,
+  "uncomp": 22010,
+  "method": 8,
+  "offset": 780842698
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0237.jpg",
+  "comp": 15141,
+  "uncomp": 15679,
+  "method": 8,
+  "offset": 780863078
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0238.jpg",
+  "comp": 9335,
+  "uncomp": 9570,
+  "method": 8,
+  "offset": 780878318
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0239.jpg",
+  "comp": 22244,
+  "uncomp": 23743,
+  "method": 8,
+  "offset": 780887752
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0240.jpg",
+  "comp": 7953,
+  "uncomp": 8124,
+  "method": 8,
+  "offset": 780910095
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0241.jpg",
+  "comp": 7098,
+  "uncomp": 7434,
+  "method": 8,
+  "offset": 780918147
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0242.jpg",
+  "comp": 4189,
+  "uncomp": 4368,
+  "method": 8,
+  "offset": 780925344
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0243.jpg",
+  "comp": 15350,
+  "uncomp": 15765,
+  "method": 8,
+  "offset": 780929632
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0244.jpg",
+  "comp": 25204,
+  "uncomp": 26347,
+  "method": 8,
+  "offset": 780945081
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0245.jpg",
+  "comp": 10988,
+  "uncomp": 11604,
+  "method": 8,
+  "offset": 780970384
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0246.jpg",
+  "comp": 8116,
+  "uncomp": 8346,
+  "method": 8,
+  "offset": 780981471
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0247.jpg",
+  "comp": 26590,
+  "uncomp": 27405,
+  "method": 8,
+  "offset": 780989686
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0248.jpg",
+  "comp": 14099,
+  "uncomp": 14509,
+  "method": 8,
+  "offset": 781016375
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0249.jpg",
+  "comp": 7377,
+  "uncomp": 7567,
+  "method": 8,
+  "offset": 781030573
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0250.jpg",
+  "comp": 11312,
+  "uncomp": 12045,
+  "method": 8,
+  "offset": 781038049
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0251.jpg",
+  "comp": 6375,
+  "uncomp": 6677,
+  "method": 8,
+  "offset": 781049460
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0252.jpg",
+  "comp": 1639,
+  "uncomp": 1818,
+  "method": 8,
+  "offset": 781055934
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0253.jpg",
+  "comp": 12357,
+  "uncomp": 12870,
+  "method": 8,
+  "offset": 781057672
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0254.jpg",
+  "comp": 5221,
+  "uncomp": 5577,
+  "method": 8,
+  "offset": 781070128
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0255.jpg",
+  "comp": 3160,
+  "uncomp": 3365,
+  "method": 8,
+  "offset": 781075448
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0256.jpg",
+  "comp": 8386,
+  "uncomp": 8591,
+  "method": 8,
+  "offset": 781078707
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0257.jpg",
+  "comp": 29162,
+  "uncomp": 30133,
+  "method": 8,
+  "offset": 781087192
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0258.jpg",
+  "comp": 13276,
+  "uncomp": 13779,
+  "method": 8,
+  "offset": 781116453
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0259.jpg",
+  "comp": 15957,
+  "uncomp": 16374,
+  "method": 8,
+  "offset": 781129828
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0260.jpg",
+  "comp": 13848,
+  "uncomp": 14365,
+  "method": 8,
+  "offset": 781145884
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0261.jpg",
+  "comp": 8899,
+  "uncomp": 9080,
+  "method": 8,
+  "offset": 781159831
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0262.jpg",
+  "comp": 15641,
+  "uncomp": 16185,
+  "method": 8,
+  "offset": 781168829
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0263.jpg",
+  "comp": 15981,
+  "uncomp": 16464,
+  "method": 8,
+  "offset": 781184569
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0264.jpg",
+  "comp": 14203,
+  "uncomp": 14816,
+  "method": 8,
+  "offset": 781200649
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0321.jpg",
+  "comp": 3183,
+  "uncomp": 3345,
+  "method": 8,
+  "offset": 781214951
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0324.jpg",
+  "comp": 103708,
+  "uncomp": 108009,
+  "method": 8,
+  "offset": 781218233
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0325.jpg",
+  "comp": 1322,
+  "uncomp": 1460,
+  "method": 8,
+  "offset": 781322040
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0326.jpg",
+  "comp": 1452,
+  "uncomp": 1581,
+  "method": 8,
+  "offset": 781323461
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0327.jpg",
+  "comp": 3830,
+  "uncomp": 4029,
+  "method": 8,
+  "offset": 781325012
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0329.jpg",
+  "comp": 2865,
+  "uncomp": 3003,
+  "method": 8,
+  "offset": 781328941
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0330.jpg",
+  "comp": 25361,
+  "uncomp": 26265,
+  "method": 8,
+  "offset": 781331905
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0331.jpg",
+  "comp": 1603,
+  "uncomp": 1737,
+  "method": 8,
+  "offset": 781357365
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0332.jpg",
+  "comp": 720,
+  "uncomp": 881,
+  "method": 8,
+  "offset": 781359067
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0333.jpg",
+  "comp": 3743,
+  "uncomp": 3894,
+  "method": 8,
+  "offset": 781359886
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0334.jpg",
+  "comp": 2619,
+  "uncomp": 2761,
+  "method": 8,
+  "offset": 781363728
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0335.jpg",
+  "comp": 1200,
+  "uncomp": 1344,
+  "method": 8,
+  "offset": 781366446
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakab0336.jpg",
+  "comp": 10445,
+  "uncomp": 10646,
+  "method": 8,
+  "offset": 781367745
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0094.jpg",
+  "comp": 6681,
+  "uncomp": 7885,
+  "method": 8,
+  "offset": 781378289
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0095.jpg",
+  "comp": 3249,
+  "uncomp": 3491,
+  "method": 8,
+  "offset": 781385069
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0096.jpg",
+  "comp": 3853,
+  "uncomp": 4046,
+  "method": 8,
+  "offset": 781388417
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0097.jpg",
+  "comp": 961,
+  "uncomp": 1110,
+  "method": 8,
+  "offset": 781392369
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0098.jpg",
+  "comp": 969,
+  "uncomp": 1117,
+  "method": 8,
+  "offset": 781393429
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0099.jpg",
+  "comp": 8550,
+  "uncomp": 8892,
+  "method": 8,
+  "offset": 781394497
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0100.jpg",
+  "comp": 1292,
+  "uncomp": 1423,
+  "method": 8,
+  "offset": 781403146
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0101.jpg",
+  "comp": 2364,
+  "uncomp": 2498,
+  "method": 8,
+  "offset": 781404537
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0102.jpg",
+  "comp": 34220,
+  "uncomp": 34592,
+  "method": 8,
+  "offset": 781407000
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0104.jpg",
+  "comp": 1064,
+  "uncomp": 1206,
+  "method": 8,
+  "offset": 781441319
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0105.jpg",
+  "comp": 2229,
+  "uncomp": 2411,
+  "method": 8,
+  "offset": 781442482
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0106.jpg",
+  "comp": 4168,
+  "uncomp": 4425,
+  "method": 8,
+  "offset": 781444810
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0107.jpg",
+  "comp": 1843,
+  "uncomp": 1972,
+  "method": 8,
+  "offset": 781449077
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0108.jpg",
+  "comp": 2265,
+  "uncomp": 2451,
+  "method": 8,
+  "offset": 781451019
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0119.jpg",
+  "comp": 15138,
+  "uncomp": 15552,
+  "method": 8,
+  "offset": 781453383
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0120.jpg",
+  "comp": 16829,
+  "uncomp": 17196,
+  "method": 8,
+  "offset": 781468620
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0121.jpg",
+  "comp": 4851,
+  "uncomp": 5096,
+  "method": 8,
+  "offset": 781485548
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0122.jpg",
+  "comp": 4745,
+  "uncomp": 4977,
+  "method": 8,
+  "offset": 781490498
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0123.jpg",
+  "comp": 7818,
+  "uncomp": 8156,
+  "method": 8,
+  "offset": 781495342
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0124.jpg",
+  "comp": 3297,
+  "uncomp": 3436,
+  "method": 8,
+  "offset": 781503259
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0125.jpg",
+  "comp": 4041,
+  "uncomp": 4182,
+  "method": 8,
+  "offset": 781506655
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0126.jpg",
+  "comp": 1930,
+  "uncomp": 2061,
+  "method": 8,
+  "offset": 781510795
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0127.jpg",
+  "comp": 15639,
+  "uncomp": 16150,
+  "method": 8,
+  "offset": 781512824
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0128.jpg",
+  "comp": 1816,
+  "uncomp": 1945,
+  "method": 8,
+  "offset": 781528562
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0129.jpg",
+  "comp": 2484,
+  "uncomp": 2619,
+  "method": 8,
+  "offset": 781530477
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0130.jpg",
+  "comp": 29060,
+  "uncomp": 30355,
+  "method": 8,
+  "offset": 781533060
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0131.jpg",
+  "comp": 3563,
+  "uncomp": 3692,
+  "method": 8,
+  "offset": 781562219
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0132.jpg",
+  "comp": 15869,
+  "uncomp": 16376,
+  "method": 8,
+  "offset": 781565881
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0133.jpg",
+  "comp": 1532,
+  "uncomp": 1669,
+  "method": 8,
+  "offset": 781581849
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0134.jpg",
+  "comp": 2919,
+  "uncomp": 3048,
+  "method": 8,
+  "offset": 781583480
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0135.jpg",
+  "comp": 727,
+  "uncomp": 889,
+  "method": 8,
+  "offset": 781586498
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0136.jpg",
+  "comp": 883,
+  "uncomp": 1036,
+  "method": 8,
+  "offset": 781587324
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0137.jpg",
+  "comp": 1483,
+  "uncomp": 1631,
+  "method": 8,
+  "offset": 781588306
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0138.jpg",
+  "comp": 1056,
+  "uncomp": 1201,
+  "method": 8,
+  "offset": 781589888
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0139.jpg",
+  "comp": 3982,
+  "uncomp": 4209,
+  "method": 8,
+  "offset": 781591043
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0140.jpg",
+  "comp": 1895,
+  "uncomp": 2087,
+  "method": 8,
+  "offset": 781595124
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0141.jpg",
+  "comp": 1403,
+  "uncomp": 1550,
+  "method": 8,
+  "offset": 781597118
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0142.jpg",
+  "comp": 1329,
+  "uncomp": 1481,
+  "method": 8,
+  "offset": 781598620
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0143.jpg",
+  "comp": 1992,
+  "uncomp": 2178,
+  "method": 8,
+  "offset": 781600048
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0144.jpg",
+  "comp": 1829,
+  "uncomp": 1963,
+  "method": 8,
+  "offset": 781602139
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0145.jpg",
+  "comp": 863,
+  "uncomp": 1019,
+  "method": 8,
+  "offset": 781604067
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0146.jpg",
+  "comp": 1876,
+  "uncomp": 2069,
+  "method": 8,
+  "offset": 781605029
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0147.jpg",
+  "comp": 1234,
+  "uncomp": 1383,
+  "method": 8,
+  "offset": 781607004
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0148.jpg",
+  "comp": 3292,
+  "uncomp": 3422,
+  "method": 8,
+  "offset": 781608337
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0149.jpg",
+  "comp": 3168,
+  "uncomp": 3297,
+  "method": 8,
+  "offset": 781611728
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0150.jpg",
+  "comp": 5627,
+  "uncomp": 5782,
+  "method": 8,
+  "offset": 781614995
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0151.jpg",
+  "comp": 1262,
+  "uncomp": 1397,
+  "method": 8,
+  "offset": 781620721
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0152.jpg",
+  "comp": 15194,
+  "uncomp": 15828,
+  "method": 8,
+  "offset": 781622082
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0153.jpg",
+  "comp": 27283,
+  "uncomp": 28343,
+  "method": 8,
+  "offset": 781637375
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0307.jpg",
+  "comp": 1109,
+  "uncomp": 1252,
+  "method": 8,
+  "offset": 781664757
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakac0309.jpg",
+  "comp": 1039,
+  "uncomp": 1182,
+  "method": 8,
+  "offset": 781665965
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0001.jpg",
+  "comp": 5892,
+  "uncomp": 6193,
+  "method": 8,
+  "offset": 781667103
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0002.jpg",
+  "comp": 10483,
+  "uncomp": 11427,
+  "method": 8,
+  "offset": 781673094
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0003.jpg",
+  "comp": 1278,
+  "uncomp": 1428,
+  "method": 8,
+  "offset": 781683676
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0004.jpg",
+  "comp": 67347,
+  "uncomp": 68362,
+  "method": 8,
+  "offset": 781685053
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0005.jpg",
+  "comp": 14087,
+  "uncomp": 14881,
+  "method": 8,
+  "offset": 781752499
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0006.jpg",
+  "comp": 7045,
+  "uncomp": 7224,
+  "method": 8,
+  "offset": 781766685
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0007.jpg",
+  "comp": 11408,
+  "uncomp": 12082,
+  "method": 8,
+  "offset": 781773829
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0008.jpg",
+  "comp": 25118,
+  "uncomp": 26358,
+  "method": 8,
+  "offset": 781785336
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0009.jpg",
+  "comp": 22583,
+  "uncomp": 23806,
+  "method": 8,
+  "offset": 781810553
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0010.jpg",
+  "comp": 22540,
+  "uncomp": 23644,
+  "method": 8,
+  "offset": 781833235
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0011.jpg",
+  "comp": 13360,
+  "uncomp": 13833,
+  "method": 8,
+  "offset": 781855874
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0012.jpg",
+  "comp": 17175,
+  "uncomp": 17509,
+  "method": 8,
+  "offset": 781869333
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0013.jpg",
+  "comp": 25545,
+  "uncomp": 26701,
+  "method": 8,
+  "offset": 781886607
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0014.jpg",
+  "comp": 43568,
+  "uncomp": 44265,
+  "method": 8,
+  "offset": 781912251
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0015.jpg",
+  "comp": 205061,
+  "uncomp": 213976,
+  "method": 8,
+  "offset": 781955918
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0016.jpg",
+  "comp": 2123,
+  "uncomp": 2257,
+  "method": 8,
+  "offset": 782161078
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0017.jpg",
+  "comp": 8302,
+  "uncomp": 8588,
+  "method": 8,
+  "offset": 782163300
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0018.jpg",
+  "comp": 709,
+  "uncomp": 869,
+  "method": 8,
+  "offset": 782171701
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0019.jpg",
+  "comp": 2190,
+  "uncomp": 2381,
+  "method": 8,
+  "offset": 782172509
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0020.jpg",
+  "comp": 51511,
+  "uncomp": 52971,
+  "method": 8,
+  "offset": 782174798
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0021.jpg",
+  "comp": 1549,
+  "uncomp": 1679,
+  "method": 8,
+  "offset": 782226408
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0022.jpg",
+  "comp": 1407,
+  "uncomp": 1533,
+  "method": 8,
+  "offset": 782228056
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0023.jpg",
+  "comp": 4602,
+  "uncomp": 4738,
+  "method": 8,
+  "offset": 782229562
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0024.jpg",
+  "comp": 1325,
+  "uncomp": 1467,
+  "method": 8,
+  "offset": 782234263
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0025.jpg",
+  "comp": 1272,
+  "uncomp": 1437,
+  "method": 8,
+  "offset": 782235687
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0026.jpg",
+  "comp": 926,
+  "uncomp": 1080,
+  "method": 8,
+  "offset": 782237058
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0027.jpg",
+  "comp": 977,
+  "uncomp": 1126,
+  "method": 8,
+  "offset": 782238083
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0028.jpg",
+  "comp": 68067,
+  "uncomp": 68958,
+  "method": 8,
+  "offset": 782239159
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0029.jpg",
+  "comp": 28528,
+  "uncomp": 29224,
+  "method": 8,
+  "offset": 782307325
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0030.jpg",
+  "comp": 2037,
+  "uncomp": 2220,
+  "method": 8,
+  "offset": 782335952
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0031.jpg",
+  "comp": 26293,
+  "uncomp": 27280,
+  "method": 8,
+  "offset": 782338088
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0032.jpg",
+  "comp": 30744,
+  "uncomp": 31741,
+  "method": 8,
+  "offset": 782364480
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0033.jpg",
+  "comp": 13301,
+  "uncomp": 13828,
+  "method": 8,
+  "offset": 782395323
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0034.jpg",
+  "comp": 26647,
+  "uncomp": 27688,
+  "method": 8,
+  "offset": 782408723
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0035.jpg",
+  "comp": 33160,
+  "uncomp": 34127,
+  "method": 8,
+  "offset": 782435469
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0036.jpg",
+  "comp": 129477,
+  "uncomp": 132643,
+  "method": 8,
+  "offset": 782468728
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0037.jpg",
+  "comp": 217451,
+  "uncomp": 222488,
+  "method": 8,
+  "offset": 782598304
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0038.jpg",
+  "comp": 886,
+  "uncomp": 1041,
+  "method": 8,
+  "offset": 782815854
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0039.jpg",
+  "comp": 1135,
+  "uncomp": 1276,
+  "method": 8,
+  "offset": 782816839
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0040.jpg",
+  "comp": 993,
+  "uncomp": 1137,
+  "method": 8,
+  "offset": 782818073
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0348.jpg",
+  "comp": 46458,
+  "uncomp": 48787,
+  "method": 8,
+  "offset": 782819165
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0358.jpg",
+  "comp": 28249,
+  "uncomp": 28596,
+  "method": 8,
+  "offset": 782865722
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0365.jpg",
+  "comp": 3257,
+  "uncomp": 3395,
+  "method": 8,
+  "offset": 782894070
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0366.jpg",
+  "comp": 2581,
+  "uncomp": 2715,
+  "method": 8,
+  "offset": 782897426
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0367.jpg",
+  "comp": 2841,
+  "uncomp": 2979,
+  "method": 8,
+  "offset": 782900106
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0368.jpg",
+  "comp": 11013,
+  "uncomp": 11884,
+  "method": 8,
+  "offset": 782903046
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0369.jpg",
+  "comp": 13324,
+  "uncomp": 15649,
+  "method": 8,
+  "offset": 782914158
+ },
+ {
+  "name": "udx/bldg/52350421_bldg_6697_appearance/osakad0370.jpg",
+  "comp": 61780,
+  "uncomp": 63285,
+  "method": 8,
+  "offset": 782927581
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0001.jpg",
+  "comp": 36405,
+  "uncomp": 37010,
+  "method": 8,
+  "offset": 785115435
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0002.jpg",
+  "comp": 1929,
+  "uncomp": 2060,
+  "method": 8,
+  "offset": 785151939
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0003.jpg",
+  "comp": 7693,
+  "uncomp": 8046,
+  "method": 8,
+  "offset": 785153967
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0004.jpg",
+  "comp": 2921,
+  "uncomp": 3060,
+  "method": 8,
+  "offset": 785161759
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0005.jpg",
+  "comp": 2653,
+  "uncomp": 2789,
+  "method": 8,
+  "offset": 785164779
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0006.jpg",
+  "comp": 2888,
+  "uncomp": 3025,
+  "method": 8,
+  "offset": 785167531
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0007.jpg",
+  "comp": 3468,
+  "uncomp": 3614,
+  "method": 8,
+  "offset": 785170518
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0008.jpg",
+  "comp": 2882,
+  "uncomp": 3017,
+  "method": 8,
+  "offset": 785174085
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0009.jpg",
+  "comp": 2836,
+  "uncomp": 2978,
+  "method": 8,
+  "offset": 785177066
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0010.jpg",
+  "comp": 2666,
+  "uncomp": 2816,
+  "method": 8,
+  "offset": 785180001
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0011.jpg",
+  "comp": 2949,
+  "uncomp": 3077,
+  "method": 8,
+  "offset": 785182766
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0012.jpg",
+  "comp": 2962,
+  "uncomp": 3101,
+  "method": 8,
+  "offset": 785185814
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0013.jpg",
+  "comp": 723,
+  "uncomp": 883,
+  "method": 8,
+  "offset": 785188875
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0014.jpg",
+  "comp": 774,
+  "uncomp": 932,
+  "method": 8,
+  "offset": 785189697
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0015.jpg",
+  "comp": 702,
+  "uncomp": 864,
+  "method": 8,
+  "offset": 785190570
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0016.jpg",
+  "comp": 1424,
+  "uncomp": 1557,
+  "method": 8,
+  "offset": 785191371
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0017.jpg",
+  "comp": 84586,
+  "uncomp": 85208,
+  "method": 8,
+  "offset": 785192894
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0018.jpg",
+  "comp": 3047,
+  "uncomp": 3199,
+  "method": 8,
+  "offset": 785277579
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0019.jpg",
+  "comp": 2239,
+  "uncomp": 2403,
+  "method": 8,
+  "offset": 785280725
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0020.jpg",
+  "comp": 1445,
+  "uncomp": 1581,
+  "method": 8,
+  "offset": 785283063
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0021.jpg",
+  "comp": 56085,
+  "uncomp": 58524,
+  "method": 8,
+  "offset": 785284607
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0022.jpg",
+  "comp": 15692,
+  "uncomp": 16100,
+  "method": 8,
+  "offset": 785340791
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0023.jpg",
+  "comp": 10047,
+  "uncomp": 10222,
+  "method": 8,
+  "offset": 785356582
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0024.jpg",
+  "comp": 931,
+  "uncomp": 1080,
+  "method": 8,
+  "offset": 785366728
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0025.jpg",
+  "comp": 4811,
+  "uncomp": 5049,
+  "method": 8,
+  "offset": 785367758
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0026.jpg",
+  "comp": 2561,
+  "uncomp": 2743,
+  "method": 8,
+  "offset": 785372668
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0027.jpg",
+  "comp": 2198,
+  "uncomp": 2373,
+  "method": 8,
+  "offset": 785375328
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0028.jpg",
+  "comp": 2447,
+  "uncomp": 2629,
+  "method": 8,
+  "offset": 785377625
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0029.jpg",
+  "comp": 1248,
+  "uncomp": 1387,
+  "method": 8,
+  "offset": 785380171
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0030.jpg",
+  "comp": 1097,
+  "uncomp": 1235,
+  "method": 8,
+  "offset": 785381518
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0031.jpg",
+  "comp": 1041,
+  "uncomp": 1181,
+  "method": 8,
+  "offset": 785382714
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0032.jpg",
+  "comp": 8779,
+  "uncomp": 9111,
+  "method": 8,
+  "offset": 785383854
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0033.jpg",
+  "comp": 1492,
+  "uncomp": 1634,
+  "method": 8,
+  "offset": 785392732
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0034.jpg",
+  "comp": 4143,
+  "uncomp": 4754,
+  "method": 8,
+  "offset": 785394323
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0035.jpg",
+  "comp": 1503,
+  "uncomp": 1645,
+  "method": 8,
+  "offset": 785398565
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0036.jpg",
+  "comp": 1736,
+  "uncomp": 1896,
+  "method": 8,
+  "offset": 785400167
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0037.jpg",
+  "comp": 4246,
+  "uncomp": 4505,
+  "method": 8,
+  "offset": 785402002
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0038.jpg",
+  "comp": 32695,
+  "uncomp": 33808,
+  "method": 8,
+  "offset": 785406347
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0039.jpg",
+  "comp": 9817,
+  "uncomp": 10082,
+  "method": 8,
+  "offset": 785439141
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0040.jpg",
+  "comp": 2296,
+  "uncomp": 2445,
+  "method": 8,
+  "offset": 785449057
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0041.jpg",
+  "comp": 2471,
+  "uncomp": 2640,
+  "method": 8,
+  "offset": 785451452
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0042.jpg",
+  "comp": 3015,
+  "uncomp": 3180,
+  "method": 8,
+  "offset": 785454022
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0043.jpg",
+  "comp": 3259,
+  "uncomp": 3391,
+  "method": 8,
+  "offset": 785457136
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0044.jpg",
+  "comp": 2852,
+  "uncomp": 2989,
+  "method": 8,
+  "offset": 785460494
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0045.jpg",
+  "comp": 3394,
+  "uncomp": 3532,
+  "method": 8,
+  "offset": 785463445
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0046.jpg",
+  "comp": 4208,
+  "uncomp": 4439,
+  "method": 8,
+  "offset": 785466938
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0047.jpg",
+  "comp": 3337,
+  "uncomp": 3469,
+  "method": 8,
+  "offset": 785471245
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0048.jpg",
+  "comp": 3418,
+  "uncomp": 3558,
+  "method": 8,
+  "offset": 785474681
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0049.jpg",
+  "comp": 6003,
+  "uncomp": 6141,
+  "method": 8,
+  "offset": 785478198
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0050.jpg",
+  "comp": 3093,
+  "uncomp": 3236,
+  "method": 8,
+  "offset": 785484300
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0051.jpg",
+  "comp": 2954,
+  "uncomp": 3092,
+  "method": 8,
+  "offset": 785487492
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0052.jpg",
+  "comp": 3835,
+  "uncomp": 4033,
+  "method": 8,
+  "offset": 785490545
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0053.jpg",
+  "comp": 2742,
+  "uncomp": 2887,
+  "method": 8,
+  "offset": 785494479
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0054.jpg",
+  "comp": 4397,
+  "uncomp": 4617,
+  "method": 8,
+  "offset": 785497320
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0055.jpg",
+  "comp": 3652,
+  "uncomp": 3920,
+  "method": 8,
+  "offset": 785501816
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0056.jpg",
+  "comp": 1796,
+  "uncomp": 1926,
+  "method": 8,
+  "offset": 785505567
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0057.jpg",
+  "comp": 3371,
+  "uncomp": 3508,
+  "method": 8,
+  "offset": 785507462
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0058.jpg",
+  "comp": 2603,
+  "uncomp": 2756,
+  "method": 8,
+  "offset": 785510932
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0059.jpg",
+  "comp": 9750,
+  "uncomp": 10033,
+  "method": 8,
+  "offset": 785513634
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0060.jpg",
+  "comp": 3315,
+  "uncomp": 3452,
+  "method": 8,
+  "offset": 785523483
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0061.jpg",
+  "comp": 2362,
+  "uncomp": 2530,
+  "method": 8,
+  "offset": 785526897
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0062.jpg",
+  "comp": 3009,
+  "uncomp": 3140,
+  "method": 8,
+  "offset": 785529358
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0063.jpg",
+  "comp": 1897,
+  "uncomp": 2024,
+  "method": 8,
+  "offset": 785532466
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0064.jpg",
+  "comp": 2602,
+  "uncomp": 2751,
+  "method": 8,
+  "offset": 785534462
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0065.jpg",
+  "comp": 1691,
+  "uncomp": 1829,
+  "method": 8,
+  "offset": 785537163
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0066.jpg",
+  "comp": 2666,
+  "uncomp": 2837,
+  "method": 8,
+  "offset": 785538953
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0067.jpg",
+  "comp": 2163,
+  "uncomp": 2286,
+  "method": 8,
+  "offset": 785541718
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0068.jpg",
+  "comp": 4326,
+  "uncomp": 4519,
+  "method": 8,
+  "offset": 785543980
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0069.jpg",
+  "comp": 5640,
+  "uncomp": 5773,
+  "method": 8,
+  "offset": 785548405
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0070.jpg",
+  "comp": 2841,
+  "uncomp": 2992,
+  "method": 8,
+  "offset": 785554144
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0071.jpg",
+  "comp": 3188,
+  "uncomp": 3321,
+  "method": 8,
+  "offset": 785557084
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0072.jpg",
+  "comp": 2583,
+  "uncomp": 2719,
+  "method": 8,
+  "offset": 785560371
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0073.jpg",
+  "comp": 1934,
+  "uncomp": 2061,
+  "method": 8,
+  "offset": 785563053
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0074.jpg",
+  "comp": 1505,
+  "uncomp": 1657,
+  "method": 8,
+  "offset": 785565086
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0075.jpg",
+  "comp": 1987,
+  "uncomp": 2124,
+  "method": 8,
+  "offset": 785566690
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0076.jpg",
+  "comp": 3014,
+  "uncomp": 3140,
+  "method": 8,
+  "offset": 785568776
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0077.jpg",
+  "comp": 3328,
+  "uncomp": 3456,
+  "method": 8,
+  "offset": 785571889
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0078.jpg",
+  "comp": 4994,
+  "uncomp": 5188,
+  "method": 8,
+  "offset": 785575316
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0079.jpg",
+  "comp": 4175,
+  "uncomp": 4307,
+  "method": 8,
+  "offset": 785580409
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0080.jpg",
+  "comp": 2360,
+  "uncomp": 2488,
+  "method": 8,
+  "offset": 785584683
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0081.jpg",
+  "comp": 1959,
+  "uncomp": 2087,
+  "method": 8,
+  "offset": 785587142
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0082.jpg",
+  "comp": 2038,
+  "uncomp": 2172,
+  "method": 8,
+  "offset": 785589200
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0083.jpg",
+  "comp": 2560,
+  "uncomp": 2715,
+  "method": 8,
+  "offset": 785591337
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0084.jpg",
+  "comp": 1811,
+  "uncomp": 1960,
+  "method": 8,
+  "offset": 785593996
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0085.jpg",
+  "comp": 1827,
+  "uncomp": 1966,
+  "method": 8,
+  "offset": 785595906
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0086.jpg",
+  "comp": 1108,
+  "uncomp": 1249,
+  "method": 8,
+  "offset": 785597832
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0087.jpg",
+  "comp": 3170,
+  "uncomp": 3302,
+  "method": 8,
+  "offset": 785599039
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0088.jpg",
+  "comp": 2210,
+  "uncomp": 2355,
+  "method": 8,
+  "offset": 785602308
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0089.jpg",
+  "comp": 3023,
+  "uncomp": 3166,
+  "method": 8,
+  "offset": 785604617
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0090.jpg",
+  "comp": 1948,
+  "uncomp": 2082,
+  "method": 8,
+  "offset": 785607739
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0091.jpg",
+  "comp": 2843,
+  "uncomp": 3000,
+  "method": 8,
+  "offset": 785609786
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0092.jpg",
+  "comp": 1796,
+  "uncomp": 1927,
+  "method": 8,
+  "offset": 785612728
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0093.jpg",
+  "comp": 2927,
+  "uncomp": 3081,
+  "method": 8,
+  "offset": 785614623
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0094.jpg",
+  "comp": 2136,
+  "uncomp": 2262,
+  "method": 8,
+  "offset": 785617649
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0095.jpg",
+  "comp": 4524,
+  "uncomp": 4681,
+  "method": 8,
+  "offset": 785619884
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0096.jpg",
+  "comp": 3043,
+  "uncomp": 3191,
+  "method": 8,
+  "offset": 785624507
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0097.jpg",
+  "comp": 1866,
+  "uncomp": 1997,
+  "method": 8,
+  "offset": 785627649
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0099.jpg",
+  "comp": 2676,
+  "uncomp": 2826,
+  "method": 8,
+  "offset": 785629614
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0100.jpg",
+  "comp": 2535,
+  "uncomp": 2690,
+  "method": 8,
+  "offset": 785632389
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0101.jpg",
+  "comp": 3180,
+  "uncomp": 3319,
+  "method": 8,
+  "offset": 785635023
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0102.jpg",
+  "comp": 2924,
+  "uncomp": 3058,
+  "method": 8,
+  "offset": 785638302
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0105.jpg",
+  "comp": 5501,
+  "uncomp": 5640,
+  "method": 8,
+  "offset": 785641325
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0106.jpg",
+  "comp": 3708,
+  "uncomp": 3873,
+  "method": 8,
+  "offset": 785646925
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0107.jpg",
+  "comp": 3073,
+  "uncomp": 3356,
+  "method": 8,
+  "offset": 785650732
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0108.jpg",
+  "comp": 1174,
+  "uncomp": 1319,
+  "method": 8,
+  "offset": 785653904
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0109.jpg",
+  "comp": 1364,
+  "uncomp": 1499,
+  "method": 8,
+  "offset": 785655177
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0110.jpg",
+  "comp": 3961,
+  "uncomp": 4142,
+  "method": 8,
+  "offset": 785656640
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0111.jpg",
+  "comp": 1689,
+  "uncomp": 1856,
+  "method": 8,
+  "offset": 785660700
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0112.jpg",
+  "comp": 1548,
+  "uncomp": 1684,
+  "method": 8,
+  "offset": 785662488
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0113.jpg",
+  "comp": 1163,
+  "uncomp": 1322,
+  "method": 8,
+  "offset": 785664135
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0114.jpg",
+  "comp": 1448,
+  "uncomp": 1579,
+  "method": 8,
+  "offset": 785665397
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0115.jpg",
+  "comp": 1911,
+  "uncomp": 2091,
+  "method": 8,
+  "offset": 785666944
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0116.jpg",
+  "comp": 1755,
+  "uncomp": 1925,
+  "method": 8,
+  "offset": 785668954
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0117.jpg",
+  "comp": 2271,
+  "uncomp": 2406,
+  "method": 8,
+  "offset": 785670808
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0118.jpg",
+  "comp": 1573,
+  "uncomp": 1699,
+  "method": 8,
+  "offset": 785673178
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0119.jpg",
+  "comp": 2171,
+  "uncomp": 2333,
+  "method": 8,
+  "offset": 785674850
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0120.jpg",
+  "comp": 2931,
+  "uncomp": 3083,
+  "method": 8,
+  "offset": 785677120
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0121.jpg",
+  "comp": 1537,
+  "uncomp": 1665,
+  "method": 8,
+  "offset": 785680150
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0122.jpg",
+  "comp": 3311,
+  "uncomp": 3440,
+  "method": 8,
+  "offset": 785681786
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0123.jpg",
+  "comp": 1642,
+  "uncomp": 1825,
+  "method": 8,
+  "offset": 785685196
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0124.jpg",
+  "comp": 112263,
+  "uncomp": 115314,
+  "method": 8,
+  "offset": 785686937
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0128.jpg",
+  "comp": 1258,
+  "uncomp": 1393,
+  "method": 8,
+  "offset": 785799299
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0129.jpg",
+  "comp": 1265,
+  "uncomp": 1401,
+  "method": 8,
+  "offset": 785800656
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0130.jpg",
+  "comp": 844,
+  "uncomp": 999,
+  "method": 8,
+  "offset": 785802020
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0131.jpg",
+  "comp": 3498,
+  "uncomp": 3769,
+  "method": 8,
+  "offset": 785802963
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0132.jpg",
+  "comp": 1008,
+  "uncomp": 1156,
+  "method": 8,
+  "offset": 785806560
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0139.jpg",
+  "comp": 254519,
+  "uncomp": 259727,
+  "method": 8,
+  "offset": 785807667
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0140.jpg",
+  "comp": 124507,
+  "uncomp": 127311,
+  "method": 8,
+  "offset": 786062285
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0141.jpg",
+  "comp": 173156,
+  "uncomp": 186243,
+  "method": 8,
+  "offset": 786186891
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0142.jpg",
+  "comp": 1611,
+  "uncomp": 1743,
+  "method": 8,
+  "offset": 786360146
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0143.jpg",
+  "comp": 2480,
+  "uncomp": 2635,
+  "method": 8,
+  "offset": 786361856
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0144.jpg",
+  "comp": 1071,
+  "uncomp": 1213,
+  "method": 8,
+  "offset": 786364435
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0145.jpg",
+  "comp": 1026,
+  "uncomp": 1172,
+  "method": 8,
+  "offset": 786365605
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0147.jpg",
+  "comp": 11098,
+  "uncomp": 11980,
+  "method": 8,
+  "offset": 786366730
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0148.jpg",
+  "comp": 1553,
+  "uncomp": 1695,
+  "method": 8,
+  "offset": 786377927
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0149.jpg",
+  "comp": 2985,
+  "uncomp": 3114,
+  "method": 8,
+  "offset": 786379579
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0192.jpg",
+  "comp": 9423,
+  "uncomp": 9648,
+  "method": 8,
+  "offset": 786382663
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0337.jpg",
+  "comp": 1739,
+  "uncomp": 1871,
+  "method": 8,
+  "offset": 786392185
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0348.jpg",
+  "comp": 1884,
+  "uncomp": 2013,
+  "method": 8,
+  "offset": 786394023
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0352.jpg",
+  "comp": 3272,
+  "uncomp": 3403,
+  "method": 8,
+  "offset": 786396006
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0353.jpg",
+  "comp": 69071,
+  "uncomp": 77582,
+  "method": 8,
+  "offset": 786399377
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0355.jpg",
+  "comp": 23293,
+  "uncomp": 23495,
+  "method": 8,
+  "offset": 786468547
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0360.jpg",
+  "comp": 1301,
+  "uncomp": 1451,
+  "method": 8,
+  "offset": 786491939
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakaa0361.jpg",
+  "comp": 1828,
+  "uncomp": 1985,
+  "method": 8,
+  "offset": 786493339
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0001.jpg",
+  "comp": 118794,
+  "uncomp": 125094,
+  "method": 8,
+  "offset": 786495266
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0002.jpg",
+  "comp": 7337,
+  "uncomp": 8123,
+  "method": 8,
+  "offset": 786614159
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0003.jpg",
+  "comp": 17202,
+  "uncomp": 18394,
+  "method": 8,
+  "offset": 786621595
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0004.jpg",
+  "comp": 3469,
+  "uncomp": 3606,
+  "method": 8,
+  "offset": 786638896
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0005.jpg",
+  "comp": 34274,
+  "uncomp": 34826,
+  "method": 8,
+  "offset": 786642464
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0006.jpg",
+  "comp": 6154,
+  "uncomp": 6675,
+  "method": 8,
+  "offset": 786676837
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0007.jpg",
+  "comp": 868,
+  "uncomp": 1020,
+  "method": 8,
+  "offset": 786683090
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0008.jpg",
+  "comp": 4512,
+  "uncomp": 4985,
+  "method": 8,
+  "offset": 786684057
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0009.jpg",
+  "comp": 3714,
+  "uncomp": 3884,
+  "method": 8,
+  "offset": 786688668
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0010.jpg",
+  "comp": 822,
+  "uncomp": 978,
+  "method": 8,
+  "offset": 786692481
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0011.jpg",
+  "comp": 18141,
+  "uncomp": 19981,
+  "method": 8,
+  "offset": 786693402
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0012.jpg",
+  "comp": 1094,
+  "uncomp": 1236,
+  "method": 8,
+  "offset": 786711642
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0013.jpg",
+  "comp": 752,
+  "uncomp": 912,
+  "method": 8,
+  "offset": 786712835
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0014.jpg",
+  "comp": 818,
+  "uncomp": 973,
+  "method": 8,
+  "offset": 786713686
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0015.jpg",
+  "comp": 858,
+  "uncomp": 1011,
+  "method": 8,
+  "offset": 786714603
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0016.jpg",
+  "comp": 1107,
+  "uncomp": 1250,
+  "method": 8,
+  "offset": 786715560
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0017.jpg",
+  "comp": 791,
+  "uncomp": 948,
+  "method": 8,
+  "offset": 786716766
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0018.jpg",
+  "comp": 172188,
+  "uncomp": 184638,
+  "method": 8,
+  "offset": 786717656
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0019.jpg",
+  "comp": 1999,
+  "uncomp": 2144,
+  "method": 8,
+  "offset": 786889943
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0020.jpg",
+  "comp": 2026,
+  "uncomp": 2186,
+  "method": 8,
+  "offset": 786892041
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0021.jpg",
+  "comp": 955,
+  "uncomp": 1104,
+  "method": 8,
+  "offset": 786894166
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0022.jpg",
+  "comp": 985,
+  "uncomp": 1130,
+  "method": 8,
+  "offset": 786895220
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0023.jpg",
+  "comp": 1000,
+  "uncomp": 1144,
+  "method": 8,
+  "offset": 786896304
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0024.jpg",
+  "comp": 1339,
+  "uncomp": 1468,
+  "method": 8,
+  "offset": 786897403
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0025.jpg",
+  "comp": 1838,
+  "uncomp": 1971,
+  "method": 8,
+  "offset": 786898841
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0026.jpg",
+  "comp": 4825,
+  "uncomp": 4992,
+  "method": 8,
+  "offset": 786900778
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0027.jpg",
+  "comp": 1535,
+  "uncomp": 1669,
+  "method": 8,
+  "offset": 786905702
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0028.jpg",
+  "comp": 2036,
+  "uncomp": 2217,
+  "method": 8,
+  "offset": 786907336
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0029.jpg",
+  "comp": 1220,
+  "uncomp": 1356,
+  "method": 8,
+  "offset": 786909471
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0030.jpg",
+  "comp": 2630,
+  "uncomp": 2759,
+  "method": 8,
+  "offset": 786910790
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0031.jpg",
+  "comp": 1218,
+  "uncomp": 1367,
+  "method": 8,
+  "offset": 786913519
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0033.jpg",
+  "comp": 14147,
+  "uncomp": 14684,
+  "method": 8,
+  "offset": 786914836
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0034.jpg",
+  "comp": 1386,
+  "uncomp": 1541,
+  "method": 8,
+  "offset": 786929082
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0035.jpg",
+  "comp": 1608,
+  "uncomp": 1750,
+  "method": 8,
+  "offset": 786930567
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0036.jpg",
+  "comp": 1328,
+  "uncomp": 1473,
+  "method": 8,
+  "offset": 786932274
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0037.jpg",
+  "comp": 1591,
+  "uncomp": 1735,
+  "method": 8,
+  "offset": 786933701
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0038.jpg",
+  "comp": 1479,
+  "uncomp": 1605,
+  "method": 8,
+  "offset": 786935391
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0039.jpg",
+  "comp": 9359,
+  "uncomp": 9536,
+  "method": 8,
+  "offset": 786936969
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0040.jpg",
+  "comp": 1245,
+  "uncomp": 1381,
+  "method": 8,
+  "offset": 786946427
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0041.jpg",
+  "comp": 872,
+  "uncomp": 1027,
+  "method": 8,
+  "offset": 786947771
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0042.jpg",
+  "comp": 37080,
+  "uncomp": 37698,
+  "method": 8,
+  "offset": 786948742
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0043.jpg",
+  "comp": 2970,
+  "uncomp": 3107,
+  "method": 8,
+  "offset": 786985921
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0044.jpg",
+  "comp": 37239,
+  "uncomp": 37768,
+  "method": 8,
+  "offset": 786988990
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0045.jpg",
+  "comp": 956,
+  "uncomp": 1107,
+  "method": 8,
+  "offset": 787026328
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0046.jpg",
+  "comp": 636,
+  "uncomp": 801,
+  "method": 8,
+  "offset": 787027383
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0059.jpg",
+  "comp": 1758,
+  "uncomp": 1890,
+  "method": 8,
+  "offset": 787028118
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0082.jpg",
+  "comp": 2411,
+  "uncomp": 2575,
+  "method": 8,
+  "offset": 787029975
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0083.jpg",
+  "comp": 2204,
+  "uncomp": 2398,
+  "method": 8,
+  "offset": 787032485
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0084.jpg",
+  "comp": 17051,
+  "uncomp": 17481,
+  "method": 8,
+  "offset": 787034788
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0085.jpg",
+  "comp": 6073,
+  "uncomp": 6654,
+  "method": 8,
+  "offset": 787051938
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0086.jpg",
+  "comp": 4245,
+  "uncomp": 4867,
+  "method": 8,
+  "offset": 787058110
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0087.jpg",
+  "comp": 11667,
+  "uncomp": 12504,
+  "method": 8,
+  "offset": 787062454
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0109.jpg",
+  "comp": 4054,
+  "uncomp": 4185,
+  "method": 8,
+  "offset": 787074220
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0110.jpg",
+  "comp": 1373,
+  "uncomp": 1520,
+  "method": 8,
+  "offset": 787078373
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0111.jpg",
+  "comp": 903,
+  "uncomp": 1065,
+  "method": 8,
+  "offset": 787079845
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0112.jpg",
+  "comp": 1771,
+  "uncomp": 1900,
+  "method": 8,
+  "offset": 787080847
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0113.jpg",
+  "comp": 2515,
+  "uncomp": 2711,
+  "method": 8,
+  "offset": 787082717
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0114.jpg",
+  "comp": 1204,
+  "uncomp": 1345,
+  "method": 8,
+  "offset": 787085331
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0115.jpg",
+  "comp": 1277,
+  "uncomp": 1411,
+  "method": 8,
+  "offset": 787086634
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0116.jpg",
+  "comp": 851,
+  "uncomp": 1006,
+  "method": 8,
+  "offset": 787088010
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0117.jpg",
+  "comp": 1374,
+  "uncomp": 1515,
+  "method": 8,
+  "offset": 787088960
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0118.jpg",
+  "comp": 5354,
+  "uncomp": 5809,
+  "method": 8,
+  "offset": 787090433
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0154.jpg",
+  "comp": 3061,
+  "uncomp": 3200,
+  "method": 8,
+  "offset": 787095886
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0155.jpg",
+  "comp": 16997,
+  "uncomp": 17256,
+  "method": 8,
+  "offset": 787099046
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0156.jpg",
+  "comp": 39807,
+  "uncomp": 40321,
+  "method": 8,
+  "offset": 787116142
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0157.jpg",
+  "comp": 2830,
+  "uncomp": 2966,
+  "method": 8,
+  "offset": 787156048
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0158.jpg",
+  "comp": 744,
+  "uncomp": 905,
+  "method": 8,
+  "offset": 787158977
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0159.jpg",
+  "comp": 3899,
+  "uncomp": 4151,
+  "method": 8,
+  "offset": 787159820
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0160.jpg",
+  "comp": 27340,
+  "uncomp": 28424,
+  "method": 8,
+  "offset": 787163818
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0161.jpg",
+  "comp": 9690,
+  "uncomp": 9955,
+  "method": 8,
+  "offset": 787191257
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0162.jpg",
+  "comp": 3635,
+  "uncomp": 3767,
+  "method": 8,
+  "offset": 787201046
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0163.jpg",
+  "comp": 1948,
+  "uncomp": 2075,
+  "method": 8,
+  "offset": 787204780
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0164.jpg",
+  "comp": 3683,
+  "uncomp": 3816,
+  "method": 8,
+  "offset": 787206827
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0165.jpg",
+  "comp": 2212,
+  "uncomp": 2338,
+  "method": 8,
+  "offset": 787210609
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0166.jpg",
+  "comp": 2496,
+  "uncomp": 2637,
+  "method": 8,
+  "offset": 787212920
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0167.jpg",
+  "comp": 1698,
+  "uncomp": 1828,
+  "method": 8,
+  "offset": 787215515
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0168.jpg",
+  "comp": 802,
+  "uncomp": 959,
+  "method": 8,
+  "offset": 787217312
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0169.jpg",
+  "comp": 1047,
+  "uncomp": 1192,
+  "method": 8,
+  "offset": 787218213
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0170.jpg",
+  "comp": 66347,
+  "uncomp": 68263,
+  "method": 8,
+  "offset": 787219359
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0171.jpg",
+  "comp": 4182,
+  "uncomp": 4415,
+  "method": 8,
+  "offset": 787285805
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0172.jpg",
+  "comp": 921,
+  "uncomp": 1070,
+  "method": 8,
+  "offset": 787290086
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0173.jpg",
+  "comp": 1628,
+  "uncomp": 1759,
+  "method": 8,
+  "offset": 787291106
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0174.jpg",
+  "comp": 1056,
+  "uncomp": 1202,
+  "method": 8,
+  "offset": 787292833
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0175.jpg",
+  "comp": 641,
+  "uncomp": 807,
+  "method": 8,
+  "offset": 787293988
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0176.jpg",
+  "comp": 1471,
+  "uncomp": 1604,
+  "method": 8,
+  "offset": 787294728
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0177.jpg",
+  "comp": 3272,
+  "uncomp": 3414,
+  "method": 8,
+  "offset": 787296298
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0178.jpg",
+  "comp": 1969,
+  "uncomp": 2100,
+  "method": 8,
+  "offset": 787299669
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0179.jpg",
+  "comp": 3409,
+  "uncomp": 3545,
+  "method": 8,
+  "offset": 787301737
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0180.jpg",
+  "comp": 3723,
+  "uncomp": 4017,
+  "method": 8,
+  "offset": 787305245
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0181.jpg",
+  "comp": 6052,
+  "uncomp": 6201,
+  "method": 8,
+  "offset": 787309067
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0182.jpg",
+  "comp": 13504,
+  "uncomp": 14046,
+  "method": 8,
+  "offset": 787315218
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0183.jpg",
+  "comp": 665,
+  "uncomp": 831,
+  "method": 8,
+  "offset": 787328821
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0184.jpg",
+  "comp": 1117,
+  "uncomp": 1258,
+  "method": 8,
+  "offset": 787329585
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0186.jpg",
+  "comp": 13120,
+  "uncomp": 13429,
+  "method": 8,
+  "offset": 787330801
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0187.jpg",
+  "comp": 1336,
+  "uncomp": 1506,
+  "method": 8,
+  "offset": 787344020
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0188.jpg",
+  "comp": 7400,
+  "uncomp": 7615,
+  "method": 8,
+  "offset": 787345455
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0189.jpg",
+  "comp": 1123,
+  "uncomp": 1262,
+  "method": 8,
+  "offset": 787352954
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0190.jpg",
+  "comp": 4756,
+  "uncomp": 5208,
+  "method": 8,
+  "offset": 787354176
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0191.jpg",
+  "comp": 56138,
+  "uncomp": 58638,
+  "method": 8,
+  "offset": 787359031
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0192.jpg",
+  "comp": 3018,
+  "uncomp": 3163,
+  "method": 8,
+  "offset": 787415268
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0193.jpg",
+  "comp": 10978,
+  "uncomp": 12018,
+  "method": 8,
+  "offset": 787418385
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0194.jpg",
+  "comp": 1730,
+  "uncomp": 1868,
+  "method": 8,
+  "offset": 787429462
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0195.jpg",
+  "comp": 757,
+  "uncomp": 915,
+  "method": 8,
+  "offset": 787431291
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0196.jpg",
+  "comp": 3672,
+  "uncomp": 3818,
+  "method": 8,
+  "offset": 787432147
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0197.jpg",
+  "comp": 9712,
+  "uncomp": 10436,
+  "method": 8,
+  "offset": 787435918
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0198.jpg",
+  "comp": 2237,
+  "uncomp": 2399,
+  "method": 8,
+  "offset": 787445729
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0199.jpg",
+  "comp": 3975,
+  "uncomp": 4202,
+  "method": 8,
+  "offset": 787448065
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0200.jpg",
+  "comp": 2418,
+  "uncomp": 2577,
+  "method": 8,
+  "offset": 787452139
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0201.jpg",
+  "comp": 1731,
+  "uncomp": 1866,
+  "method": 8,
+  "offset": 787454656
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0202.jpg",
+  "comp": 1437,
+  "uncomp": 1567,
+  "method": 8,
+  "offset": 787456486
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0203.jpg",
+  "comp": 1272,
+  "uncomp": 1408,
+  "method": 8,
+  "offset": 787458022
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0237.jpg",
+  "comp": 1067,
+  "uncomp": 1208,
+  "method": 8,
+  "offset": 787459393
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0238.jpg",
+  "comp": 1801,
+  "uncomp": 1932,
+  "method": 8,
+  "offset": 787460559
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0239.jpg",
+  "comp": 71407,
+  "uncomp": 78039,
+  "method": 8,
+  "offset": 787462459
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0240.jpg",
+  "comp": 881,
+  "uncomp": 1033,
+  "method": 8,
+  "offset": 787533965
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0241.jpg",
+  "comp": 847,
+  "uncomp": 1006,
+  "method": 8,
+  "offset": 787534945
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0251.jpg",
+  "comp": 2373,
+  "uncomp": 2551,
+  "method": 8,
+  "offset": 787535891
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0252.jpg",
+  "comp": 10601,
+  "uncomp": 10755,
+  "method": 8,
+  "offset": 787538363
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0266.jpg",
+  "comp": 1347,
+  "uncomp": 1489,
+  "method": 8,
+  "offset": 787549063
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0267.jpg",
+  "comp": 1900,
+  "uncomp": 2033,
+  "method": 8,
+  "offset": 787550509
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0268.jpg",
+  "comp": 1156,
+  "uncomp": 1299,
+  "method": 8,
+  "offset": 787552508
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0269.jpg",
+  "comp": 3035,
+  "uncomp": 3168,
+  "method": 8,
+  "offset": 787553763
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0270.jpg",
+  "comp": 4797,
+  "uncomp": 4970,
+  "method": 8,
+  "offset": 787556897
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0271.jpg",
+  "comp": 2608,
+  "uncomp": 2790,
+  "method": 8,
+  "offset": 787561793
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0272.jpg",
+  "comp": 1072,
+  "uncomp": 1214,
+  "method": 8,
+  "offset": 787564500
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0273.jpg",
+  "comp": 1515,
+  "uncomp": 1650,
+  "method": 8,
+  "offset": 787565671
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0274.jpg",
+  "comp": 1568,
+  "uncomp": 1705,
+  "method": 8,
+  "offset": 787567285
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0275.jpg",
+  "comp": 1107,
+  "uncomp": 1246,
+  "method": 8,
+  "offset": 787568952
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0276.jpg",
+  "comp": 2868,
+  "uncomp": 3132,
+  "method": 8,
+  "offset": 787570158
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0277.jpg",
+  "comp": 1302,
+  "uncomp": 1447,
+  "method": 8,
+  "offset": 787573125
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0278.jpg",
+  "comp": 1337,
+  "uncomp": 1484,
+  "method": 8,
+  "offset": 787574526
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0279.jpg",
+  "comp": 1223,
+  "uncomp": 1357,
+  "method": 8,
+  "offset": 787575962
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0280.jpg",
+  "comp": 8792,
+  "uncomp": 8950,
+  "method": 8,
+  "offset": 787577284
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0281.jpg",
+  "comp": 1618,
+  "uncomp": 1743,
+  "method": 8,
+  "offset": 787586175
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0282.jpg",
+  "comp": 1408,
+  "uncomp": 1548,
+  "method": 8,
+  "offset": 787587892
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0294.jpg",
+  "comp": 11424,
+  "uncomp": 11762,
+  "method": 8,
+  "offset": 787589399
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0295.jpg",
+  "comp": 25532,
+  "uncomp": 26702,
+  "method": 8,
+  "offset": 787600922
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0296.jpg",
+  "comp": 2361,
+  "uncomp": 2500,
+  "method": 8,
+  "offset": 787626553
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0297.jpg",
+  "comp": 5694,
+  "uncomp": 6186,
+  "method": 8,
+  "offset": 787629013
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0298.jpg",
+  "comp": 1486,
+  "uncomp": 1631,
+  "method": 8,
+  "offset": 787634806
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0299.jpg",
+  "comp": 696,
+  "uncomp": 857,
+  "method": 8,
+  "offset": 787636391
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0300.jpg",
+  "comp": 147390,
+  "uncomp": 149734,
+  "method": 8,
+  "offset": 787637186
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0301.jpg",
+  "comp": 2160,
+  "uncomp": 2340,
+  "method": 8,
+  "offset": 787784675
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0302.jpg",
+  "comp": 1471,
+  "uncomp": 1610,
+  "method": 8,
+  "offset": 787786934
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0303.jpg",
+  "comp": 1159,
+  "uncomp": 1311,
+  "method": 8,
+  "offset": 787788504
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0304.jpg",
+  "comp": 18034,
+  "uncomp": 18288,
+  "method": 8,
+  "offset": 787789762
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0306.jpg",
+  "comp": 884,
+  "uncomp": 1036,
+  "method": 8,
+  "offset": 787807895
+ },
+ {
+  "name": "udx/bldg/52350422_bldg_6697_appearance/osakac0308.jpg",
+  "comp": 5213,
+  "uncomp": 5380,
+  "method": 8,
+  "offset": 787808878
+ }
+]
