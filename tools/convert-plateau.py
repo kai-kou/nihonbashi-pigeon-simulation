@@ -5,7 +5,7 @@ Formalized from the R5-2 prototype (Bolt 第4回, Issue #151 / #146).
 Input: one or more bldg GML files (one mesh each). Output: a single JSON
 file in format "PLATEAU-CITY v1":
 
-  origin: [lat0, lon0]  (Osaka Castle keep, approx.)
+  origin: [lat0, lon0]  (CITY origin [34.6668, 135.5058], same as window.CITY.origin)
   buildings: [ [h_dm, usage_code, [x_dm, north_dm, ...], lod2_index|-1, baseZ_dm], ... ]
       - same conventions as current window.CITY buildings[0..2]:
         height in decimetres, footprint as flat int dm pairs (x=east, north)
@@ -64,7 +64,7 @@ NS = {
     'xlink': 'http://www.w3.org/1999/xlink',
 }
 FORMAT = 'PLATEAU-CITY v1'
-LAT0, LON0 = 34.687315, 135.526201  # Osaka Castle keep (approx.)
+LAT0, LON0 = 34.6668, 135.5058  # CITY origin (window.CITY.origin, unified in Bolt 第6回)
 phi = math.radians(LAT0)
 M_LAT = 111132.954 - 559.822 * math.cos(2 * phi) + 1.175 * math.cos(4 * phi)   # m per deg lat
 M_LON = 111412.84 * math.cos(phi) - 93.5 * math.cos(3 * phi)                 # m per deg lon
