@@ -10,6 +10,14 @@ Usage:
         scripts in src/assets/ are inlined as base64 data URIs.
         Default output is the repository-root index.html.
 
+    The PLATEAU texture atlas (src/data/texture-atlas.jpg, R5-P #159)
+    is inlined as a base64 data URI string constant
+    (``window.TEXTURE_ATLAS``) in BOTH modes: it is data, like
+    citygeo.js, not an asset script. The template line is
+    ``<!-- @include-base64 data/texture-atlas.jpg -->`` inside that
+    script line; split restores the same line and decodes the JPEG
+    back to src/data/texture-atlas.jpg, so the round trip is exact.
+
     python3 tools/build.py verify [--expected-git-blob SHA]
         Build twice in memory, check the two outputs are byte-identical
         (determinism), and compare the result with the index.html on
@@ -44,6 +52,7 @@ SRC = ROOT / "src"
 TEMPLATE = SRC / "template.html"
 
 INCLUDE_RE = re.compile(rb"<!-- @include ([A-Za-z0-9_./-]+) -->")
+ATLAS_B64_RE = re.compile(rb"<!-- @include-base64 ([A-Za-z0-9_./-]+) -->")
 ASSET_LINE_RE = re.compile(rb"^<!-- @script-asset ([A-Za-z0-9_./-]+) -->$")
 
 # Split layout, in document order. Each entry maps one block of the
@@ -64,6 +73,13 @@ SCRIPT_CLOSE = b"    </script>"
 STYLE_OPEN = b"    <style>"
 STYLE_CLOSE = b"    </style>"
 CITYGEO_PREFIX = b"    <script>window.CITYGEO = "
+ATLAS_LINE_PREFIX = b'    <script>window.TEXTURE_ATLAS = "data:image/jpeg;base64,'
+ATLAS_LINE_SUFFIX = b'";</script>'
+ATLAS_TEMPLATE_LINE = (
+    b'    <script>window.TEXTURE_ATLAS = "data:image/jpeg;base64,'
+    b"<!-- @include-base64 data/texture-atlas.jpg -->"
+    b'";</script>'
+)
 
 
 def read_part(rel):
@@ -105,6 +121,20 @@ def build_bytes(mode):
                 out_lines.append(
                     b'    <script src="' + rel.encode() + b'"></script>'
                 )
+            continue
+
+        atlas = ATLAS_B64_RE.search(line)
+        if atlas:
+            # R5-P #159: inline a binary file (the texture atlas JPEG)
+            # as a base64 data URI, in both modes (it is data, like
+            # citygeo.js; only the two asset scripts differ by mode).
+            rel = atlas.group(1).decode()
+            data = (SRC / rel).read_bytes()
+            if b"@include" in data or b"@script-asset" in data:
+                raise SystemExit(
+                    f"part file must not contain build tokens: src/{rel}"
+                )
+            out_lines.append(ATLAS_B64_RE.sub(base64.b64encode(data), line))
             continue
 
         def replace(match):
@@ -204,10 +234,27 @@ def cmd_split(args):
     style_seen = False
     citygeo_seen = False
     assets_seen = []
+    atlas_seen = False
 
     while idx < len(lines):
         line = lines[idx]
-        if line == SCRIPT_OPEN and scripts_seen == 0:
+        if line.startswith(ATLAS_LINE_PREFIX) and line.endswith(ATLAS_LINE_SUFFIX):
+            # R5-P #159: the atlas data URI line. Decode the JPEG back
+            # to src/data/texture-atlas.jpg and restore the template
+            # token line. The rebuild check below proves the round trip.
+            b64 = line[len(ATLAS_LINE_PREFIX):-len(ATLAS_LINE_SUFFIX)]
+            try:
+                data = base64.b64decode(b64, validate=True)
+            except Exception as exc:
+                raise SystemExit(f"split: atlas base64 is not decodable: {exc}")
+            dest = SRC / "data/texture-atlas.jpg"
+            dest.parent.mkdir(parents=True, exist_ok=True)
+            dest.write_bytes(data)
+            print(f"  src/data/texture-atlas.jpg: {len(data)} bytes (decoded)")
+            template.append(ATLAS_TEMPLATE_LINE)
+            atlas_seen = True
+            idx += 1
+        elif line == SCRIPT_OPEN and scripts_seen == 0:
             content, close_idx = extract_block(
                 lines, idx + 1, SCRIPT_CLOSE, "webfont script"
             )
@@ -265,6 +312,8 @@ def cmd_split(args):
         raise SystemExit("split: style block not found")
     if not citygeo_seen:
         raise SystemExit("split: CITYGEO line not found")
+    if not atlas_seen:
+        raise SystemExit("split: TEXTURE_ATLAS line not found")
     if assets_seen != ASSETS:
         raise SystemExit(f"split: expected assets {ASSETS}, found {assets_seen}")
 
