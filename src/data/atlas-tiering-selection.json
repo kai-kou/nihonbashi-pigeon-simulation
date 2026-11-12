@@ -1,0 +1,1710 @@
+{
+ "selection": "S4",
+ "criteria": "tenshu landmark OR measuredHeight>=45m OR footprint>=1500m2",
+ "buildings": [
+  {
+   "gml_id": "bldg_d4019253-fda1-47b2-9d54-64eee420887c",
+   "mesh": "52350421",
+   "file": "osakab0057.jpg",
+   "height_m": 151.1,
+   "footprint_m2": 793.6,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3078
+  },
+  {
+   "gml_id": "bldg_ff36366c-b9f3-467f-8d49-53d96c054037",
+   "mesh": "52350421",
+   "file": "osakab0196.jpg",
+   "height_m": 136.4,
+   "footprint_m2": 1439.2,
+   "usage": "414",
+   "storeys": 40,
+   "criteria": "height>=45",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5269
+  },
+  {
+   "gml_id": "bldg_08021731-c912-48de-9db1-23af48341779",
+   "mesh": "52350421",
+   "file": "osakaa0224.jpg",
+   "height_m": 100.4,
+   "footprint_m2": 2902.1,
+   "usage": "401",
+   "storeys": 8,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5186
+  },
+  {
+   "gml_id": "bldg_5e6e750f-a827-46d1-9b3c-8c05209b1081",
+   "mesh": "52350421",
+   "file": "osakad0036.jpg",
+   "height_m": 96.8,
+   "footprint_m2": 3865.9,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5912
+  },
+  {
+   "gml_id": "bldg_3c3410c1-6662-4e50-b3e8-31032ae2e6ef",
+   "mesh": "52350422",
+   "file": "osakaa0141.jpg",
+   "height_m": 95.7,
+   "footprint_m2": 7160.0,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2833
+  },
+  {
+   "gml_id": "bldg_d1bf3eb7-3e52-4e50-8b4f-054c8386981c",
+   "mesh": "52350421",
+   "file": "osakaa0310.jpg",
+   "height_m": 84.2,
+   "footprint_m2": 2657.2,
+   "usage": "421",
+   "storeys": 15,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2881
+  },
+  {
+   "gml_id": "bldg_9263244d-2630-429a-93ae-8292de3d5c06",
+   "mesh": "52350421",
+   "file": "osakaa0255.jpg",
+   "height_m": 81.0,
+   "footprint_m2": 10697.6,
+   "usage": "401",
+   "storeys": 22,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2850
+  },
+  {
+   "gml_id": "bldg_4258411e-e4a6-486f-bc7d-bbf8bf0a99ec",
+   "mesh": "52350421",
+   "file": "osakad0037.jpg",
+   "height_m": 79.3,
+   "footprint_m2": 12060.1,
+   "usage": "421",
+   "storeys": 10,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3665
+  },
+  {
+   "gml_id": "bldg_e8920eb7-0581-441a-a4b9-dce511e19809",
+   "mesh": "52350422",
+   "file": "osakaa0139.jpg",
+   "height_m": 74.8,
+   "footprint_m2": 10241.3,
+   "usage": "403",
+   "storeys": 18,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3713
+  },
+  {
+   "gml_id": "bldg_c22aaa2b-8cf5-4d8a-aa5e-4abb50fd413f",
+   "mesh": "52350421",
+   "file": "osakad0370.jpg",
+   "height_m": 72.9,
+   "footprint_m2": 1392.8,
+   "usage": "421",
+   "storeys": 10,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    1024
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3143
+  },
+  {
+   "gml_id": "bldg_f16c3ba7-7c32-4113-9320-06392f5abf54",
+   "mesh": "52350422",
+   "file": "osakaa0140.jpg",
+   "height_m": 72.0,
+   "footprint_m2": 3595.8,
+   "usage": "401",
+   "storeys": 17,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5787
+  },
+  {
+   "gml_id": "bldg_1387ca32-5069-4ef7-8f0b-97bade15caf0",
+   "mesh": "52350421",
+   "file": "osakaa0240.jpg",
+   "height_m": 67.4,
+   "footprint_m2": 832.0,
+   "usage": "422",
+   "storeys": 14,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    1024
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2940
+  },
+  {
+   "gml_id": "bldg_1f0893b8-8315-4a1f-a3d6-90f0f72c2c5f",
+   "mesh": "52350421",
+   "file": "osakaa0254.jpg",
+   "height_m": 65.5,
+   "footprint_m2": 2658.3,
+   "usage": "422",
+   "storeys": 12,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 6239
+  },
+  {
+   "gml_id": "bldg_abfcb896-1f1a-4af3-af00-e11b60400855",
+   "mesh": "52350421",
+   "file": "osakad0015.jpg",
+   "height_m": 63.8,
+   "footprint_m2": 6784.7,
+   "usage": "422",
+   "storeys": 13,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3484
+  },
+  {
+   "gml_id": "bldg_235a0c6c-8beb-45bb-9be5-abc113049c5d",
+   "mesh": "52350421",
+   "file": "osakaa0263.jpg",
+   "height_m": 63.8,
+   "footprint_m2": 788.8,
+   "usage": "401",
+   "storeys": 9,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4143
+  },
+  {
+   "gml_id": "bldg_da92ce52-79f1-4094-bf0f-6bf71dbbff02",
+   "mesh": "52350421",
+   "file": "osakad0028.jpg",
+   "height_m": 60.9,
+   "footprint_m2": 2182.2,
+   "usage": "421",
+   "storeys": 10,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3433
+  },
+  {
+   "gml_id": "bldg_8cdca2b6-ffa6-4c9d-ae5e-a9a5b760d243",
+   "mesh": "52350421",
+   "file": "osakaa0347.jpg",
+   "height_m": 59.7,
+   "footprint_m2": 897.8,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3223
+  },
+  {
+   "gml_id": "bldg_04f24fdf-0274-4c4f-8dbd-56e1eed6c6d2",
+   "mesh": "52350421",
+   "file": "osakab0101.jpg",
+   "height_m": 58.9,
+   "footprint_m2": 525.7,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4357
+  },
+  {
+   "gml_id": "bldg_ae227690-b7d8-48a9-97f8-51871a4f36c3",
+   "mesh": "52350421",
+   "file": "osakad0004.jpg",
+   "height_m": 56.9,
+   "footprint_m2": 2700.3,
+   "usage": "421",
+   "storeys": 8,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3489
+  },
+  {
+   "gml_id": "bldg_a1de5ad7-06f7-466a-9eca-27468525e693",
+   "mesh": "52350421",
+   "file": "osakab0003.jpg",
+   "height_m": 53.7,
+   "footprint_m2": 841.3,
+   "usage": "401",
+   "storeys": 12,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4995
+  },
+  {
+   "gml_id": "bldg_41117eae-5c12-40c2-8d1a-9461b8db7784",
+   "mesh": "52350422",
+   "file": "osakac0001.jpg",
+   "height_m": 53.2,
+   "footprint_m2": 1750.9,
+   "usage": "422",
+   "storeys": 8,
+   "criteria": "landmark(tenshu)+height>=45+area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4713
+  },
+  {
+   "gml_id": "bldg_3924e85a-9b45-493d-8e66-5fc4295d586b",
+   "mesh": "52350421",
+   "file": "osakaa0225.jpg",
+   "height_m": 52.0,
+   "footprint_m2": 578.7,
+   "usage": "401",
+   "storeys": 13,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 3930
+  },
+  {
+   "gml_id": "bldg_5afba39b-fd5f-4685-963f-894da856367f",
+   "mesh": "52350421",
+   "file": "osakaa0226.jpg",
+   "height_m": 51.3,
+   "footprint_m2": 1974.8,
+   "usage": "422",
+   "storeys": 9,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3347
+  },
+  {
+   "gml_id": "bldg_9ca0c35b-3000-4496-863a-25462bc1c0d6",
+   "mesh": "52350421",
+   "file": "osakaa0259.jpg",
+   "height_m": 49.8,
+   "footprint_m2": 8723.5,
+   "usage": "402",
+   "storeys": 9,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3353
+  },
+  {
+   "gml_id": "bldg_76138be7-e581-4463-8cf6-1366b8862b36",
+   "mesh": "52350421",
+   "file": "osakaa0238.jpg",
+   "height_m": 49.5,
+   "footprint_m2": 597.0,
+   "usage": "401",
+   "storeys": 11,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5572
+  },
+  {
+   "gml_id": "bldg_7fda81e3-3a64-4e03-a161-eb12fb5c7031",
+   "mesh": "52350421",
+   "file": "osakab0001.jpg",
+   "height_m": 49.3,
+   "footprint_m2": 685.8,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4932
+  },
+  {
+   "gml_id": "bldg_656f02d9-78cb-4b6f-ac3b-655c6b8fe925",
+   "mesh": "52350421",
+   "file": "osakab0140.jpg",
+   "height_m": 49.1,
+   "footprint_m2": 456.0,
+   "usage": "401",
+   "storeys": 5,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4497
+  },
+  {
+   "gml_id": "bldg_6c3a676e-8448-4c26-82b6-518d76bb2681",
+   "mesh": "52350421",
+   "file": "osakad0348.jpg",
+   "height_m": 49.1,
+   "footprint_m2": 876.3,
+   "usage": "401",
+   "storeys": 11,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    1024
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2665
+  },
+  {
+   "gml_id": "bldg_8f076265-a3c7-49b1-9f4b-75c203641cd7",
+   "mesh": "52350421",
+   "file": "osakab0110.jpg",
+   "height_m": 48.9,
+   "footprint_m2": 415.0,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4309
+  },
+  {
+   "gml_id": "bldg_0cb04180-c1d3-4e9b-8785-5ec97d4416e3",
+   "mesh": "52350421",
+   "file": "osakab0004.jpg",
+   "height_m": 48.6,
+   "footprint_m2": 360.7,
+   "usage": "422",
+   "storeys": 10,
+   "criteria": "height>=45",
+   "orig": [
+    256,
+    512
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3584
+  },
+  {
+   "gml_id": "bldg_2d27a3f6-f049-4926-a512-211c2edc0150",
+   "mesh": "52350421",
+   "file": "osakab0098.jpg",
+   "height_m": 48.4,
+   "footprint_m2": 410.8,
+   "usage": "412",
+   "storeys": 15,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4627
+  },
+  {
+   "gml_id": "bldg_842abd3c-4682-4cb1-afa7-01bdccaea25d",
+   "mesh": "52350421",
+   "file": "osakab0050.jpg",
+   "height_m": 47.8,
+   "footprint_m2": 380.3,
+   "usage": "412",
+   "storeys": 15,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4386
+  },
+  {
+   "gml_id": "bldg_c5a111fc-5b3b-4abd-8770-b19a65180b05",
+   "mesh": "52350421",
+   "file": "osakab0189.jpg",
+   "height_m": 47.8,
+   "footprint_m2": 178.5,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    256,
+    512
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2898
+  },
+  {
+   "gml_id": "bldg_fa6d0c2b-0494-4a69-bfa4-9e9571bd57a0",
+   "mesh": "52350421",
+   "file": "osakab0025.jpg",
+   "height_m": 47.7,
+   "footprint_m2": 426.9,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    1024,
+    256
+   ],
+   "tile_512": [
+    512,
+    128
+   ],
+   "tile_256": [
+    256,
+    64
+   ],
+   "delta_px_256_to_512": 49152,
+   "jpeg_bytes_128": 1895
+  },
+  {
+   "gml_id": "bldg_908804bd-43f5-4f7c-b2fe-e199e99f6cd4",
+   "mesh": "52350421",
+   "file": "osakad0369.jpg",
+   "height_m": 47.6,
+   "footprint_m2": 446.9,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 2341
+  },
+  {
+   "gml_id": "bldg_e8081b13-193b-417c-bded-552be485be08",
+   "mesh": "52350422",
+   "file": "osakaa0017.jpg",
+   "height_m": 47.3,
+   "footprint_m2": 1862.3,
+   "usage": "412",
+   "storeys": 14,
+   "criteria": "height>=45+area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3391
+  },
+  {
+   "gml_id": "bldg_77ef767b-cb8b-4830-8917-e7b3651fcaa4",
+   "mesh": "52350421",
+   "file": "osakaa0183.jpg",
+   "height_m": 47.3,
+   "footprint_m2": 425.7,
+   "usage": "401",
+   "storeys": 4,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 6116
+  },
+  {
+   "gml_id": "bldg_e580cd24-22a3-41eb-aa2d-47eb704eac9e",
+   "mesh": "52350421",
+   "file": "osakaa0270.jpg",
+   "height_m": 47.2,
+   "footprint_m2": 768.1,
+   "usage": "414",
+   "storeys": 14,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4660
+  },
+  {
+   "gml_id": "bldg_3bda36f9-67c3-4dad-845e-a0f08039c595",
+   "mesh": "52350421",
+   "file": "osakaa0239.jpg",
+   "height_m": 47.1,
+   "footprint_m2": 492.8,
+   "usage": "414",
+   "storeys": 13,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5659
+  },
+  {
+   "gml_id": "bldg_99cfe8d4-ac79-4e14-9b75-0e2e7c07df50",
+   "mesh": "52350421",
+   "file": "osakab0114.jpg",
+   "height_m": 46.9,
+   "footprint_m2": 259.3,
+   "usage": "401",
+   "storeys": 8,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    256
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2809
+  },
+  {
+   "gml_id": "bldg_75aaac1a-3ad3-435e-baa8-3bed9b36d03e",
+   "mesh": "52350421",
+   "file": "osakab0071.jpg",
+   "height_m": 46.7,
+   "footprint_m2": 636.9,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 3615
+  },
+  {
+   "gml_id": "bldg_9676363e-aa82-4d29-9443-d7d76b0e6029",
+   "mesh": "52350421",
+   "file": "osakaa0245.jpg",
+   "height_m": 46.6,
+   "footprint_m2": 725.7,
+   "usage": "422",
+   "storeys": 8,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4507
+  },
+  {
+   "gml_id": "bldg_9f52f663-e7d8-408d-9d10-1d36bac66c38",
+   "mesh": "52350421",
+   "file": "osakaa0294.jpg",
+   "height_m": 46.5,
+   "footprint_m2": 711.9,
+   "usage": "414",
+   "storeys": 13,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4623
+  },
+  {
+   "gml_id": "bldg_5aaa60b3-812c-4200-bf9a-472e86319d10",
+   "mesh": "52350421",
+   "file": "osakab0041.jpg",
+   "height_m": 46.4,
+   "footprint_m2": 288.8,
+   "usage": "412",
+   "storeys": 11,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    256
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2520
+  },
+  {
+   "gml_id": "bldg_95463b6b-f4d8-4477-b8f1-d0129e8e0d9b",
+   "mesh": "52350421",
+   "file": "osakaa0267.jpg",
+   "height_m": 46.1,
+   "footprint_m2": 654.0,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 3990
+  },
+  {
+   "gml_id": "bldg_689b11de-0341-4a40-bf60-70b563b8ea42",
+   "mesh": "52350421",
+   "file": "osakaa0295.jpg",
+   "height_m": 46.0,
+   "footprint_m2": 192.3,
+   "usage": "414",
+   "storeys": 15,
+   "criteria": "height>=45",
+   "orig": [
+    256,
+    512
+   ],
+   "tile_512": [
+    256,
+    512
+   ],
+   "tile_256": [
+    128,
+    256
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2441
+  },
+  {
+   "gml_id": "bldg_6c8a9f7a-47db-4835-97b4-1bcc3d9ec64e",
+   "mesh": "52350421",
+   "file": "osakab0220.jpg",
+   "height_m": 45.5,
+   "footprint_m2": 621.0,
+   "usage": "401",
+   "storeys": 10,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5053
+  },
+  {
+   "gml_id": "bldg_9c88bc42-c28c-4c54-8b75-c802e4e4295e",
+   "mesh": "52350421",
+   "file": "osakad0035.jpg",
+   "height_m": 45.3,
+   "footprint_m2": 732.7,
+   "usage": "403",
+   "storeys": 10,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5234
+  },
+  {
+   "gml_id": "bldg_347dedbc-b3df-46c6-8227-918221e3d559",
+   "mesh": "52350421",
+   "file": "osakab0201.jpg",
+   "height_m": 45.0,
+   "footprint_m2": 270.5,
+   "usage": "412",
+   "storeys": 15,
+   "criteria": "height>=45",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4127
+  },
+  {
+   "gml_id": "bldg_a6c9f7e7-3e61-4807-8f51-abeda1ca26b9",
+   "mesh": "52350421",
+   "file": "osakab0019.jpg",
+   "height_m": 42.0,
+   "footprint_m2": 1645.2,
+   "usage": "422",
+   "storeys": 7,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3179
+  },
+  {
+   "gml_id": "bldg_f3fe8c03-3f6b-40c2-a185-27c43b710da4",
+   "mesh": "52350421",
+   "file": "osakab0092.jpg",
+   "height_m": 40.7,
+   "footprint_m2": 1964.2,
+   "usage": "421",
+   "storeys": 7,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    256
+   ],
+   "tile_512": [
+    512,
+    128
+   ],
+   "tile_256": [
+    256,
+    64
+   ],
+   "delta_px_256_to_512": 49152,
+   "jpeg_bytes_128": 1895
+  },
+  {
+   "gml_id": "bldg_ddc3ded1-cb3d-479a-a440-4b38c6ed40dc",
+   "mesh": "52350421",
+   "file": "osakab0073.jpg",
+   "height_m": 40.5,
+   "footprint_m2": 1751.0,
+   "usage": "422",
+   "storeys": 7,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2809
+  },
+  {
+   "gml_id": "bldg_e2f62c36-2608-47ef-b028-5225529f4993",
+   "mesh": "52350421",
+   "file": "osakab0324.jpg",
+   "height_m": 40.0,
+   "footprint_m2": 4220.7,
+   "usage": "421",
+   "storeys": 7,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5454
+  },
+  {
+   "gml_id": "bldg_8d4914d8-4914-4143-9372-56f3fa2b3976",
+   "mesh": "52350421",
+   "file": "osakaa0315.jpg",
+   "height_m": 38.2,
+   "footprint_m2": 3125.9,
+   "usage": "421",
+   "storeys": 8,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3493
+  },
+  {
+   "gml_id": "bldg_9a0e75e0-ddfd-41f9-a611-04ab8c5b47fa",
+   "mesh": "52350421",
+   "file": "osakaa0229.jpg",
+   "height_m": 37.7,
+   "footprint_m2": 3448.3,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5773
+  },
+  {
+   "gml_id": "bldg_16c90ddb-3fc3-40c7-879b-b0ad73a98694",
+   "mesh": "52350421",
+   "file": "osakaa0230.jpg",
+   "height_m": 34.3,
+   "footprint_m2": 2014.9,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3317
+  },
+  {
+   "gml_id": "bldg_2bb54f2b-0c4e-4fa2-b069-21f9157abb4c",
+   "mesh": "52350421",
+   "file": "osakad0014.jpg",
+   "height_m": 27.5,
+   "footprint_m2": 2311.5,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2819
+  },
+  {
+   "gml_id": "bldg_614ec471-a763-4354-adaa-847ac7ae4599",
+   "mesh": "52350422",
+   "file": "osakac0170.jpg",
+   "height_m": 24.0,
+   "footprint_m2": 2005.6,
+   "usage": "402",
+   "storeys": 3,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3525
+  },
+  {
+   "gml_id": "bldg_e26f4f77-08b0-4d75-9794-5438c1364247",
+   "mesh": "52350421",
+   "file": "osakad0020.jpg",
+   "height_m": 22.6,
+   "footprint_m2": 3504.3,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    512
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 3239
+  },
+  {
+   "gml_id": "bldg_dda3cf24-7c6f-4443-9e04-aa821def7120",
+   "mesh": "52350422",
+   "file": "osakac0018.jpg",
+   "height_m": 21.1,
+   "footprint_m2": 10794.1,
+   "usage": "422",
+   "storeys": 2,
+   "criteria": "area>=1500",
+   "orig": [
+    2048,
+    1024
+   ],
+   "tile_512": [
+    512,
+    256
+   ],
+   "tile_256": [
+    256,
+    128
+   ],
+   "delta_px_256_to_512": 98304,
+   "jpeg_bytes_128": 2610
+  },
+  {
+   "gml_id": "bldg_25dd56f2-15b3-49ce-a90a-0647d70134a0",
+   "mesh": "52350422",
+   "file": "osakaa0124.jpg",
+   "height_m": 20.6,
+   "footprint_m2": 4648.4,
+   "usage": "422",
+   "storeys": 3,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 6075
+  },
+  {
+   "gml_id": "bldg_3f0020ae-5a53-42d4-97f3-ff879fef92f0",
+   "mesh": "52350421",
+   "file": "osakaa0358.jpg",
+   "height_m": 20.1,
+   "footprint_m2": 1899.0,
+   "usage": "422",
+   "storeys": 6,
+   "criteria": "area>=1500",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5379
+  },
+  {
+   "gml_id": "bldg_8ea29ffd-261f-41c5-977b-de5af7a4d6d7",
+   "mesh": "52350421",
+   "file": "osakab0330.jpg",
+   "height_m": 17.8,
+   "footprint_m2": 1729.3,
+   "usage": "422",
+   "storeys": 3,
+   "criteria": "area>=1500",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 3910
+  },
+  {
+   "gml_id": "bldg_5c4d004e-c5cd-4fd1-ae72-21c3bae8412f",
+   "mesh": "52350422",
+   "file": "osakac0191.jpg",
+   "height_m": 16.6,
+   "footprint_m2": 3250.8,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    2048,
+    256
+   ],
+   "tile_512": [
+    512,
+    64
+   ],
+   "tile_256": [
+    256,
+    32
+   ],
+   "delta_px_256_to_512": 24576,
+   "jpeg_bytes_128": 1387
+  },
+  {
+   "gml_id": "bldg_777ed6d6-12f4-4b0c-bfd0-d86d3be95c3a",
+   "mesh": "52350422",
+   "file": "osakac0044.jpg",
+   "height_m": 15.4,
+   "footprint_m2": 2363.0,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    256
+   ],
+   "tile_512": [
+    512,
+    128
+   ],
+   "tile_256": [
+    256,
+    64
+   ],
+   "delta_px_256_to_512": 49152,
+   "jpeg_bytes_128": 2255
+  },
+  {
+   "gml_id": "bldg_8840885c-5c95-45d0-b3df-17971607c689",
+   "mesh": "52350422",
+   "file": "osakac0042.jpg",
+   "height_m": 15.2,
+   "footprint_m2": 2505.1,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 5375
+  },
+  {
+   "gml_id": "bldg_7b90764e-4c23-4de7-96f5-3c67785272a2",
+   "mesh": "52350421",
+   "file": "osakac0153.jpg",
+   "height_m": 14.5,
+   "footprint_m2": 1806.5,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    512,
+    512
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4718
+  },
+  {
+   "gml_id": "bldg_8c6c06ee-6871-4dae-ac6b-d6db3a316644",
+   "mesh": "52350422",
+   "file": "osakac0239.jpg",
+   "height_m": 13.2,
+   "footprint_m2": 5366.7,
+   "usage": "431",
+   "storeys": 1,
+   "criteria": "area>=1500",
+   "orig": [
+    2048,
+    512
+   ],
+   "tile_512": [
+    512,
+    128
+   ],
+   "tile_256": [
+    256,
+    64
+   ],
+   "delta_px_256_to_512": 49152,
+   "jpeg_bytes_128": 1822
+  },
+  {
+   "gml_id": "bldg_e51a409d-fc9c-4651-81fc-2dcf630d58df",
+   "mesh": "52350422",
+   "file": "osakac0300.jpg",
+   "height_m": 13.0,
+   "footprint_m2": 9305.4,
+   "usage": "431",
+   "storeys": 2,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 7610
+  },
+  {
+   "gml_id": "bldg_ea0119dd-a43f-4c1d-a639-57bca789f4a3",
+   "mesh": "52350422",
+   "file": "osakac0005.jpg",
+   "height_m": 12.1,
+   "footprint_m2": 1760.5,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    256
+   ],
+   "tile_512": [
+    512,
+    128
+   ],
+   "tile_256": [
+    256,
+    64
+   ],
+   "delta_px_256_to_512": 49152,
+   "jpeg_bytes_128": 2239
+  },
+  {
+   "gml_id": "bldg_a0b04166-5ef2-44a2-aa29-ec644cb9a998",
+   "mesh": "52350422",
+   "file": "osakaa0353.jpg",
+   "height_m": 5.3,
+   "footprint_m2": 4254.3,
+   "usage": "461",
+   "storeys": 9999,
+   "criteria": "area>=1500",
+   "orig": [
+    1024,
+    1024
+   ],
+   "tile_512": [
+    512,
+    512
+   ],
+   "tile_256": [
+    256,
+    256
+   ],
+   "delta_px_256_to_512": 196608,
+   "jpeg_bytes_128": 4336
+  }
+ ]
+}
